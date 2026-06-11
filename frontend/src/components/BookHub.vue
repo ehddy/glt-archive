@@ -1,49 +1,64 @@
 <template>
-  <div class="book-hub" :style="{ '--hub-color': hubColor }">
-    <BookNode
-      :title="book.title"
-      :author="authorName"
-      :quote-count="book.quotes.length"
-      :color-index="colorIndex"
-    />
-
-    <div ref="graphEl" class="hub-graph">
-      <svg
-        v-if="lines.length"
-        class="hub-lines"
-        :viewBox="`0 0 ${svgWidth} ${svgHeight}`"
-        preserveAspectRatio="none"
-      >
-        <path
-          v-for="(line, i) in lines"
-          :key="i"
-          :d="line"
-          class="hub-line"
-          fill="none"
-        />
-      </svg>
-
-      <div ref="branchesEl" class="hub-branches">
-        <div
-          v-for="quote in book.quotes"
+  <article
+    class="shelf-book"
+    :class="{
+      'is-expanded': isExpanded,
+      'is-search': searchMode,
+      'is-active': isActiveInRow,
+    }"
+    :style="bookStyle"
+    @mouseenter="onEnter"
+    @mouseleave="onLeave"
+  >
+    <div
+      v-if="book.quotes.length"
+      class="quote-spread"
+      :aria-hidden="!isExpanded"
+      @mouseenter="onEnter"
+      @mouseleave="onLeave"
+      @click.stop
+    >
+      <div class="quote-spread-inner">
+        <QuoteBranch
+          v-for="(quote, i) in book.quotes"
           :key="quote.id"
-          class="hub-branch"
-        >
-          <QuoteBranch :quote="quote" />
-        </div>
+          :quote="quote"
+          variant="spread"
+          :highlighted="searchMode"
+          :style="{ '--quote-i': i }"
+        />
       </div>
     </div>
-  </div>
+
+    <div class="book-open-wrap" :class="{ 'is-open': isExpanded }">
+      <span class="book-flap book-flap--left" aria-hidden="true" />
+      <BookNode
+        :class="{ 'is-pulled': isExpanded }"
+        :title="book.title"
+        :author="authorName"
+        :quote-count="book.quotes.length"
+        :color-index="colorIndex"
+        variant="spine"
+        show-count
+        @click="onBookClick"
+      />
+      <span class="book-flap book-flap--right" aria-hidden="true" />
+    </div>
+
+    <div class="shelf-slot" :class="{ 'is-open': isExpanded }" aria-hidden="true" />
+  </article>
 </template>
 
 <script>
 import BookNode from './BookNode.vue'
 import QuoteBranch from './QuoteBranch.vue'
 
-const BOOK_COLORS = [
-  '#8b3a3a', '#2d4a3e', '#4a6741', '#6b4c35',
-  '#3d4f6b', '#7a5c3e', '#5c3d5e', '#8b6914',
+const HUB_COLORS = [
+  '#c4693a', '#7d8f6a', '#c97b84', '#c9a227',
+  '#6b8f9c', '#a67c6d', '#8b7d6b', '#b5836e',
 ]
+
+const SPREAD_STEP = 32
 
 export default {
   name: 'BookHub',
@@ -51,13 +66,17 @@ export default {
   props: {
     book: { type: Object, required: true },
     colorIndex: { type: Number, default: 0 },
+    bookIndexInRow: { type: Number, default: 0 },
+    activeIndexInRow: { type: Number, default: null },
+    pullOffset: { type: Number, default: 0 },
+    forceExpanded: { type: Boolean, default: false },
+    searchMode: { type: Boolean, default: false },
   },
+  emits: ['show-detail', 'activate', 'deactivate'],
   data() {
     return {
-      lines: [],
-      svgWidth: 300,
-      svgHeight: 200,
-      resizeObserver: null,
+      isHovered: false,
+      leaveTimer: null,
     }
   },
   computed: {
@@ -65,162 +84,212 @@ export default {
       return this.book.author?.name || ''
     },
     hubColor() {
-      return BOOK_COLORS[this.colorIndex % BOOK_COLORS.length]
+      return HUB_COLORS[this.colorIndex % HUB_COLORS.length]
+    },
+    isActiveInRow() {
+      return this.activeIndexInRow === this.bookIndexInRow
+    },
+    spreadX() {
+      if (this.forceExpanded || this.activeIndexInRow === null) return 0
+      const active = this.activeIndexInRow
+      const idx = this.bookIndexInRow
+      if (idx === active) return 0
+      if (idx < active) return -SPREAD_STEP * (active - idx)
+      return SPREAD_STEP * (idx - active)
+    },
+    bookStyle() {
+      return {
+        '--hub-color': this.hubColor,
+        '--pull-shift': `${this.pullOffset * 0.35}px`,
+        '--spread-x': `${this.spreadX}px`,
+        '--quote-count': this.book.quotes.length,
+      }
+    },
+    isExpanded() {
+      return this.forceExpanded || this.isHovered
     },
   },
-  mounted() {
-    this.$nextTick(() => {
-      this.drawLines()
-      const target = this.$refs.graphEl
-      if (target && typeof ResizeObserver !== 'undefined') {
-        this.resizeObserver = new ResizeObserver(() => this.drawLines())
-        this.resizeObserver.observe(target)
+  watch: {
+    isHovered(val) {
+      if (this.forceExpanded) return
+      if (val) {
+        this.$emit('activate', this.bookIndexInRow)
       }
-    })
-    window.addEventListener('resize', this.drawLines)
+    },
   },
   beforeUnmount() {
-    this.resizeObserver?.disconnect()
-    window.removeEventListener('resize', this.drawLines)
+    clearTimeout(this.leaveTimer)
+    if (this.isHovered) {
+      this.$emit('deactivate', this.bookIndexInRow)
+    }
   },
   methods: {
-    drawLines() {
-      const branches = this.$refs.branchesEl
-      const graph = this.$refs.graphEl
-      if (!branches || !graph) return
-
-      const items = branches.querySelectorAll('.hub-branch')
-      if (!items.length) {
-        if (this.lines.length) this.lines = []
-        return
+    onEnter() {
+      clearTimeout(this.leaveTimer)
+      this.isHovered = true
+      if (!this.forceExpanded) {
+        this.$emit('activate', this.bookIndexInRow)
       }
-
-      const graphRect = graph.getBoundingClientRect()
-      if (graphRect.width === 0 || graphRect.height === 0) return
-
-      const startX = 0
-      const startY = graphRect.height / 2
-      const endX = 28
-
-      const newWidth = Math.round(graphRect.width)
-      const newHeight = Math.round(graphRect.height)
-      const newLines = Array.from(items).map((item) => {
-        const rect = item.getBoundingClientRect()
-        const endY = rect.top - graphRect.top + rect.height / 2
-        const midX = endX + (graphRect.width - endX) * 0.25
-        return `M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`
-      })
-
-      const sameSize = newWidth === this.svgWidth && newHeight === this.svgHeight
-      const sameLines = sameSize
-        && newLines.length === this.lines.length
-        && newLines.every((l, i) => l === this.lines[i])
-
-      if (sameLines) return
-
-      this.svgWidth = newWidth
-      this.svgHeight = newHeight
-      this.lines = newLines
+    },
+    onLeave() {
+      this.leaveTimer = setTimeout(() => {
+        this.isHovered = false
+        if (!this.forceExpanded) {
+          this.$emit('deactivate', this.bookIndexInRow)
+        }
+      }, 200)
+    },
+    onBookClick(event) {
+      if (event.target.closest('.quote-bubble')) return
+      if (typeof this.book.id === 'number') {
+        this.$emit('show-detail', this.book.id)
+      }
     },
   },
 }
 </script>
 
 <style scoped>
-.book-hub {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  padding: var(--glt-space-6) 0;
-}
-
-.hub-graph {
+.shelf-book {
   position: relative;
-  flex: 1;
-  min-width: 0;
+  width: 100%;
+  max-width: var(--glt-spine-width);
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1;
+  transform: translateX(var(--spread-x, 0));
+  transition:
+    transform 0.4s var(--glt-ease),
+    z-index 0s;
 }
 
-.hub-lines {
+.shelf-book.is-active {
+  z-index: 60;
+}
+
+.shelf-book.is-expanded:not(.is-active) {
+  z-index: 10;
+}
+
+.shelf-book :deep(.book-node) {
+  cursor: pointer;
+}
+
+.book-open-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transform-origin: center bottom;
+  transition: transform 0.38s var(--glt-ease);
+}
+
+.book-open-wrap.is-open {
+  transform: translateY(calc(-10px - var(--pull-shift))) scale(1.04);
+}
+
+.book-flap {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  bottom: 0;
+  width: 10px;
+  height: calc(var(--glt-spine-height) - 8px);
+  background: color-mix(in srgb, var(--hub-color) 88%, #fff);
+  border: 1px solid color-mix(in srgb, var(--hub-color) 55%, #5c4a38);
+  border-radius: 3px;
+  opacity: 0;
+  transition:
+    opacity 0.32s var(--glt-ease),
+    transform 0.38s var(--glt-ease);
   pointer-events: none;
   z-index: 0;
 }
 
-.hub-line {
-  stroke: var(--glt-line);
-  stroke-width: 1.5;
-  transition: stroke var(--glt-duration);
+.book-flap--left {
+  left: -6px;
+  transform-origin: right bottom;
 }
 
-.book-hub:hover .hub-line {
-  stroke: var(--hub-color);
-  stroke-opacity: 0.45;
+.book-flap--right {
+  right: -6px;
+  transform-origin: left bottom;
 }
 
-.hub-branches {
-  position: relative;
-  z-index: 1;
-  flex: 1;
+.book-open-wrap.is-open .book-flap {
+  opacity: 0.92;
+}
+
+.book-open-wrap.is-open .book-flap--left {
+  transform: rotateY(-28deg) translateX(-4px);
+}
+
+.book-open-wrap.is-open .book-flap--right {
+  transform: rotateY(28deg) translateX(4px);
+}
+
+.quote-spread {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translateX(-50%);
+  width: max(var(--glt-spine-width), 240px);
+  max-width: min(300px, 42vw);
+  z-index: 80;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.28s var(--glt-ease),
+    visibility 0.28s,
+    transform 0.35s var(--glt-ease);
+}
+
+.shelf-book.is-expanded .quote-spread {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.quote-spread-inner {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: var(--glt-branch-gap);
-  padding: var(--glt-space-2) 0 var(--glt-space-2) var(--glt-space-8);
+  gap: 8px;
+  max-height: min(calc(36px + var(--quote-count) * 88px), 50vh);
+  overflow-y: auto;
+  padding: 4px 2px;
+  scrollbar-width: thin;
 }
 
-.hub-branch {
-  position: relative;
+.quote-spread-inner :deep(.quote-bubble) {
+  animation: quote-rise 0.32s var(--glt-ease) both;
+  animation-delay: calc(var(--quote-i, 0) * 0.05s);
 }
 
-.hub-branch::before {
-  content: '';
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  width: 8px;
+@keyframes quote-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.shelf-slot {
+  width: calc(var(--glt-spine-width) + 6px);
   height: 8px;
-  border-radius: 50%;
-  background: var(--glt-surface-raised);
-  border: 2px solid var(--glt-line);
-  transform: translate(-50%, -50%);
-  transition: border-color var(--glt-duration), background var(--glt-duration);
-  z-index: 2;
+  margin-top: -4px;
+  border-radius: 2px 2px 0 0;
+  background: color-mix(in srgb, var(--hub-color) 25%, #3d3429);
+  opacity: 0.35;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  transition: width 0.35s var(--glt-ease);
 }
 
-.book-hub:hover .hub-branch::before {
-  border-color: var(--hub-color);
-  background: var(--glt-accent-soft);
-}
-
-@media (max-width: 720px) {
-  .book-hub {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--glt-space-4);
-  }
-
-  .hub-graph {
-    width: 100%;
-  }
-
-  .hub-lines {
-    display: none;
-  }
-
-  .hub-branches {
-    padding-left: 0;
-    border-left: 2px solid var(--glt-line);
-    margin-left: var(--glt-space-4);
-    padding-left: var(--glt-space-5);
-  }
-
-  .hub-branch::before {
-    left: calc(-1 * var(--glt-space-5) - 1px);
-  }
+.shelf-slot.is-open {
+  width: calc(var(--glt-spine-width) + 22px);
+  opacity: 0.5;
 }
 </style>

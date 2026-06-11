@@ -16,7 +16,9 @@
 | **구절 검색** | 구절, 작가, 작품명 텍스트 매칭 검색 |
 | **구절 등록** | 구절 · 작가 · 작품 3가지 필드로 간단 등록 |
 | **협업 편집** | 구절 수정 + 버전 이력 자동 저장 |
-| **라이브러리 그래프** | 작품(책 노드)에서 구절이 가지처럼 연결되는 시각화 |
+| **책장 UI** | 책장에서 꺼낸 듯한 작품·구절 시각화 |
+| **책 추천 챗봇** | Gemini로 비슷한 느낌의 작품·작가 추천 (우하단 📚) |
+| **알라딘 도서 검색** | 구절 등록 시 알라딘 API로 작품 검색·선택, 상세 정보 DB 저장 |
 | **시드 데이터** | 한국 문학 구절 12건 자동 등록 (최초 실행 시) |
 
 ---
@@ -27,8 +29,8 @@
 |------|------|
 | Frontend | Vue 3 (Options API), Vue Router, Vite |
 | Backend | FastAPI, SQLAlchemy, Pydantic |
-| Database | SQLite (로컬) / PostgreSQL (Docker) |
-| Infra | Docker Compose (선택) |
+| Database | **Supabase (PostgreSQL)** / SQLite (로컬 개발) |
+| Infra | Docker Compose (선택, 로컬 PostgreSQL) |
 
 프론트엔드는 **항상 백엔드 API(`/api`)** 를 통해 데이터를 가져옵니다.  
 개발 환경에서는 Vite 프록시가 요청을 백엔드로 전달하고, 배포 환경에서는 nginx가 동일하게 처리합니다.
@@ -51,7 +53,43 @@ git clone https://github.com/ehddy/glt-archive.git
 cd glt-archive
 ```
 
-### 2. 백엔드 실행
+### 2. Supabase DB 연동 (권장)
+
+상세 가이드: **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)**
+
+1. [supabase.com](https://supabase.com) 가입 → 새 프로젝트 생성
+2. **Project Settings → Database → Connection string (URI)** 복사
+3. `backend/.env`에 설정:
+
+```env
+DATABASE_URL=postgresql://postgres.xxxxx:YOUR_PASSWORD@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres
+```
+
+### 3. 백엔드 환경 변수 (API 키)
+
+```powershell
+cd backend
+copy .env.example .env
+```
+
+`.env` 파일에 Gemini API 키를 입력합니다. ([Google AI Studio](https://aistudio.google.com/apikey)에서 발급)
+
+```env
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-2.5-flash-lite
+```
+
+> 챗봇 없이 구절 검색만 사용할 경우 Gemini 설정은 생략할 수 있습니다.
+
+알라딘 TTBKey도 같은 `.env`에 추가합니다. ([알라딘 Open API 가이드](https://www.aladin.co.kr/ttb/wguide.aspx))
+
+```env
+ALADIN_TTB_KEY=your_aladin_ttb_key_here
+```
+
+> 구절 등록 시 작품 검색에 알라딘 API가 필요합니다.
+
+### 4. 백엔드 실행
 
 ```powershell
 cd backend
@@ -59,11 +97,13 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-- 기본 DB: SQLite (`backend/quotes.db`, 자동 생성)
+> `.env`를 수정했다면 백엔드를 **재시작**해야 챗봇에 반영됩니다.
+
+- DB: Supabase URI 설정 시 클라우드 PostgreSQL, 미설정 시 SQLite (`backend/quotes.db`)
 - API 문서: http://127.0.0.1:8000/docs
 - 헬스체크: http://127.0.0.1:8000/api/health
 
-### 3. 프론트엔드 실행 (새 터미널)
+### 5. 프론트엔드 실행 (새 터미널)
 
 ```powershell
 cd frontend
@@ -107,6 +147,10 @@ npm run dev
 | `POST` | `/api/quotes` | 구절 등록 |
 | `PATCH` | `/api/quotes/{id}` | 구절 수정 |
 | `GET` | `/api/authors` | 작가 목록 |
+| `POST` | `/api/chat` | 책 추천 챗봇 (Gemini) |
+| `GET` | `/api/aladin/search` | 알라딘 도서 검색 |
+| `GET` | `/api/aladin/books/{item_id}` | 알라딘 도서 상세 조회 |
+| `POST` | `/api/aladin/books/{item_id}` | 알라딘 도서 DB 저장 |
 
 ### 예시
 

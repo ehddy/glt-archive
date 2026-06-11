@@ -1,40 +1,48 @@
 :root {
-  /* Surface */
-  --glt-bg: #f3efe6;
-  --glt-bg-subtle: #ebe5d9;
-  --glt-surface: #fffdf8;
+  /* Surface — warm paper */
+  --glt-bg: #faf6f0;
+  --glt-bg-outer: #e5dbd0;
+  --glt-bg-subtle: #f0e8dc;
+  --glt-surface: #fffdf9;
   --glt-surface-raised: #ffffff;
-  --glt-overlay: rgba(26, 22, 18, 0.04);
+  --glt-overlay: rgba(61, 52, 41, 0.05);
+  --glt-glass: #ffffff;
+  --glt-glass-border: rgba(212, 195, 170, 0.65);
 
-  /* Ink */
-  --glt-ink: #1a1612;
-  --glt-ink-secondary: #5c5348;
-  --glt-ink-tertiary: #9a9084;
-  --glt-ink-faint: #c4bbb0;
+  /* Ink — warm brown */
+  --glt-ink: #3d3429;
+  --glt-ink-secondary: #6b5d4d;
+  --glt-ink-tertiary: #9a8b78;
+  --glt-ink-faint: #c4b5a3;
 
-  /* Accent — ink green */
-  --glt-accent: #2d4a3e;
-  --glt-accent-hover: #1f352c;
-  --glt-accent-soft: #e8f0ec;
-  --glt-accent-muted: #b8cfc4;
+  /* Accent — terracotta honey */
+  --glt-accent: #c4693a;
+  --glt-accent-hover: #a85532;
+  --glt-accent-soft: #fdeee4;
+  --glt-accent-muted: #e8c4ad;
 
-  /* Graph lines */
-  --glt-line: #d4cbb8;
-  --glt-line-active: #a89880;
-  --glt-node-glow: rgba(45, 74, 62, 0.12);
+  /* Graph */
+  --glt-line: #e2d5c4;
+  --glt-line-active: #c4a882;
+  --glt-node-glow: rgba(196, 105, 58, 0.12);
 
-  /* Book spine palette */
-  --glt-book-0: #8b3a3a;
-  --glt-book-1: #2d4a3e;
-  --glt-book-2: #4a6741;
-  --glt-book-3: #6b4c35;
-  --glt-book-4: #3d4f6b;
-  --glt-book-5: #7a5c3e;
-  --glt-book-6: #5c3d5e;
-  --glt-book-7: #8b6914;
+  /* Hub palette */
+  --glt-book-0: #c4693a;
+  --glt-book-1: #7d8f6a;
+  --glt-book-2: #c97b84;
+  --glt-book-3: #c9a227;
+  --glt-book-4: #6b8f9c;
+  --glt-book-5: #a67c6d;
+  --glt-book-6: #8b7d6b;
+  --glt-book-7: #b5836e;
+
+  /* Bubble */
+  --glt-bubble-bg: #ffffff;
+  --glt-bubble-border: rgba(212, 195, 170, 0.75);
+  --glt-bubble-shadow: 0 3px 14px rgba(61, 52, 41, 0.06);
 
   /* Typography */
-  --glt-font-sans: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  --glt-font-sans: 'DM Sans', 'Noto Sans KR', -apple-system, sans-serif;
   --glt-font-serif: 'Noto Serif KR', Georgia, serif;
 
   /* Spacing */
@@ -49,24 +57,44 @@
   --glt-space-12: 48px;
 
   /* Radius */
-  --glt-radius-sm: 8px;
-  --glt-radius-md: 12px;
-  --glt-radius-lg: 16px;
-  --glt-radius-xl: 20px;
+  --glt-radius-sm: 10px;
+  --glt-radius-md: 14px;
+  --glt-radius-lg: 18px;
+  --glt-radius-xl: 22px;
   --glt-radius-full: 999px;
+  --glt-radius-bubble: 16px;
 
   /* Shadow */
-  --glt-shadow-sm: 0 1px 3px rgba(26, 22, 18, 0.06);
-  --glt-shadow-md: 0 6px 20px rgba(26, 22, 18, 0.08);
-  --glt-shadow-lg: 0 16px 48px rgba(26, 22, 18, 0.1);
-  --glt-shadow-book: 0 8px 24px rgba(26, 22, 18, 0.14);
+  --glt-shadow-sm: 0 2px 8px rgba(61, 52, 41, 0.06);
+  --glt-shadow-md: 0 6px 20px rgba(61, 52, 41, 0.08);
+  --glt-shadow-lg: 0 12px 36px rgba(61, 52, 41, 0.1);
+  --glt-shadow-app: 0 8px 40px rgba(61, 52, 41, 0.14);
+  --glt-shadow-glow: 0 4px 20px var(--hub-glow, rgba(196, 105, 58, 0.12));
 
   /* Motion */
   --glt-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --glt-duration: 0.25s;
+  --glt-duration: 0.28s;
 
   /* Layout */
-  --glt-container: 1200px;
-  --glt-book-width: 200px;
+  --glt-app-width: 1080px;
+  --glt-container: 100%;
+  --glt-book-width: 152px;
+  --glt-book-min-height: 118px;
+  --glt-hub-size: 88px;
+  --glt-spine-width: 84px;
+  --glt-spine-height: 168px;
+  --glt-bubble-width: 236px;
+  --glt-bubble-shelf-width: 220px;
+  --glt-shelf-slot-width: 248px;
+  --glt-shelf-slot-gap: 12px;
+  --glt-text-quote: 1rem;
+  --glt-text-book-title: 0.95rem;
+  --glt-text-book-author: 0.85rem;
+  --glt-bubble-graph-width: 168px;
   --glt-branch-gap: 14px;
+
+  /* Bookshelf */
+  --glt-shelf-wood: #c4a882;
+  --glt-shelf-wood-dark: #8f7358;
+  --glt-shelf-wall: #ebe2d6;
 }

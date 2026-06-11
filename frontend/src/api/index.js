@@ -1,16 +1,20 @@
 // 모든 요청은 /api 경로로 백엔드에 전달 (개발: Vite 프록시, 배포: nginx)
+import { getClientId } from '../utils/clientId'
+
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 const REQUEST_TIMEOUT_MS = 8000
+const CHAT_TIMEOUT_MS = 60000
 
-async function request(path, options = {}) {
+async function request(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const response = await fetch(`${API_BASE}${path}`, {
       headers: {
         'Content-Type': 'application/json',
+        'X-Client-Id': getClientId(),
         ...options.headers,
       },
       signal: controller.signal,
@@ -25,18 +29,17 @@ async function request(path, options = {}) {
         : Array.isArray(detail)
           ? detail.map((d) => d.msg).join(', ')
           : '요청에 실패했습니다.'
-      throw new Error(
-        message === 'Not Found'
-          ? '서버 API를 찾을 수 없습니다. 백엔드를 재시작해 주세요.'
-          : message
-      )
+      if (response.status === 404 && message === 'Not Found') {
+        throw new Error('API를 찾을 수 없습니다.')
+      }
+      throw new Error(message)
     }
 
     if (response.status === 204) return null
     return response.json()
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error('서버 응답 시간이 초과되었습니다. 백엔드가 실행 중인지 확인해 주세요.')
+      throw new Error('응답 시간이 초과되었습니다.')
     }
     throw err
   } finally {
@@ -47,6 +50,39 @@ async function request(path, options = {}) {
 export const api = {
   getLibrary() {
     return request('/api/library')
+  },
+  getFeaturedBooks(limit = 8) {
+    return request(`/api/library/featured?limit=${limit}`)
+  },
+  getBookmarkIds() {
+    return request('/api/bookmarks/ids')
+  },
+  listBookmarks() {
+    return request('/api/bookmarks')
+  },
+  addBookmark(quoteId) {
+    return request(`/api/bookmarks/${quoteId}`, { method: 'POST' })
+  },
+  removeBookmark(quoteId) {
+    return request(`/api/bookmarks/${quoteId}`, { method: 'DELETE' })
+  },
+  getNovel(id) {
+    return request(`/api/novels/${id}`)
+  },
+  browseNovels({ q, skip = 0, limit = 24 } = {}) {
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    params.set('skip', String(skip))
+    params.set('limit', String(limit))
+    return request(`/api/novels?${params}`)
+  },
+  browseQuotes({ q, novelId, skip = 0, limit = 20 } = {}) {
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    if (novelId) params.set('novel_id', String(novelId))
+    params.set('skip', String(skip))
+    params.set('limit', String(limit))
+    return request(`/api/quotes/browse?${params}`)
   },
   listQuotes(skip = 0, limit = 100) {
     return request(`/api/quotes?skip=${skip}&limit=${limit}`)
@@ -74,5 +110,20 @@ export const api = {
   },
   listAuthors() {
     return request('/api/authors')
+  },
+  searchAladinBooks(q, limit = 10) {
+    return request(`/api/aladin/search?q=${encodeURIComponent(q)}&limit=${limit}`)
+  },
+  getAladinBook(itemId) {
+    return request(`/api/aladin/books/${itemId}`)
+  },
+  importAladinBook(itemId) {
+    return request(`/api/aladin/books/${itemId}`, { method: 'POST' })
+  },
+  chat(message, history = []) {
+    return request('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, history }),
+    }, CHAT_TIMEOUT_MS)
   },
 }

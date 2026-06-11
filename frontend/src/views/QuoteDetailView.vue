@@ -1,8 +1,18 @@
 <template>
-  <section v-if="loading" class="glt-empty">불러오는 중...</section>
+  <section v-if="loading" class="glt-empty">불러오는 중…</section>
   <section v-else-if="error" class="glt-empty">{{ error }}</section>
-  <section v-else-if="quote" class="detail">
-    <router-link to="/" class="back-link">← 목록으로</router-link>
+  <section v-else-if="quote" class="detail glt-container">
+    <router-link to="/" class="back-link">← 목록</router-link>
+
+    <header class="detail-header">
+      <h1 class="glt-title">구절</h1>
+    </header>
+
+    <div v-if="quote.novel" class="add-quote-bar glt-card">
+      <router-link :to="registerRoute" class="glt-btn glt-btn-primary add-quote-btn">
+        구절 추가
+      </router-link>
+    </div>
 
     <div class="detail-graph glt-card">
       <div class="detail-source">
@@ -13,9 +23,8 @@
           :quote-count="1"
           :color-index="bookColorIndex"
         />
-        <div v-else class="detail-source-fallback">
-          <span class="glt-eyebrow">미분류</span>
-          <p v-if="authorName" class="fallback-author">{{ authorName }}</p>
+        <div v-else-if="authorName" class="detail-source-fallback">
+          <p class="fallback-author">{{ authorName }}</p>
         </div>
         <div class="detail-connector" />
       </div>
@@ -24,37 +33,30 @@
       </article>
     </div>
 
-    <section class="edit-section glt-card">
-      <h2 class="glt-section-title">내용 편집</h2>
-      <p class="edit-desc">구절이나 작가·작품 정보가 틀렸다면 수정해 주세요.</p>
+    <section class="collect-section glt-card">
+      <div v-if="novelTitle || authorName" class="book-readonly glt-card-raised">
+        <router-link
+          v-if="quote.novel?.id && novelTitle"
+          :to="`/novels/${quote.novel.id}`"
+          class="readonly-title readonly-link"
+        >
+          {{ novelTitle }}
+        </router-link>
+        <p v-else-if="novelTitle" class="readonly-title">{{ novelTitle }}</p>
+        <p v-if="authorName" class="readonly-author">{{ authorName }}</p>
+      </div>
 
-      <div class="glt-field">
-        <label>구절</label>
-        <textarea v-model="form.text" />
-      </div>
-      <div class="glt-field">
-        <label>작가</label>
-        <input v-model="form.author_name" />
-      </div>
-      <div class="glt-field">
-        <label>작품</label>
-        <input v-model="form.novel_title" />
-      </div>
-      <button class="glt-btn glt-btn-primary" :disabled="saving" @click="save">
-        {{ saving ? '저장 중...' : '저장' }}
+      <button
+        type="button"
+        class="glt-btn collect-btn"
+        :class="isBookmarked ? 'glt-btn-ghost is-collected' : 'glt-btn-primary'"
+        @click="toggleBookmark"
+      >
+        {{ isBookmarked ? COLLECT.done : COLLECT.action }}
       </button>
-      <p v-if="saveMessage" class="save-message">{{ saveMessage }}</p>
-    </section>
-
-    <section v-if="versions.length > 1" class="history glt-card">
-      <h2 class="glt-section-title">수정 이력</h2>
-      <div v-for="version in versions" :key="version.id" class="history-item">
-        <div class="history-head">
-          <strong>v{{ version.version }}</strong>
-          <span>{{ formatDate(version.created_at) }}</span>
-        </div>
-        <p class="history-text">{{ version.text }}</p>
-      </div>
+      <p v-if="collectMessage" class="collect-message" :class="{ 'is-error': collectIsError }">
+        {{ collectMessage }}
+      </p>
     </section>
   </section>
 </template>
@@ -62,6 +64,8 @@
 <script>
 import { api } from '../api'
 import BookNode from '../components/BookNode.vue'
+import { COLLECT } from '../utils/collectLabels'
+import { registerRouteForNovel, registerRouteForQuote } from '../utils/registerBook'
 
 export default {
   name: 'QuoteDetailView',
@@ -69,16 +73,12 @@ export default {
   data() {
     return {
       quote: null,
-      versions: [],
       loading: true,
       error: '',
-      saving: false,
-      saveMessage: '',
-      form: {
-        text: '',
-        author_name: '',
-        novel_title: '',
-      },
+      collectMessage: '',
+      collectIsError: false,
+      isBookmarked: false,
+      COLLECT,
     }
   },
   computed: {
@@ -90,6 +90,12 @@ export default {
     },
     bookColorIndex() {
       return (this.quote?.novel?.id || 0) % 8
+    },
+    registerRoute() {
+      if (this.quote?.novel) {
+        return registerRouteForNovel(this.quote.novel)
+      }
+      return registerRouteForQuote(this.$route.params.id)
     },
   },
   watch: {
@@ -104,49 +110,37 @@ export default {
     async loadQuote() {
       this.loading = true
       this.error = ''
+      this.collectMessage = ''
       try {
         const id = this.$route.params.id
-        const [quote, versions] = await Promise.all([
+        const [quote, bookmarkRes] = await Promise.all([
           api.getQuote(id),
-          api.getVersions(id),
+          api.getBookmarkIds().catch(() => ({ quote_ids: [] })),
         ])
         this.quote = quote
-        this.versions = versions
-        this.form = {
-          text: quote.text,
-          author_name: this.authorName,
-          novel_title: this.novelTitle,
-        }
+        this.isBookmarked = (bookmarkRes.quote_ids || []).includes(quote.id)
       } catch (e) {
         this.error = e.message
       } finally {
         this.loading = false
       }
     },
-    async save() {
-      this.saving = true
-      this.saveMessage = ''
+    async toggleBookmark() {
+      if (!this.quote) return
+      this.collectMessage = ''
+      this.collectIsError = false
       try {
-        this.quote = await api.updateQuote(this.$route.params.id, {
-          text: this.form.text,
-          author_name: this.form.author_name,
-          novel_title: this.form.novel_title,
-        })
-        this.versions = await api.getVersions(this.$route.params.id)
-        this.form = {
-          text: this.quote.text,
-          author_name: this.authorName,
-          novel_title: this.novelTitle,
+        if (this.isBookmarked) {
+          await api.removeBookmark(this.quote.id)
+          this.isBookmarked = false
+        } else {
+          await api.addBookmark(this.quote.id)
+          this.isBookmarked = true
         }
-        this.saveMessage = '저장되었습니다.'
       } catch (e) {
-        this.saveMessage = e.message
-      } finally {
-        this.saving = false
+        this.collectMessage = e.message
+        this.collectIsError = true
       }
-    },
-    formatDate(value) {
-      return new Date(value).toLocaleString('ko-KR')
     },
   },
 }
@@ -155,17 +149,38 @@ export default {
 <style scoped>
 .back-link {
   display: inline-block;
-  margin-bottom: var(--glt-space-5);
+  margin-bottom: var(--glt-space-3);
   color: var(--glt-ink-secondary);
   font-size: 0.85rem;
 }
 
+.detail-header {
+  margin-bottom: var(--glt-space-4);
+}
+
+.detail-header .glt-title {
+  margin-top: 0;
+}
+
+.add-quote-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  margin-bottom: var(--glt-space-3);
+}
+
+.add-quote-btn {
+  font-size: 0.82rem;
+  padding: 8px 14px;
+}
+
 .detail-graph {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--glt-space-6);
-  padding: var(--glt-space-6);
-  margin-bottom: var(--glt-space-4);
+  gap: var(--glt-space-3);
+  padding: var(--glt-space-4);
+  margin-bottom: var(--glt-space-3);
 }
 
 .detail-source {
@@ -175,29 +190,28 @@ export default {
 }
 
 .detail-connector {
-  width: 48px;
-  height: 2px;
-  background: linear-gradient(90deg, var(--glt-line-active), var(--glt-accent-muted));
-  margin-left: var(--glt-space-2);
+  width: 2px;
+  height: 28px;
+  background: linear-gradient(180deg, var(--glt-line-active), var(--glt-accent-muted));
   position: relative;
 }
 
 .detail-connector::after {
   content: '';
   position: absolute;
-  right: -4px;
-  top: 50%;
+  left: 50%;
+  bottom: -4px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--glt-accent-soft);
   border: 2px solid var(--glt-accent-muted);
-  transform: translateY(-50%);
+  transform: translateX(-50%);
 }
 
 .detail-quote {
-  flex: 1;
-  padding: var(--glt-space-6);
+  width: 100%;
+  padding: var(--glt-space-4);
 }
 
 .detail-source-fallback {
@@ -209,72 +223,62 @@ export default {
 }
 
 .fallback-author {
-  margin: var(--glt-space-2) 0 0;
+  margin: 0;
   font-size: 0.85rem;
   color: var(--glt-ink-secondary);
 }
 
-.edit-section,
-.history {
-  padding: var(--glt-space-6);
+.collect-section {
+  padding: var(--glt-space-4);
+}
+
+.book-readonly {
+  padding: var(--glt-space-3) var(--glt-space-4);
   margin-bottom: var(--glt-space-4);
 }
 
-.edit-desc {
-  color: var(--glt-ink-secondary);
-  margin: var(--glt-space-2) 0 var(--glt-space-5);
-  font-size: 0.875rem;
+.readonly-title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--glt-ink);
 }
 
-.save-message {
+.readonly-link {
+  display: inline-block;
+  text-decoration: none;
+  color: var(--glt-accent-hover);
+}
+
+.readonly-link:hover {
+  text-decoration: underline;
+}
+
+.readonly-author {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--glt-ink-secondary);
+}
+
+.collect-btn {
+  width: 100%;
+  padding: 12px 18px;
+  font-size: 0.92rem;
+}
+
+.collect-btn.is-collected {
+  color: var(--glt-accent-hover);
+  border-color: var(--glt-accent-muted);
+  background: var(--glt-accent-soft);
+}
+
+.collect-message {
   margin-top: var(--glt-space-3);
   color: var(--glt-accent);
   font-size: 0.875rem;
 }
 
-.history-item {
-  padding: var(--glt-space-4) 0;
-  border-top: 1px solid var(--glt-line);
-}
-
-.history-head {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--glt-space-3);
-  color: var(--glt-ink-tertiary);
-  font-size: 0.8rem;
-  margin-bottom: var(--glt-space-2);
-}
-
-.history-text {
-  margin: 0;
-  color: var(--glt-ink-secondary);
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
-
-@media (max-width: 720px) {
-  .detail-graph {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .detail-source {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .detail-connector {
-    width: 2px;
-    height: 32px;
-    margin: var(--glt-space-2) 0;
-  }
-
-  .detail-connector::after {
-    right: 50%;
-    top: auto;
-    bottom: -4px;
-    transform: translateX(50%);
-  }
+.collect-message.is-error {
+  color: var(--glt-accent-hover);
 }
 </style>

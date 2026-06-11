@@ -1,7 +1,10 @@
 /* ── Layout ── */
 .glt-container {
-  width: min(var(--glt-container), calc(100% - var(--glt-space-8)));
+  width: 100%;
+  max-width: var(--glt-app-width);
   margin: 0 auto;
+  padding-left: var(--glt-space-4);
+  padding-right: var(--glt-space-4);
 }
 
 /* ── Typography ── */
@@ -9,36 +12,36 @@
   display: inline-flex;
   align-items: center;
   gap: var(--glt-space-2);
-  padding: var(--glt-space-1) var(--glt-space-3);
+  padding: 5px 12px;
   border-radius: var(--glt-radius-full);
   background: var(--glt-accent-soft);
-  color: var(--glt-accent);
-  font-size: 0.72rem;
+  border: 1px solid var(--glt-accent-muted);
+  color: var(--glt-accent-hover);
+  font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .glt-title {
   margin: var(--glt-space-3) 0 var(--glt-space-2);
-  font-size: clamp(1.6rem, 3.5vw, 2.25rem);
+  font-size: 1.65rem;
   font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1.15;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
   color: var(--glt-ink);
 }
 
 .glt-subtitle {
-  margin: 0 0 var(--glt-space-8);
+  margin: 0 0 var(--glt-space-5);
   color: var(--glt-ink-secondary);
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1.65;
-  max-width: 480px;
 }
 
 .glt-section-title {
   margin: 0;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--glt-ink);
   letter-spacing: -0.01em;
@@ -46,17 +49,17 @@
 
 /* ── Surface ── */
 .glt-card {
-  background: var(--glt-surface);
-  border: 1px solid var(--glt-line);
+  background: var(--glt-glass);
+  border: 1px solid var(--glt-glass-border);
   border-radius: var(--glt-radius-lg);
   box-shadow: var(--glt-shadow-sm);
 }
 
 .glt-card-raised {
   background: var(--glt-surface-raised);
-  border: 1px solid rgba(212, 203, 184, 0.6);
-  border-radius: var(--glt-radius-lg);
-  box-shadow: var(--glt-shadow-md);
+  border: 1px solid var(--glt-glass-border);
+  border-radius: var(--glt-radius-md);
+  box-shadow: var(--glt-shadow-sm);
 }
 
 /* ── Buttons ── */
@@ -65,11 +68,11 @@
   align-items: center;
   justify-content: center;
   gap: var(--glt-space-2);
-  padding: 10px 18px;
+  padding: 10px 16px;
   border: none;
-  border-radius: var(--glt-radius-sm);
-  font-size: 0.875rem;
-  font-weight: 500;
+  border-radius: var(--glt-radius-full);
+  font-size: 0.84rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all var(--glt-duration) var(--glt-ease);
   white-space: nowrap;
@@ -83,23 +86,25 @@
 .glt-btn-primary {
   background: var(--glt-accent);
   color: #fff;
+  box-shadow: 0 3px 12px rgba(196, 105, 58, 0.28);
 }
 
 .glt-btn-primary:hover:not(:disabled) {
   background: var(--glt-accent-hover);
-  box-shadow: var(--glt-shadow-sm);
+  box-shadow: 0 4px 16px rgba(196, 105, 58, 0.35);
+  transform: translateY(-1px);
 }
 
 .glt-btn-ghost {
-  background: transparent;
+  background: var(--glt-surface);
   color: var(--glt-ink-secondary);
-  border: 1px solid var(--glt-line);
+  border: 1px solid var(--glt-glass-border);
 }
 
 .glt-btn-ghost:hover:not(:disabled) {
-  background: var(--glt-surface);
+  background: var(--glt-accent-soft);
   color: var(--glt-ink);
-  border-color: var(--glt-line-active);
+  border-color: var(--glt-accent-muted);
 }
 
 /* ── Form ── */
@@ -111,21 +116,25 @@
 }
 
 .glt-field label {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--glt-ink-secondary);
-  letter-spacing: 0.01em;
 }
 
 .glt-field input,
 .glt-field textarea {
   width: 100%;
   padding: 11px 14px;
-  border: 1px solid var(--glt-line);
-  border-radius: var(--glt-radius-sm);
-  background: var(--glt-surface-raised);
+  border: 1px solid var(--glt-glass-border);
+  border-radius: var(--glt-radius-md);
+  background: var(--glt-surface);
   color: var(--glt-ink);
   transition: border-color var(--glt-duration), box-shadow var(--glt-duration);
+}
+
+.glt-field input::placeholder,
+.glt-field textarea::placeholder {
+  color: var(--glt-ink-tertiary);
 }
 
 .glt-field input:focus,
@@ -136,7 +145,7 @@
 }
 
 .glt-field textarea {
-  min-height: 110px;
+  min-height: 100px;
   resize: vertical;
   line-height: 1.65;
 }
@@ -145,26 +154,27 @@
 .glt-search {
   display: flex;
   align-items: center;
-  gap: var(--glt-space-3);
-  padding: var(--glt-space-2) var(--glt-space-2) var(--glt-space-2) var(--glt-space-4);
-  background: var(--glt-surface-raised);
-  border: 1px solid var(--glt-line);
-  border-radius: var(--glt-radius-xl);
+  gap: var(--glt-space-2);
+  padding: 6px 6px 6px var(--glt-space-3);
+  background: var(--glt-surface);
+  border: 1px solid var(--glt-glass-border);
+  border-radius: var(--glt-radius-full);
   box-shadow: var(--glt-shadow-sm);
   transition: border-color var(--glt-duration), box-shadow var(--glt-duration);
 }
 
 .glt-search:focus-within {
   border-color: var(--glt-accent-muted);
-  box-shadow: 0 0 0 4px var(--glt-accent-soft);
+  box-shadow: 0 0 0 3px var(--glt-accent-soft);
 }
 
 .glt-search input {
   flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: var(--glt-ink);
 }
 
@@ -172,29 +182,37 @@
   color: var(--glt-ink-tertiary);
 }
 
+.glt-search .glt-btn {
+  padding: 8px 14px;
+  font-size: 0.8rem;
+}
+
 /* ── Quote text ── */
 .glt-quote {
   margin: 0;
-  font-family: var(--glt-font-serif);
-  font-size: 1rem;
+  font-family: var(--glt-font-sans);
+  font-size: 0.9rem;
   font-weight: 400;
-  line-height: 1.75;
+  line-height: 1.6;
   color: var(--glt-ink);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .glt-quote-lg {
-  font-size: clamp(1.2rem, 2.5vw, 1.55rem);
-  line-height: 1.7;
+  font-family: var(--glt-font-serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.65;
 }
 
 /* ── Chips ── */
 .glt-chip {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: var(--glt-radius-full);
   background: var(--glt-overlay);
+  border: 1px solid var(--glt-glass-border);
   color: var(--glt-ink-secondary);
   font-size: 0.72rem;
   font-weight: 500;
@@ -203,22 +221,7 @@
 /* ── Empty / Loading ── */
 .glt-empty {
   text-align: center;
-  padding: var(--glt-space-12) var(--glt-space-6);
+  padding: var(--glt-space-10) var(--glt-space-4);
   color: var(--glt-ink-secondary);
-}
-
-.glt-stats {
-  display: flex;
-  gap: var(--glt-space-6);
-  margin-top: var(--glt-space-4);
-}
-
-.glt-stat {
-  font-size: 0.8rem;
-  color: var(--glt-ink-tertiary);
-}
-
-.glt-stat strong {
-  color: var(--glt-ink-secondary);
-  font-weight: 600;
+  font-size: 0.88rem;
 }
