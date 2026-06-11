@@ -1,4 +1,3 @@
-import os
 import time
 
 
@@ -105,9 +104,7 @@ def needs_schema_reset() -> bool:
 
 
 
-def init_db(retries: int | None = None, delay: float = 3.0):
-    if retries is None:
-        retries = 3 if os.getenv("VERCEL") else 15
+def init_db(retries: int = 15, delay: float = 3.0):
     db_label = database_kind()
     print(f"[db] using {db_label}")
 

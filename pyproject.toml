@@ -1,5 +1,0 @@
-[tool.vercel]
-entrypoint = "api/index.py:app"
-
-[tool.vercel.scripts]
-build = "cd frontend && npm install && npm run build"
