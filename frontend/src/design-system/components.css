@@ -1,0 +1,224 @@
+/* ── Layout ── */
+.glt-container {
+  width: min(var(--glt-container), calc(100% - var(--glt-space-8)));
+  margin: 0 auto;
+}
+
+/* ── Typography ── */
+.glt-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--glt-space-2);
+  padding: var(--glt-space-1) var(--glt-space-3);
+  border-radius: var(--glt-radius-full);
+  background: var(--glt-accent-soft);
+  color: var(--glt-accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.glt-title {
+  margin: var(--glt-space-3) 0 var(--glt-space-2);
+  font-size: clamp(1.6rem, 3.5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  color: var(--glt-ink);
+}
+
+.glt-subtitle {
+  margin: 0 0 var(--glt-space-8);
+  color: var(--glt-ink-secondary);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  max-width: 480px;
+}
+
+.glt-section-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--glt-ink);
+  letter-spacing: -0.01em;
+}
+
+/* ── Surface ── */
+.glt-card {
+  background: var(--glt-surface);
+  border: 1px solid var(--glt-line);
+  border-radius: var(--glt-radius-lg);
+  box-shadow: var(--glt-shadow-sm);
+}
+
+.glt-card-raised {
+  background: var(--glt-surface-raised);
+  border: 1px solid rgba(212, 203, 184, 0.6);
+  border-radius: var(--glt-radius-lg);
+  box-shadow: var(--glt-shadow-md);
+}
+
+/* ── Buttons ── */
+.glt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--glt-space-2);
+  padding: 10px 18px;
+  border: none;
+  border-radius: var(--glt-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--glt-duration) var(--glt-ease);
+  white-space: nowrap;
+}
+
+.glt-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.glt-btn-primary {
+  background: var(--glt-accent);
+  color: #fff;
+}
+
+.glt-btn-primary:hover:not(:disabled) {
+  background: var(--glt-accent-hover);
+  box-shadow: var(--glt-shadow-sm);
+}
+
+.glt-btn-ghost {
+  background: transparent;
+  color: var(--glt-ink-secondary);
+  border: 1px solid var(--glt-line);
+}
+
+.glt-btn-ghost:hover:not(:disabled) {
+  background: var(--glt-surface);
+  color: var(--glt-ink);
+  border-color: var(--glt-line-active);
+}
+
+/* ── Form ── */
+.glt-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--glt-space-2);
+  margin-bottom: var(--glt-space-4);
+}
+
+.glt-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--glt-ink-secondary);
+  letter-spacing: 0.01em;
+}
+
+.glt-field input,
+.glt-field textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--glt-line);
+  border-radius: var(--glt-radius-sm);
+  background: var(--glt-surface-raised);
+  color: var(--glt-ink);
+  transition: border-color var(--glt-duration), box-shadow var(--glt-duration);
+}
+
+.glt-field input:focus,
+.glt-field textarea:focus {
+  outline: none;
+  border-color: var(--glt-accent-muted);
+  box-shadow: 0 0 0 3px var(--glt-accent-soft);
+}
+
+.glt-field textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.65;
+}
+
+/* ── Search ── */
+.glt-search {
+  display: flex;
+  align-items: center;
+  gap: var(--glt-space-3);
+  padding: var(--glt-space-2) var(--glt-space-2) var(--glt-space-2) var(--glt-space-4);
+  background: var(--glt-surface-raised);
+  border: 1px solid var(--glt-line);
+  border-radius: var(--glt-radius-xl);
+  box-shadow: var(--glt-shadow-sm);
+  transition: border-color var(--glt-duration), box-shadow var(--glt-duration);
+}
+
+.glt-search:focus-within {
+  border-color: var(--glt-accent-muted);
+  box-shadow: 0 0 0 4px var(--glt-accent-soft);
+}
+
+.glt-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: var(--glt-ink);
+}
+
+.glt-search input::placeholder {
+  color: var(--glt-ink-tertiary);
+}
+
+/* ── Quote text ── */
+.glt-quote {
+  margin: 0;
+  font-family: var(--glt-font-serif);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--glt-ink);
+  letter-spacing: -0.01em;
+}
+
+.glt-quote-lg {
+  font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+  line-height: 1.7;
+}
+
+/* ── Chips ── */
+.glt-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--glt-radius-full);
+  background: var(--glt-overlay);
+  color: var(--glt-ink-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+/* ── Empty / Loading ── */
+.glt-empty {
+  text-align: center;
+  padding: var(--glt-space-12) var(--glt-space-6);
+  color: var(--glt-ink-secondary);
+}
+
+.glt-stats {
+  display: flex;
+  gap: var(--glt-space-6);
+  margin-top: var(--glt-space-4);
+}
+
+.glt-stat {
+  font-size: 0.8rem;
+  color: var(--glt-ink-tertiary);
+}
+
+.glt-stat strong {
+  color: var(--glt-ink-secondary);
+  font-weight: 600;
+}
