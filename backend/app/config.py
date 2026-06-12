@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash-lite"
     aladin_ttb_key: str = ""
     cors_origins_env: str = Field(default="", validation_alias="CORS_ORIGINS")
+    cache_enabled: bool = Field(default=True, validation_alias="CACHE_ENABLED")
+    cache_ttl_seconds: int = Field(default=60, ge=5, le=600, validation_alias="CACHE_TTL_SECONDS")
 
     @field_validator("database_url", mode="before")
     @classmethod

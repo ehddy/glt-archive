@@ -188,6 +188,7 @@ class HomeOut(BaseModel):
     stats: LibraryStatsOut
     featured_books: list[NovelWithQuotesOut]
     recent_quotes: list[QuoteOut]
+    bookmark_ids: list[int] = Field(default_factory=list)
 
 
 class BookmarkIdsOut(BaseModel):

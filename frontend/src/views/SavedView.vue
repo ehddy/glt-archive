@@ -6,40 +6,29 @@
     <div v-else-if="error" class="glt-empty">{{ error }}</div>
     <div v-else-if="!quotes.length" class="glt-empty glt-card">{{ COLLECT.empty }}</div>
 
-    <SourceSearchResults
+    <SavedQuoteList
       v-else
-      :results="resultItems"
-      :bookmark-ids="bookmarkIds"
-      @toggle-bookmark="toggleBookmark"
+      :quotes="quotes"
+      @remove="removeBookmark"
     />
   </section>
 </template>
 
 <script>
 import { api } from '../api'
-import SourceSearchResults from '../components/SourceSearchResults.vue'
+import SavedQuoteList from '../components/SavedQuoteList.vue'
 import { COLLECT } from '../utils/collectLabels'
 
 export default {
   name: 'SavedView',
-  components: { SourceSearchResults },
+  components: { SavedQuoteList },
   data() {
     return {
       COLLECT,
       quotes: [],
-      bookmarkIds: new Set(),
       loading: true,
       error: '',
     }
-  },
-  computed: {
-    resultItems() {
-      return this.quotes.map((quote) => ({
-        quote,
-        score: 1,
-        match_type: 'bookmark',
-      }))
-    },
   },
   mounted() {
     this.load()
@@ -49,29 +38,17 @@ export default {
       this.loading = true
       this.error = ''
       try {
-        const [quotes, idsRes] = await Promise.all([
-          api.listBookmarks(),
-          api.getBookmarkIds(),
-        ])
-        this.quotes = quotes
-        this.bookmarkIds = new Set(idsRes.quote_ids || [])
+        this.quotes = await api.listBookmarks()
       } catch (e) {
         this.error = e.message
       } finally {
         this.loading = false
       }
     },
-    async toggleBookmark(quoteId) {
+    async removeBookmark(quoteId) {
       try {
-        if (this.bookmarkIds.has(quoteId)) {
-          await api.removeBookmark(quoteId)
-          this.bookmarkIds.delete(quoteId)
-          this.quotes = this.quotes.filter((q) => q.id !== quoteId)
-        } else {
-          await api.addBookmark(quoteId)
-          this.bookmarkIds.add(quoteId)
-        }
-        this.bookmarkIds = new Set(this.bookmarkIds)
+        await api.removeBookmark(quoteId)
+        this.quotes = this.quotes.filter((q) => q.id !== quoteId)
       } catch (e) {
         this.error = e.message
       }
@@ -82,6 +59,6 @@ export default {
 
 <style scoped>
 .saved .glt-title {
-  margin-bottom: var(--glt-space-3);
+  margin-bottom: var(--glt-space-2);
 }
 </style>

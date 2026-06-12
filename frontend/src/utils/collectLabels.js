@@ -1,6 +1,7 @@
 export const COLLECT = {
   action: '문장 담기',
   done: '담아 둠',
+  remove: '담기 해제',
   nav: '담은 문장',
   pageTitle: '담은 문장',
   empty: '담은 문장이 없습니다.',

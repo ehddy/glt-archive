@@ -7,6 +7,7 @@ from app.models.models import Author, Bookmark, Novel, Quote, QuoteVersion, Sour
 from app.schemas.schemas import QuoteCreate, QuoteUpdate
 from app.services.novel_service import import_novel_from_aladin
 from app.services.source_service import get_or_create_custom_source, get_or_create_from_novel, get_source
+from app.cache import invalidate_read_cache
 
 
 DUPLICATE_QUOTE_MESSAGE = "이미 등록된 문장입니다."
@@ -130,6 +131,7 @@ def _persist_quote(
         db.rollback()
         raise ValueError(DUPLICATE_QUOTE_MESSAGE) from exc
     db.refresh(quote)
+    invalidate_read_cache()
     return quote
 
 
@@ -192,6 +194,7 @@ def update_quote(db: Session, quote: Quote, data: QuoteUpdate) -> Quote:
     db.add(version)
     db.commit()
     db.refresh(quote)
+    invalidate_read_cache()
     return quote
 
 

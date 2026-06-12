@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.schemas.schemas import (
     HomeOut,
@@ -26,6 +27,14 @@ from app.services.novel_service import (
 router = APIRouter(prefix="/api", tags=["library"])
 
 
+def _optional_client_id(
+    x_client_id: str | None = Header(default=None, alias="X-Client-Id"),
+) -> str | None:
+    if not x_client_id or len(x_client_id.strip()) < 8:
+        return None
+    return x_client_id.strip()[:64]
+
+
 
 
 
@@ -37,24 +46,38 @@ def library(db: Session = Depends(get_db)):
 
 
 @router.get("/library/stats", response_model=LibraryStatsOut)
-def library_stats(db: Session = Depends(get_db)):
+def library_stats(response: Response, db: Session = Depends(get_db)):
+    if settings.cache_enabled:
+        response.headers["Cache-Control"] = f"public, max-age={settings.cache_ttl_seconds}"
     return LibraryStatsOut.model_validate(get_library_stats(db))
 
 
 @router.get("/home", response_model=HomeOut)
 def home(
+    response: Response,
     featured_limit: int = Query(20, ge=1, le=20),
     quote_limit: int = Query(12, ge=1, le=24),
+    client_id: str | None = Depends(_optional_client_id),
     db: Session = Depends(get_db),
 ):
-    return get_home(db, featured_limit=featured_limit, quote_limit=quote_limit)
+    if settings.cache_enabled:
+        response.headers["Cache-Control"] = f"private, max-age={settings.cache_ttl_seconds}"
+    return get_home(
+        db,
+        featured_limit=featured_limit,
+        quote_limit=quote_limit,
+        client_id=client_id,
+    )
 
 
 @router.get("/library/featured", response_model=list[NovelWithQuotesOut])
 def featured_books(
+    response: Response,
     limit: int = Query(20, ge=1, le=20),
     db: Session = Depends(get_db),
 ):
+    if settings.cache_enabled:
+        response.headers["Cache-Control"] = f"public, max-age={settings.cache_ttl_seconds}"
     return get_featured_books(db, limit=limit)
 
 

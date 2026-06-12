@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 
+from app.cache import invalidate_read_cache
 from app.models.models import Bookmark, Novel, Quote, Source
 
 
@@ -55,6 +56,7 @@ def add_bookmark(db: Session, client_id: str, quote_id: int) -> Bookmark:
     db.add(bookmark)
     db.commit()
     db.refresh(bookmark)
+    invalidate_read_cache()
     return bookmark
 
 
@@ -68,4 +70,5 @@ def remove_bookmark(db: Session, client_id: str, quote_id: int) -> bool:
         return False
     db.delete(row)
     db.commit()
+    invalidate_read_cache()
     return True

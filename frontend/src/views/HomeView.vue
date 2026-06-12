@@ -21,20 +21,18 @@
       </div>
     </header>
 
-    <div v-if="loading && !hasHomeContent" class="glt-empty">
+    <div v-if="loading && !searched" class="glt-empty">
       <span class="loading-orbit" />
       불러오는 중…
     </div>
 
-    <div v-else-if="error && !hasHomeContent && !searched" class="error-panel glt-card">
+    <div v-else-if="error && !searched" class="error-panel glt-card">
       <p class="error-title">불러오기 실패</p>
       <p class="error-desc">{{ error }}</p>
       <button class="glt-btn glt-btn-primary" @click="loadHome">다시 시도</button>
     </div>
 
     <template v-else>
-      <p v-if="error && !searched" class="load-warning" role="status">{{ error }}</p>
-
       <SourceSearchResults
         v-if="searched && searchResults.length"
         :results="searchResults"
@@ -50,13 +48,13 @@
         </router-link>
       </div>
 
-      <template v-else>
+      <div v-else class="home-feed">
         <FeaturedBooks
           :books="featuredBooks"
           :stats="libraryStats"
         />
         <RecentQuotes :quotes="recentQuotes" />
-      </template>
+      </div>
     </template>
   </section>
 </template>
@@ -88,9 +86,6 @@ export default {
     registerRoute() {
       return registerRouteForSearchQuery(this.query)
     },
-    hasHomeContent() {
-      return this.featuredBooks.length > 0 || this.recentQuotes.length > 0
-    },
   },
   mounted() {
     this.loadHome()
@@ -99,27 +94,22 @@ export default {
     async loadHome() {
       this.loading = true
       this.error = ''
+      this.libraryStats = null
+      this.featuredBooks = []
+      this.recentQuotes = []
 
       try {
         const home = await api.getHome({ featuredLimit: 20, quoteLimit: 12 })
         this.libraryStats = home.stats
         this.featuredBooks = Array.isArray(home.featured_books) ? home.featured_books : []
         this.recentQuotes = Array.isArray(home.recent_quotes) ? home.recent_quotes : []
+        this.bookmarkIds = new Set(home.bookmark_ids || [])
       } catch (e) {
         this.error = e.message || '불러오기에 실패했습니다.'
-        this.libraryStats = null
-        this.featuredBooks = []
-        this.recentQuotes = []
+        this.bookmarkIds = new Set()
+      } finally {
+        this.loading = false
       }
-
-      try {
-        const bookmarkRes = await api.getBookmarkIds()
-        this.bookmarkIds = new Set(bookmarkRes?.quote_ids || [])
-      } catch {
-        // 북마크는 홈 콘텐츠 표시에 필수가 아님
-      }
-
-      this.loading = false
     },
     async handleSearch() {
       const q = this.query.trim()
@@ -277,15 +267,10 @@ export default {
   white-space: pre-line;
 }
 
-.load-warning {
-  margin: 0 0 var(--glt-space-4);
-  padding: 10px 12px;
-  border-radius: var(--glt-radius-md);
-  background: rgba(196, 105, 58, 0.08);
-  border: 1px solid rgba(196, 105, 58, 0.18);
-  color: var(--glt-accent-hover);
-  font-size: 0.8rem;
-  line-height: 1.5;
+.home-feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--glt-space-6);
 }
 
 .empty-search {

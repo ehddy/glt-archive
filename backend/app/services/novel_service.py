@@ -8,6 +8,8 @@ from app.schemas.schemas import LibraryOut, NovelSummaryOut, NovelWithQuotesOut
 from app.services.aladin_service import lookup_book, parse_author_name
 from app.services.author_service import get_or_create_author
 from app.services.quote_serializer import serialize_quote
+from app.cache import invalidate_read_cache, read_cache
+from app.config import settings
 
 
 def _quote_out(quote: Quote):
@@ -65,7 +67,7 @@ def get_library(db: Session) -> LibraryOut:
     )
 
 
-def get_library_stats(db: Session) -> dict[str, int]:
+def query_library_stats(db: Session) -> dict[str, int]:
     row = db.execute(
         text(
             "SELECT "
@@ -76,7 +78,17 @@ def get_library_stats(db: Session) -> dict[str, int]:
     return {"total_books": int(row[0] or 0), "total_quotes": int(row[1] or 0)}
 
 
-def get_featured_books(db: Session, limit: int = 20) -> list[NovelWithQuotesOut]:
+def get_library_stats(db: Session) -> dict[str, int]:
+    cached = read_cache.get_or_set(
+        "stats",
+        lambda: query_library_stats(db),
+        ttl=float(settings.cache_ttl_seconds),
+        enabled=settings.cache_enabled,
+    )
+    return dict(cached)
+
+
+def query_featured_books(db: Session, limit: int = 20) -> list[NovelWithQuotesOut]:
     quote_counts = (
         db.query(
             Quote.novel_id,
@@ -110,6 +122,24 @@ def get_featured_books(db: Session, limit: int = 20) -> list[NovelWithQuotesOut]
         )
         for novel, count in rows
     ]
+
+
+def get_featured_books(db: Session, limit: int = 20) -> list[NovelWithQuotesOut]:
+    cache_key = f"featured:{limit}"
+
+    def load() -> list[dict]:
+        return [
+            book.model_dump(mode="json")
+            for book in query_featured_books(db, limit=limit)
+        ]
+
+    payload = read_cache.get_or_set(
+        cache_key,
+        load,
+        ttl=float(settings.cache_ttl_seconds),
+        enabled=settings.cache_enabled,
+    )
+    return [NovelWithQuotesOut.model_validate(item) for item in payload]
 
 
 def _novels_filter_query(db: Session, q: str | None = None):
@@ -258,6 +288,7 @@ async def import_novel_from_aladin(db: Session, item_id: int) -> Novel:
         apply_aladin_detail(existing, detail)
         db.commit()
         db.refresh(existing)
+        invalidate_read_cache()
         return existing
 
     novel = Novel(
@@ -269,4 +300,5 @@ async def import_novel_from_aladin(db: Session, item_id: int) -> Novel:
     db.add(novel)
     db.commit()
     db.refresh(novel)
+    invalidate_read_cache()
     return novel
