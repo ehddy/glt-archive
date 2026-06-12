@@ -37,6 +37,13 @@
       </div>
       <article class="detail-quote glt-card-raised">
         <p class="glt-quote glt-quote-lg">{{ quote.text }}</p>
+        <div class="detail-like">
+          <LikeButton
+            :liked="isLiked"
+            :count="quote.like_count || 0"
+            @click="toggleLike"
+          />
+        </div>
       </article>
     </div>
 
@@ -53,16 +60,8 @@
         <p v-if="authorName" class="readonly-author">{{ authorName }}</p>
       </div>
 
-      <div class="collect-action">
-        <BookmarkIconButton
-          :saved="isBookmarked"
-          :action-label="COLLECT.action"
-          :saved-label="COLLECT.done"
-          @click="toggleBookmark"
-        />
-      </div>
-      <p v-if="collectMessage" class="collect-message" :class="{ 'is-error': collectIsError }">
-        {{ collectMessage }}
+      <p v-if="likeMessage" class="like-message" :class="{ 'is-error': likeIsError }">
+        {{ likeMessage }}
       </p>
     </section>
   </section>
@@ -72,24 +71,25 @@
 import { api } from '../api'
 import BackLink from '../components/BackLink.vue'
 import BookNode from '../components/BookNode.vue'
-import BookmarkIconButton from '../components/BookmarkIconButton.vue'
-import { COLLECT } from '../utils/collectLabels'
+import LikeButton from '../components/LikeButton.vue'
+import { requireLogin } from '../utils/auth'
+import { toggleLike as toggleLikeRequest } from '../utils/likeToggle'
 import { quoteAuthorName, quoteCoverUrl, quoteNovelId, quoteSourceTitle } from '../utils/quoteDisplay'
 import { registerRouteForNovel, registerRouteForQuote } from '../utils/registerBook'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'QuoteDetailView',
-  components: { BackLink, BookNode, BookmarkIconButton },
+  components: { BackLink, BookNode, LikeButton },
   data() {
     return {
       quote: null,
       loading: true,
       error: '',
-      collectMessage: '',
-      collectIsError: false,
-      isBookmarked: false,
-      COLLECT,
+      likeMessage: '',
+      likeIsError: false,
+      isLiked: false,
+      likedIds: new Set(),
     }
   },
   computed: {
@@ -131,15 +131,16 @@ export default {
       this.loading = true
       startPageLoading()
       this.error = ''
-      this.collectMessage = ''
+      this.likeMessage = ''
       try {
         const id = this.$route.params.id
-        const [quote, bookmarkRes] = await Promise.all([
+        const [quote, likedRes] = await Promise.all([
           api.getQuote(id),
-          api.getBookmarkIds().catch(() => ({ quote_ids: [] })),
+          api.getLikeIds().catch(() => ({ quote_ids: [] })),
         ])
         this.quote = quote
-        this.isBookmarked = (bookmarkRes.quote_ids || []).includes(quote.id)
+        this.likedIds = new Set(likedRes.quote_ids || [])
+        this.isLiked = this.likedIds.has(quote.id)
       } catch (e) {
         this.error = e.message
       } finally {
@@ -147,21 +148,19 @@ export default {
         endPageLoading()
       }
     },
-    async toggleBookmark() {
+    async toggleLike() {
       if (!this.quote) return
-      this.collectMessage = ''
-      this.collectIsError = false
+      if (!requireLogin(this.$router, this.$route.fullPath)) return
+      this.likeMessage = ''
+      this.likeIsError = false
       try {
-        if (this.isBookmarked) {
-          await api.removeBookmark(this.quote.id)
-          this.isBookmarked = false
-        } else {
-          await api.addBookmark(this.quote.id)
-          this.isBookmarked = true
-        }
+        const { likedIds, likeCount, liked } = await toggleLikeRequest(api, this.likedIds, this.quote.id)
+        this.likedIds = likedIds
+        this.isLiked = liked
+        this.quote = { ...this.quote, like_count: likeCount }
       } catch (e) {
-        this.collectMessage = e.message
-        this.collectIsError = true
+        this.likeMessage = e.message
+        this.likeIsError = true
       }
     },
   },
@@ -297,29 +296,20 @@ export default {
   color: var(--glt-ink-secondary);
 }
 
-.collect-action {
+.detail-like {
   display: flex;
-  justify-content: center;
-  padding-top: var(--glt-space-1);
+  justify-content: flex-end;
+  margin-top: var(--glt-space-3);
 }
 
-.collect-action :deep(.bookmark-icon-btn) {
-  width: 44px;
-  height: 44px;
-}
-
-.collect-action :deep(.bookmark-icon-btn svg) {
-  width: 20px;
-  height: 20px;
-}
-
-.collect-message {
+.like-message {
   margin-top: var(--glt-space-3);
   color: var(--glt-accent);
   font-size: 0.875rem;
+  text-align: center;
 }
 
-.collect-message.is-error {
+.like-message.is-error {
   color: var(--glt-accent-hover);
 }
 </style>

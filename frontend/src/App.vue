@@ -16,17 +16,17 @@
 
         <transition name="register-backdrop">
           <button
-            v-if="isRegisterOpen"
+            v-if="isSheetOpen"
             type="button"
             class="register-backdrop"
-            aria-label="등록 닫기"
-            @click="closeRegister"
+            :aria-label="sheetCloseLabel"
+            @click="closeSheet"
           />
         </transition>
 
         <router-view v-slot="{ Component, route }">
           <component
-            v-if="route.name === 'register' && backgroundView"
+            v-if="isSheetOpen && backgroundView"
             :is="backgroundView"
             :key="lastRouteFullPath"
             class="route-background"
@@ -41,7 +41,7 @@
 
 
 
-      <nav class="bottom-nav" aria-label="주 메뉴">
+      <nav v-if="!isSheetOpen" class="bottom-nav" aria-label="주 메뉴">
 
         <router-link :to="{ name: 'home' }" class="tab-item" aria-label="홈">
 
@@ -120,7 +120,7 @@
 
         </router-link>
 
-        <router-link :to="{ name: 'saved' }" class="tab-item" aria-label="담은">
+        <router-link :to="{ name: 'saved' }" class="tab-item" aria-label="좋아요">
 
           <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
 
@@ -146,7 +146,7 @@
         :message="pageLoading.message"
       />
 
-      <ChatBot v-if="$route.name !== 'register' && pageLoading.count === 0" />
+      <ChatBot v-if="!isSheetOpen && pageLoading.count === 0" />
 
     </div>
 
@@ -169,9 +169,10 @@ import QuoteDetailView from './views/QuoteDetailView.vue'
 import QuotesBrowseView from './views/QuotesBrowseView.vue'
 import SavedView from './views/SavedView.vue'
 
-import { COLLECT } from './utils/collectLabels'
-
 import { registerRouteForQuote } from './utils/registerBook'
+
+const SHEET_ROUTE_NAMES = new Set(['register', 'login', 'signup'])
+const AUTH_MODAL_ROUTES = new Set(['login', 'signup'])
 
 const ROUTE_VIEWS = {
   home: HomeView,
@@ -194,7 +195,6 @@ export default {
   data() {
 
     return {
-      COLLECT,
       pageLoading,
       pageTransition: 'page-fade',
       lastRouteName: null,
@@ -205,12 +205,18 @@ export default {
 
   computed: {
 
-    isRegisterOpen() {
-      return this.$route.name === 'register'
+    isSheetOpen() {
+      return SHEET_ROUTE_NAMES.has(this.$route.name)
+    },
+
+    sheetCloseLabel() {
+      if (this.$route.name === 'register') return '등록 닫기'
+      if (this.$route.name === 'signup') return '회원가입 닫기'
+      return '로그인 닫기'
     },
 
     backgroundView() {
-      if (!this.isRegisterOpen || !this.lastRouteName) return null
+      if (!this.isSheetOpen || !this.lastRouteName) return null
       return ROUTE_VIEWS[this.lastRouteName] || null
     },
 
@@ -232,18 +238,25 @@ export default {
     $route: {
       immediate: true,
       handler(to, from) {
-        if (to.name === 'register') {
-          if (from?.name && from.name !== 'register') {
+        const toSheet = SHEET_ROUTE_NAMES.has(to.name)
+        const fromSheet = SHEET_ROUTE_NAMES.has(from?.name)
+
+        if (toSheet) {
+          if (from?.name && !fromSheet) {
             this.lastRouteName = from.name
             this.lastRouteFullPath = from.fullPath
           }
-          this.pageTransition = 'sheet-up'
+          if (AUTH_MODAL_ROUTES.has(to.name)) {
+            this.pageTransition = AUTH_MODAL_ROUTES.has(from?.name) ? 'page-fade' : 'modal-pop'
+          } else {
+            this.pageTransition = fromSheet ? 'page-fade' : 'sheet-up'
+          }
           document.body.style.overflow = 'hidden'
           return
         }
 
-        if (from?.name === 'register') {
-          this.pageTransition = 'sheet-down'
+        if (fromSheet) {
+          this.pageTransition = AUTH_MODAL_ROUTES.has(from?.name) ? 'modal-pop' : 'sheet-down'
         } else {
           this.pageTransition = 'page-fade'
         }
@@ -257,7 +270,7 @@ export default {
   },
 
   methods: {
-    closeRegister() {
+    closeSheet() {
       if (window.history.length > 1) {
         this.$router.back()
       } else {
@@ -355,6 +368,13 @@ export default {
   flex: 1;
 
   padding: calc(var(--glt-safe-top) + var(--glt-space-3)) 0 var(--glt-page-bottom);
+
+}
+
+.main:has(.register--sheet),
+.main:has(.auth-modal) {
+
+  z-index: 130;
 
 }
 
@@ -575,6 +595,19 @@ export default {
 
 .sheet-down-leave-to {
   transform: translateY(100%);
+}
+
+.modal-pop-enter-active,
+.modal-pop-leave-active {
+  transition:
+    opacity 0.28s var(--glt-ease),
+    transform 0.28s var(--glt-ease);
+}
+
+.modal-pop-enter-from,
+.modal-pop-leave-to {
+  opacity: 0;
+  transform: scale(0.96) translateY(10px);
 }
 
 </style>

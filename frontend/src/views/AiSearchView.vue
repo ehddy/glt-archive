@@ -35,38 +35,38 @@
       <ul class="news-list">
         <li v-for="(article, i) in result.articles" :key="i">
           <article class="news-card">
-            <blockquote class="news-quote">{{ article.quote }}</blockquote>
-            <div class="news-byline">
-              <div class="news-byline-fields">
-                <div class="news-field">
-                  <span class="news-label">출처</span>
-                  <span class="news-source">{{ article.source_title }}</span>
-                </div>
-                <div v-if="article.author" class="news-field">
-                  <span class="news-label">작가</span>
-                  <span class="news-author">{{ article.author }}</span>
-                </div>
-              </div>
-              <div class="news-byline-actions">
-                <a
-                  v-if="article.source_url"
-                  :href="article.source_url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="news-link"
-                >
-                  출처
-                </a>
-                <RegisterIconButton
-                  label="등록"
-                  @click="registerArticle(article)"
-                />
-              </div>
+            <div class="news-card-head">
+              <blockquote class="news-quote">{{ article.quote }}</blockquote>
+              <RegisterIconButton
+                label="등록"
+                @click="registerArticle(article)"
+              />
             </div>
-            <p v-if="article.context" class="news-context">
-              <span class="news-label">설명</span>
-              <span>{{ article.context }}</span>
-            </p>
+            <dl class="news-meta-list">
+              <div class="news-meta-row">
+                <dt class="news-label">출처</dt>
+                <dd class="news-meta-value">
+                  <a
+                    v-if="article.source_url"
+                    :href="article.source_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="news-source-link"
+                  >
+                    {{ article.source_title }}
+                  </a>
+                  <span v-else class="news-source">{{ article.source_title }}</span>
+                </dd>
+              </div>
+              <div v-if="article.author" class="news-meta-row">
+                <dt class="news-label">작가</dt>
+                <dd class="news-meta-value news-author">{{ article.author }}</dd>
+              </div>
+              <div v-if="article.context" class="news-meta-row">
+                <dt class="news-label">설명</dt>
+                <dd class="news-meta-value news-context">{{ article.context }}</dd>
+              </div>
+            </dl>
           </article>
         </li>
       </ul>
@@ -267,14 +267,15 @@ export default {
   box-shadow: 0 2px 10px rgba(61, 52, 41, 0.04);
 }
 
-.news-byline-actions {
+.news-card-head {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .news-quote {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   padding: 0;
   border: none;
@@ -287,71 +288,59 @@ export default {
   word-break: keep-all;
 }
 
-.news-byline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 12px;
+.news-meta-list {
+  margin: 12px 0 0;
   padding-top: 12px;
   border-top: 1px solid rgba(226, 213, 196, 0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.news-byline-fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-  min-width: 0;
-  flex: 1;
-}
-
-.news-field {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px 6px;
+.news-meta-row {
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: start;
 }
 
 .news-label {
+  margin: 0;
   font-size: 0.72rem;
   font-weight: 600;
+  line-height: 1.5;
   color: var(--glt-ink-tertiary);
 }
 
-.news-source {
+.news-meta-value {
+  margin: 0;
+  min-width: 0;
   font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--glt-ink-secondary);
+}
+
+.news-source,
+.news-source-link {
   font-weight: 600;
   color: var(--glt-ink-secondary);
 }
 
+.news-source-link {
+  text-decoration: none;
+}
+
+.news-source-link:hover {
+  color: var(--glt-accent-hover);
+  text-decoration: underline;
+}
+
 .news-author {
-  font-size: 0.78rem;
   color: var(--glt-ink-tertiary);
 }
 
 .news-context {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 10px 0 0;
-  padding-top: 10px;
-  border-top: 1px solid rgba(226, 213, 196, 0.45);
-  font-size: 0.8rem;
-  line-height: 1.6;
   color: var(--glt-ink-secondary);
-}
-
-.news-link {
-  flex-shrink: 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--glt-ink-tertiary);
-  text-decoration: none;
-}
-
-.news-link:hover {
-  color: var(--glt-accent-hover);
-  text-decoration: underline;
 }
 
 .state-panel {

@@ -31,7 +31,7 @@
         <div class="saved-actions">
           <DetailIconLink :to="`/quotes/${quote.id}`" />
           <RemoveIconButton
-            :label="COLLECT.remove"
+            :label="LIKE.done"
             @click="$emit('remove', quote.id)"
           />
         </div>
@@ -43,7 +43,7 @@
 <script>
 import DetailIconLink from './DetailIconLink.vue'
 import RemoveIconButton from './RemoveIconButton.vue'
-import { COLLECT } from '../utils/collectLabels'
+import { LIKE } from '../utils/likeLabels'
 import {
   quoteAuthorName,
   quoteCoverUrl,
@@ -59,7 +59,7 @@ export default {
   },
   emits: ['remove'],
   data() {
-    return { COLLECT }
+    return { LIKE }
   },
   methods: {
     sourceTitle(quote) {

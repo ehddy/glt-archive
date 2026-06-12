@@ -48,6 +48,21 @@ class Settings(BaseSettings):
     cors_origins_env: str = Field(default="", validation_alias="CORS_ORIGINS")
     cache_enabled: bool = Field(default=True, validation_alias="CACHE_ENABLED")
     cache_ttl_seconds: int = Field(default=60, ge=5, le=600, validation_alias="CACHE_TTL_SECONDS")
+    jwt_secret: str = Field(
+        default="dev-change-me-in-production",
+        validation_alias="JWT_SECRET",
+    )
+    jwt_expire_days: int = Field(default=30, ge=1, le=90, validation_alias="JWT_EXPIRE_DAYS")
+    frontend_url: str = Field(
+        default="http://127.0.0.1:5173",
+        validation_alias="FRONTEND_URL",
+    )
+    kakao_rest_api_key: str = Field(default="", validation_alias="KAKAO_REST_API_KEY")
+    kakao_client_secret: str = Field(default="", validation_alias="KAKAO_CLIENT_SECRET")
+    kakao_redirect_uri: str = Field(default="", validation_alias="KAKAO_REDIRECT_URI")
+    naver_client_id: str = Field(default="", validation_alias="NAVER_CLIENT_ID")
+    naver_client_secret: str = Field(default="", validation_alias="NAVER_CLIENT_SECRET")
+    naver_redirect_uri: str = Field(default="", validation_alias="NAVER_REDIRECT_URI")
 
     @field_validator("database_url", mode="before")
     @classmethod

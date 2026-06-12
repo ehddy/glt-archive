@@ -7,13 +7,11 @@ from app.models.models import Author, Novel, Quote, Source
 from app.schemas.schemas import NovelSummaryOut, NovelWithQuotesOut
 from app.services.aladin_service import lookup_book, parse_author_name
 from app.services.author_service import get_or_create_author
-from app.services.quote_serializer import serialize_quote
+from app.services.quote_serializer import serialize_quotes
 from app.cache import invalidate_read_cache, read_cache
 from app.config import settings
 
 
-def _quote_out(quote: Quote):
-    return serialize_quote(quote)
 
 
 def query_library_stats(db: Session) -> dict[str, int]:
@@ -177,7 +175,7 @@ def _aladin_purchase_link(novel: Novel) -> str | None:
     return None
 
 
-def novel_to_detail_out(novel: Novel) -> dict:
+def novel_to_detail_out(db: Session, novel: Novel) -> dict:
     detail = None
     if novel.detail_json:
         try:
@@ -203,7 +201,7 @@ def novel_to_detail_out(novel: Novel) -> dict:
         "aladin_link": _aladin_purchase_link(novel),
         "aladin_item_id": novel.aladin_item_id,
         "quote_count": len(quotes),
-        "quotes": [_quote_out(q) for q in quotes],
+        "quotes": serialize_quotes(db, quotes),
         "detail": detail,
     }
 

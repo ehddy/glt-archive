@@ -10,6 +10,15 @@
           <blockquote class="result-quote">{{ item.quote.text }}</blockquote>
         </router-link>
 
+        <div class="result-like">
+          <LikeButton
+            compact
+            :liked="likedIds.has(item.quote.id)"
+            :count="item.quote.like_count || 0"
+            @click="$emit('toggle-like', item.quote.id)"
+          />
+        </div>
+
         <component
           :is="sourceNovelId(item) ? 'router-link' : 'div'"
           v-bind="sourceNovelId(item) ? { to: `/novels/${sourceNovelId(item)}` } : {}"
@@ -32,12 +41,6 @@
 
         <div class="result-actions">
           <DetailIconLink :to="`/quotes/${item.quote.id}`" />
-          <BookmarkIconButton
-            :saved="bookmarkIds.has(item.quote.id)"
-            :action-label="COLLECT.action"
-            :saved-label="COLLECT.done"
-            @click="$emit('toggle-bookmark', item.quote.id)"
-          />
         </div>
       </li>
     </ul>
@@ -45,9 +48,8 @@
 </template>
 
 <script>
-import BookmarkIconButton from './BookmarkIconButton.vue'
 import DetailIconLink from './DetailIconLink.vue'
-import { COLLECT } from '../utils/collectLabels'
+import LikeButton from './LikeButton.vue'
 import {
   quoteAuthorName,
   quoteCoverUrl,
@@ -57,15 +59,12 @@ import {
 
 export default {
   name: 'SourceSearchResults',
-  components: { BookmarkIconButton, DetailIconLink },
+  components: { DetailIconLink, LikeButton },
   props: {
     results: { type: Array, required: true },
-    bookmarkIds: { type: Set, required: true },
+    likedIds: { type: Set, required: true },
   },
-  emits: ['toggle-bookmark'],
-  data() {
-    return { COLLECT }
-  },
+  emits: ['toggle-like'],
   methods: {
     sourceTitle(item) {
       return quoteSourceTitle(item.quote) || '미분류'
@@ -85,7 +84,7 @@ export default {
 
 <style scoped>
 .source-results {
-  margin-top: var(--glt-space-4);
+  margin-top: var(--glt-space-2);
 }
 
 .results-head {
@@ -133,6 +132,12 @@ export default {
   word-break: keep-all;
 }
 
+.result-like {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
 .result-source {
   display: flex;
   gap: 10px;
@@ -143,12 +148,6 @@ export default {
   border: 1px solid rgba(212, 195, 170, 0.35);
   text-decoration: none;
   color: inherit;
-  transition: border-color var(--glt-duration), box-shadow var(--glt-duration);
-}
-
-.result-source:not(.result-source--static):hover {
-  border-color: var(--glt-accent-muted);
-  box-shadow: var(--glt-shadow-sm);
 }
 
 .result-source--static {
@@ -167,7 +166,6 @@ export default {
   display: grid;
   place-items: center;
   background: var(--glt-surface);
-  font-size: 1rem;
 }
 
 .result-source-meta {
@@ -181,16 +179,12 @@ export default {
   font-size: 0.66rem;
   font-weight: 600;
   color: var(--glt-accent);
-  letter-spacing: 0.04em;
 }
 
 .result-source-title {
   font-size: 0.8rem;
   font-weight: 600;
-  line-height: 1.4;
   color: var(--glt-ink);
-  word-break: keep-all;
-  overflow-wrap: anywhere;
 }
 
 .result-source-author {
@@ -201,6 +195,5 @@ export default {
 .result-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
 }
 </style>

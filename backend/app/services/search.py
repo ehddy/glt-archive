@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.models import Author, Novel, Quote, Source
 from app.schemas.schemas import QuoteSearchResult
-from app.services.quote_serializer import serialize_quote
+from app.services.quote_serializer import serialize_quotes
 
 
 def search_quotes(db: Session, query: str, limit: int = 20) -> list[QuoteSearchResult]:
@@ -31,7 +31,8 @@ def search_quotes(db: Session, query: str, limit: int = 20) -> list[QuoteSearchR
         .limit(limit)
         .all()
     )
+    serialized = serialize_quotes(db, quotes)
     return [
-        QuoteSearchResult(quote=serialize_quote(q), score=1.0, match_type="text")
-        for q in quotes
+        QuoteSearchResult(quote=quote_out, score=1.0, match_type="text")
+        for quote_out in serialized
     ]

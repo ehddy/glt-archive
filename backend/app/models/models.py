@@ -84,6 +84,41 @@ class Quote(Base):
         back_populates="quote", order_by="QuoteVersion.version"
     )
     bookmarks: Mapped[list["Bookmark"]] = relationship(back_populates="quote")
+    likes: Mapped[list["QuoteLike"]] = relationship(back_populates="quote")
+
+
+class User(Base):
+    __tablename__ = "users"
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_user_id", name="uq_user_provider"),
+        UniqueConstraint("email", name="uq_user_email"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    provider: Mapped[str] = mapped_column(String(20), default="local", index=True)
+    provider_user_id: Mapped[str] = mapped_column(String(64), index=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    likes: Mapped[list["QuoteLike"]] = relationship(back_populates="user")
+
+
+class QuoteLike(Base):
+    __tablename__ = "quote_likes"
+    __table_args__ = (
+        UniqueConstraint("user_id", "quote_id", name="uq_like_user_quote"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    quote_id: Mapped[int] = mapped_column(ForeignKey("quotes.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    user: Mapped["User"] = relationship(back_populates="likes")
+    quote: Mapped["Quote"] = relationship(back_populates="likes")
 
 
 class Bookmark(Base):

@@ -3,7 +3,7 @@
   <div class="page-loading" role="status" aria-live="polite" aria-busy="true" aria-label="로딩 중">
 
     <div
-      class="page-loading-card glt-card"
+      class="page-loading-card"
       :class="{ 'page-loading-card--with-text': message }"
     >
       <div class="page-loading-visual" aria-hidden="true">
@@ -61,17 +61,15 @@ export default {
   width: min(100%, 120px);
   padding: 24px 20px 20px;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(61, 52, 41, 0.14);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   animation: loading-card-in 0.32s var(--glt-ease);
 }
 
 .page-loading-card--with-text {
   width: min(100%, 220px);
   padding: 28px 24px 22px;
-}
-
-[data-theme='night'] .page-loading-card {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
 .page-loading-text {

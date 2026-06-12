@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
+from app.auth.deps import get_current_user_optional
 from app.config import settings
 from app.database import get_db
+from app.models.models import User
 from app.schemas.schemas import (
     HomeOut,
     LibraryStatsOut,
@@ -25,17 +27,6 @@ from app.services.novel_service import (
 router = APIRouter(prefix="/api", tags=["library"])
 
 
-def _optional_client_id(
-    x_client_id: str | None = Header(default=None, alias="X-Client-Id"),
-) -> str | None:
-    if not x_client_id or len(x_client_id.strip()) < 8:
-        return None
-    return x_client_id.strip()[:64]
-
-
-
-
-
 @router.get("/library/stats", response_model=LibraryStatsOut)
 def library_stats(response: Response, db: Session = Depends(get_db)):
     if settings.cache_enabled:
@@ -48,7 +39,7 @@ def home(
     response: Response,
     featured_limit: int = Query(10, ge=1, le=20),
     quote_limit: int = Query(12, ge=1, le=24),
-    client_id: str | None = Depends(_optional_client_id),
+    user: User | None = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
     if settings.cache_enabled:
@@ -57,7 +48,7 @@ def home(
         db,
         featured_limit=featured_limit,
         quote_limit=quote_limit,
-        client_id=client_id,
+        user_id=user.id if user else None,
     )
 
 
@@ -95,5 +86,5 @@ def novel_detail(novel_id: int, db: Session = Depends(get_db)):
 
         raise HTTPException(status_code=404, detail="작품을 찾을 수 없습니다.")
 
-    return NovelDetailOut.model_validate(novel_to_detail_out(novel))
+    return NovelDetailOut.model_validate(novel_to_detail_out(db, novel))
 

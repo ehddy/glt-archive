@@ -1,5 +1,5 @@
 // 모든 요청은 /api 경로로 백엔드에 전달 (개발: Vite 프록시, 배포: nginx)
-import { getClientId } from '../utils/clientId'
+import { getAccessToken } from '../utils/auth'
 import { dbRequestQueue } from './requestQueue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
@@ -10,6 +10,12 @@ const AI_SEARCH_TIMEOUT_MS = 120000
 
 function shouldUseQueue(path, options = {}) {
   if (path.includes('/chat') || path.includes('/ai-search')) return false
+  if (path.includes('/api/likes/') && (options.method || 'GET').toUpperCase() !== 'GET') {
+    return false
+  }
+  if (path.includes('/api/auth/') && (options.method || 'GET').toUpperCase() !== 'GET') {
+    return false
+  }
   const method = (options.method || 'GET').toUpperCase()
   return method === 'GET' || method === 'HEAD'
 }
@@ -24,20 +30,28 @@ async function parseJsonResponse(response) {
 
 function apiConnectionMessage(status) {
   if (status === 404) {
-    return '서버에 연결하지 못했어요.'
+    return '서버 API를 찾을 수 없어요. 백엔드를 재시작해 주세요.'
   }
   return `서버 응답 오류 (${status})`
+}
+
+function normalizeApiError(message, status) {
+  if (status === 404 && (message === 'Not Found' || message === 'not found')) {
+    return '서버 API를 찾을 수 없어요. 백엔드를 재시작해 주세요.'
+  }
+  return message
 }
 
 async function requestRaw(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
+  const token = getAccessToken()
 
   try {
     const response = await fetch(`${API_BASE}${path}`, {
       headers: {
         'Content-Type': 'application/json',
-        'X-Client-Id': getClientId(),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
       signal: controller.signal,
@@ -53,7 +67,7 @@ async function requestRaw(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
           : Array.isArray(detail)
             ? detail.map((d) => d.msg).join(', ')
             : apiConnectionMessage(response.status)
-        throw new Error(message)
+        throw new Error(normalizeApiError(message, response.status))
       } catch (parseErr) {
         if (parseErr.message && !parseErr.message.startsWith('서버 응답') && !parseErr.message.startsWith('API를')) {
           throw parseErr
@@ -86,22 +100,37 @@ function request(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
 }
 
 export const api = {
+  register({ email, password, name }) {
+    return request('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name }),
+    })
+  },
+  login({ email, password }) {
+    return request('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+  },
+  getMe() {
+    return request('/api/auth/me')
+  },
   getHome({ featuredLimit = 10, quoteLimit = 12 } = {}) {
     return request(
       `/api/home?featured_limit=${featuredLimit}&quote_limit=${quoteLimit}`,
     )
   },
-  getBookmarkIds() {
-    return request('/api/bookmarks/ids')
+  getLikeIds() {
+    return request('/api/likes/ids')
   },
-  listBookmarks() {
-    return request('/api/bookmarks')
+  listLikes() {
+    return request('/api/likes')
   },
-  addBookmark(quoteId) {
-    return request(`/api/bookmarks/${quoteId}`, { method: 'POST' })
+  addLike(quoteId) {
+    return request(`/api/likes/${quoteId}`, { method: 'POST' })
   },
-  removeBookmark(quoteId) {
-    return request(`/api/bookmarks/${quoteId}`, { method: 'DELETE' })
+  removeLike(quoteId) {
+    return request(`/api/likes/${quoteId}`, { method: 'DELETE' })
   },
   getNovel(id) {
     return request(`/api/novels/${id}`)

@@ -12,7 +12,7 @@ from app.schemas.schemas import (
     QuoteVersionOut,
 )
 from app.services import quote_service
-from app.services.quote_serializer import serialize_quote
+from app.services.quote_serializer import serialize_quote_with_db, serialize_quotes
 from app.services.search import search_quotes
 
 router = APIRouter(prefix="/api/quotes", tags=["quotes"])
@@ -25,7 +25,7 @@ def list_quotes(
     db: Session = Depends(get_db),
 ):
     quotes = quote_service.list_quotes(db, skip=skip, limit=limit)
-    return [serialize_quote(q) for q in quotes]
+    return serialize_quotes(db, quotes)
 
 
 @router.get("/browse", response_model=PaginatedQuotesOut)
@@ -39,7 +39,7 @@ def browse_quotes(
     items = quote_service.list_quotes(db, skip=skip, limit=limit, q=q, novel_id=novel_id)
     total = quote_service.count_quotes(db, q=q, novel_id=novel_id)
     return PaginatedQuotesOut(
-        items=[serialize_quote(q) for q in items],
+        items=serialize_quotes(db, items),
         total=total,
         skip=skip,
         limit=limit,
@@ -60,7 +60,7 @@ def get_quote(quote_id: int, db: Session = Depends(get_db)):
     quote = quote_service.get_quote(db, quote_id)
     if not quote:
         raise HTTPException(status_code=404, detail="문장을 찾을 수 없습니다.")
-    return serialize_quote(quote)
+    return serialize_quote_with_db(db, quote)
 
 
 @router.get("/{quote_id}/versions", response_model=list[QuoteVersionOut])
@@ -84,7 +84,7 @@ async def create_quote(data: QuoteCreate, db: Session = Depends(get_db)):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     loaded = quote_service.get_quote(db, quote.id)
-    return serialize_quote(loaded)
+    return serialize_quote_with_db(db, loaded)
 
 
 @router.patch("/{quote_id}", response_model=QuoteOut)
@@ -95,4 +95,4 @@ def update_quote(
     if not quote:
         raise HTTPException(status_code=404, detail="문장을 찾을 수 없습니다.")
     updated = quote_service.update_quote(db, quote, data)
-    return serialize_quote(quote_service.get_quote(db, updated.id))
+    return serialize_quote_with_db(db, quote_service.get_quote(db, updated.id))

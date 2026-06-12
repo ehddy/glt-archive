@@ -119,11 +119,50 @@ class QuoteOut(BaseModel):
     version: int
     created_at: datetime
     updated_at: datetime
+    like_count: int = 0
     novel: NovelOut | None = None
     source: SourceOut | None = None
     author: AuthorOut | None = None
 
     model_config = {"from_attributes": True}
+
+
+class UserOut(BaseModel):
+    id: int
+    provider: str
+    name: str | None = None
+    email: str | None = None
+    avatar_url: str | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class RegisterRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=255)
+    password: str = Field(..., min_length=8, max_length=128)
+    name: str | None = Field(None, max_length=100)
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=255)
+    password: str = Field(..., min_length=1, max_length=128)
+
+
+class AuthTokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
+
+
+class LikeActionOut(BaseModel):
+    quote_id: int
+    liked: bool
+    like_count: int
+
+
+class LikeIdsOut(BaseModel):
+    quote_ids: list[int]
 
 
 class QuoteSearchResult(BaseModel):
@@ -188,7 +227,7 @@ class HomeOut(BaseModel):
     stats: LibraryStatsOut
     featured_books: list[NovelWithQuotesOut]
     recent_quotes: list[QuoteOut]
-    bookmark_ids: list[int] = Field(default_factory=list)
+    liked_ids: list[int] = Field(default_factory=list)
 
 
 class BookmarkIdsOut(BaseModel):

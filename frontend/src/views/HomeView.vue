@@ -29,8 +29,8 @@
       <SourceSearchResults
         v-if="searched && searchResults.length"
         :results="searchResults"
-        :bookmark-ids="bookmarkIds"
-        @toggle-bookmark="toggleBookmark"
+        :liked-ids="likedIds"
+        @toggle-like="toggleLike"
       />
 
       <div v-else-if="searched" class="empty-search glt-card">
@@ -58,7 +58,9 @@ import FeaturedBooks from '../components/FeaturedBooks.vue'
 import SearchIconButton from '../components/SearchIconButton.vue'
 import RecentQuotes from '../components/RecentQuotes.vue'
 import SourceSearchResults from '../components/SourceSearchResults.vue'
+import { requireLogin } from '../utils/auth'
 import { registerRouteForSearchQuery } from '../utils/registerBook'
+import { patchQuoteLikeCount, toggleLike as toggleLikeRequest } from '../utils/likeToggle'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
@@ -71,7 +73,7 @@ export default {
       featuredBooks: [],
       recentQuotes: [],
       libraryStats: null,
-      bookmarkIds: new Set(),
+      likedIds: new Set(),
       loading: true,
       error: '',
       searched: false,
@@ -99,10 +101,10 @@ export default {
         this.libraryStats = home.stats
         this.featuredBooks = Array.isArray(home.featured_books) ? home.featured_books : []
         this.recentQuotes = Array.isArray(home.recent_quotes) ? home.recent_quotes : []
-        this.bookmarkIds = new Set(home.bookmark_ids || [])
+        this.likedIds = new Set(home.liked_ids || [])
       } catch (e) {
         this.error = e.message || '잠시 문제가 생겼어요.'
-        this.bookmarkIds = new Set()
+        this.likedIds = new Set()
       } finally {
         this.loading = false
         endPageLoading()
@@ -134,16 +136,12 @@ export default {
       this.searchResults = []
       this.searched = false
     },
-    async toggleBookmark(quoteId) {
+    async toggleLike(quoteId) {
+      if (!requireLogin(this.$router, this.$route.fullPath)) return
       try {
-        if (this.bookmarkIds.has(quoteId)) {
-          await api.removeBookmark(quoteId)
-          this.bookmarkIds.delete(quoteId)
-        } else {
-          await api.addBookmark(quoteId)
-          this.bookmarkIds.add(quoteId)
-        }
-        this.bookmarkIds = new Set(this.bookmarkIds)
+        const { likedIds, likeCount } = await toggleLikeRequest(api, this.likedIds, quoteId)
+        this.likedIds = likedIds
+        this.searchResults = patchQuoteLikeCount(this.searchResults, quoteId, likeCount, { nested: true })
       } catch (e) {
         this.error = e.message
       }
@@ -158,79 +156,61 @@ export default {
 }
 
 .home-hero .glt-title {
-  margin: 0 0 var(--glt-space-5);
-  font-size: 1.35rem;
-  line-height: 1.4;
+  margin-bottom: var(--glt-space-3);
 }
 
 .search-hero {
-  width: 100%;
+  margin-top: var(--glt-space-2);
 }
 
 .search-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 5px 5px 14px;
+  padding: 4px 4px 4px 16px;
+  border-radius: var(--glt-radius-lg);
   background: var(--glt-surface);
-  border: 1px solid rgba(212, 195, 170, 0.5);
-  border-radius: var(--glt-radius-full);
-  box-shadow: 0 2px 10px rgba(61, 52, 41, 0.04);
-}
-
-.search-row:focus-within {
-  border-color: var(--glt-accent-muted);
-  box-shadow: 0 0 0 3px var(--glt-accent-soft);
+  border: 1px solid var(--glt-glass-border);
+  box-shadow: var(--glt-shadow-sm);
 }
 
 .search-input {
   flex: 1;
   min-width: 0;
   border: none;
-  outline: none;
   background: transparent;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   color: var(--glt-ink);
-  padding: 9px 0;
+  outline: none;
 }
 
 .search-input::placeholder {
-  color: var(--glt-ink-tertiary);
+  color: var(--glt-ink-faint);
 }
 
 .error-panel {
-  padding: var(--glt-space-6);
+  padding: var(--glt-space-4);
   text-align: center;
 }
 
 .error-title {
-  margin: 0 0 var(--glt-space-2);
+  margin: 0 0 8px;
   font-weight: 600;
-  color: var(--glt-ink);
 }
 
 .error-desc {
-  margin: 0 0 var(--glt-space-5);
+  margin: 0 0 var(--glt-space-3);
   color: var(--glt-ink-secondary);
-  font-size: 0.875rem;
-  line-height: 1.6;
-  white-space: pre-line;
-}
-
-.home-feed {
-  display: flex;
-  flex-direction: column;
-  gap: var(--glt-space-5);
+  font-size: 0.9rem;
 }
 
 .empty-search {
-  padding: var(--glt-space-6);
+  padding: var(--glt-space-5) var(--glt-space-4);
   text-align: center;
 }
 
 .empty-title {
-  margin: 0 0 var(--glt-space-4);
-  font-weight: 600;
-  color: var(--glt-ink);
+  margin: 0 0 var(--glt-space-3);
+  color: var(--glt-ink-secondary);
 }
 </style>
