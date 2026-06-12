@@ -1,7 +1,6 @@
 <template>
   <section class="novels glt-container">
     <header class="page-head">
-      <router-link to="/" class="back-link">← 검색</router-link>
       <h1 class="glt-title">책장</h1>
       <p class="page-lead">문장이 담긴 책을 모아두었어요. 표지를 눌러 살펴보세요.</p>
     </header>
@@ -133,17 +132,6 @@ export default {
 </script>
 
 <style scoped>
-.back-link {
-  display: inline-block;
-  font-size: 0.82rem;
-  color: var(--glt-ink-tertiary);
-  text-decoration: none;
-}
-
-.back-link:hover {
-  color: var(--glt-accent-hover);
-}
-
 .browse-search {
   width: 100%;
   margin-bottom: var(--glt-space-3);

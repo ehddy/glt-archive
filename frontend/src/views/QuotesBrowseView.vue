@@ -1,7 +1,6 @@
 <template>
   <section class="quotes-browse glt-container">
     <header class="page-head">
-      <router-link to="/" class="back-link">← 검색</router-link>
       <h1 class="glt-title page-title">명문장</h1>
       <p class="page-lead">기억 속 문장의 출처를 찾아보세요.</p>
     </header>
@@ -137,17 +136,6 @@ export default {
 </script>
 
 <style scoped>
-.back-link {
-  display: inline-block;
-  font-size: 0.82rem;
-  color: var(--glt-ink-tertiary);
-  text-decoration: none;
-}
-
-.back-link:hover {
-  color: var(--glt-accent-hover);
-}
-
 .browse-toolbar {
   padding: var(--glt-space-4);
   margin-bottom: var(--glt-space-5);
