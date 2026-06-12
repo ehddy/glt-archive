@@ -223,7 +223,7 @@
 
 import { api } from '../api'
 import { friendlyRegisterError } from '../utils/registerErrors'
-import { novelToSelectedBook } from '../utils/registerBook'
+import { novelToSelectedBook, routeAfterQuoteCreated } from '../utils/registerBook'
 
 export default {
 
@@ -642,13 +642,8 @@ export default {
           }
         }
 
-        await api.createQuote(payload)
-
-        if (history.state?.fromAiSearch) {
-          this.$router.push('/ai-search')
-        } else {
-          this.$router.push({ path: '/', query: { registered: '1' } })
-        }
+        const quote = await api.createQuote(payload)
+        this.$router.push(routeAfterQuoteCreated(quote))
 
       } catch (e) {
 

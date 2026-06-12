@@ -21,8 +21,6 @@
       </div>
     </header>
 
-    <p v-if="flashMessage" class="flash-banner" role="status">{{ flashMessage }}</p>
-
     <div v-if="loading" class="glt-empty">
       <span class="loading-orbit" />
       불러오는 중…
@@ -66,7 +64,6 @@ import { api } from '../api'
 import FeaturedBooks from '../components/FeaturedBooks.vue'
 import RecentQuotes from '../components/RecentQuotes.vue'
 import SourceSearchResults from '../components/SourceSearchResults.vue'
-import { COLLECT } from '../utils/collectLabels'
 import { registerRouteForSearchQuery } from '../utils/registerBook'
 
 export default {
@@ -82,7 +79,6 @@ export default {
       bookmarkIds: new Set(),
       loading: true,
       error: '',
-      flashMessage: '',
       searched: false,
     }
   },
@@ -93,31 +89,8 @@ export default {
   },
   mounted() {
     this.loadHome()
-    this.consumeFlash()
-  },
-  watch: {
-    '$route.query': {
-      handler() {
-        this.consumeFlash()
-      },
-    },
   },
   methods: {
-    consumeFlash() {
-      const { registered, saved } = this.$route.query
-      if (registered === '1') {
-        this.flashMessage = '등록되었습니다.'
-      } else if (saved === '1') {
-        this.flashMessage = COLLECT.flash
-      } else {
-        return
-      }
-      const rest = { ...this.$route.query }
-      delete rest.registered
-      delete rest.saved
-      this.$router.replace({ path: '/', query: rest })
-      this.loadHome()
-    },
     async loadHome() {
       this.loading = true
       this.error = ''
@@ -261,16 +234,6 @@ export default {
 
 .search-clear:hover {
   color: var(--glt-accent-hover);
-}
-
-.flash-banner {
-  margin: 0 0 var(--glt-space-4);
-  padding: 12px 14px;
-  border-radius: var(--glt-radius-md);
-  background: rgba(76, 140, 74, 0.1);
-  border: 1px solid rgba(76, 140, 74, 0.25);
-  color: #2f6b2e;
-  font-size: 0.88rem;
 }
 
 .loading-orbit {

@@ -1,3 +1,16 @@
+import { quoteNovelId } from './quoteDisplay'
+
+export function routeAfterQuoteCreated(quote) {
+  const novelId = quoteNovelId(quote)
+  if (novelId) {
+    return { path: `/novels/${novelId}` }
+  }
+  if (quote?.id) {
+    return { path: `/quotes/${quote.id}` }
+  }
+  return { path: '/' }
+}
+
 export function novelToSelectedBook(novel) {
   if (!novel?.id) return null
 
