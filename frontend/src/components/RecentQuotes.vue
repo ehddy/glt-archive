@@ -1,7 +1,7 @@
 <template>
   <section v-if="quotes.length" class="recent-quotes">
     <header class="recent-head">
-      <h2 class="recent-title">명문장 둘러보기</h2>
+      <h2 class="recent-title">방금 올라온</h2>
       <router-link to="/quotes" class="recent-more">
         더 보기
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -69,4 +69,4 @@ export default {
   color: var(--glt-accent-hover);
 }
 </style>
-
+

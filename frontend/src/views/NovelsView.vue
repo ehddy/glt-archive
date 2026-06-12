@@ -2,18 +2,18 @@
   <section class="novels glt-container">
     <header class="page-head">
       <h1 class="glt-title">책장</h1>
-      <p class="page-lead">문장이 담긴 책을 모아두었어요. 표지를 눌러 살펴보세요.</p>
     </header>
 
     <div class="glt-search browse-search">
       <input
         v-model="query"
-        type="search"
-        placeholder="도서명 또는 작가명"
+        type="text"
+        enterkeyhint="search"
+        placeholder="책·작가 검색해 보세요"
         @keyup.enter="applySearch"
       />
-      <button v-if="query" class="glt-btn glt-btn-ghost" @click="clearSearch">초기화</button>
-      <button class="glt-btn glt-btn-primary" @click="applySearch">검색</button>
+      <ClearIconButton v-if="query" @click="clearSearch" />
+      <SearchIconButton @click="applySearch" />
     </div>
 
     <p v-if="!initialLoading && total !== null" class="result-count">
@@ -23,7 +23,7 @@
 
     <div v-if="error && !initialLoading" class="glt-empty glt-card">{{ error }}</div>
     <div v-else-if="!initialLoading && !novels.length" class="glt-empty glt-card">
-      <p>아직 담긴 책이 없어요.</p>
+      <p>아직 책이 없어요</p>
       <router-link to="/register" class="glt-btn glt-btn-primary">문장 등록하기</router-link>
     </div>
     <template v-else-if="!initialLoading">
@@ -59,12 +59,14 @@
 
 <script>
 import { api } from '../api'
+import ClearIconButton from '../components/ClearIconButton.vue'
 import LoadMoreBar from '../components/LoadMoreBar.vue'
+import SearchIconButton from '../components/SearchIconButton.vue'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'NovelsView',
-  components: { LoadMoreBar },
+  components: { ClearIconButton, LoadMoreBar, SearchIconButton },
   data() {
     return {
       novels: [],

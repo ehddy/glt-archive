@@ -14,13 +14,13 @@
       @pointercancel="onSheetDragEnd"
     >
       <div class="sheet-handle" aria-hidden="true" />
-      <h1 class="glt-title sheet-title">문장 등록</h1>
+      <h1 class="glt-title sheet-title">등록</h1>
     </div>
 
     <form class="form-card glt-card" @submit.prevent="submit">
 
       <div class="glt-field source-mode-field">
-        <label>출처</label>
+        <label>어디서</label>
         <div class="mode-tabs" role="tablist">
           <button
             type="button"
@@ -28,7 +28,7 @@
             :class="{ 'is-active': sourceMode === 'aladin' }"
             @click="setSourceMode('aladin')"
           >
-            도서
+            책
           </button>
           <button
             type="button"
@@ -36,7 +36,7 @@
             :class="{ 'is-active': sourceMode === 'custom' }"
             @click="setSourceMode('custom')"
           >
-            직접 입력
+            직접 적기
           </button>
         </div>
       </div>
@@ -47,14 +47,14 @@
       >
 
         <div class="book-search-head">
-          <label>도서 검색</label>
+          <label>책 찾기</label>
           <button
             v-if="selectedBook"
             type="button"
             class="search-keep-btn"
             @click="bookSearchOpen = false"
           >
-            선택 유지
+            닫기
           </button>
         </div>
 
@@ -64,7 +64,7 @@
             ref="bookSearchInput"
             v-model="bookQuery"
             type="search"
-            placeholder="작가 이름이나 도서명을 검색하세요"
+            placeholder="책·작가 검색해 보세요"
             @input="onSearchInput"
             @keyup.enter="onSearchEnter"
             @focus="bookSearchOpen = true"
@@ -127,12 +127,12 @@
       </div>
 
       <div v-if="sourceMode === 'custom'" class="glt-field custom-source-fields">
-        <label for="custom-source-title">출처명 *</label>
+        <label for="custom-source-title">출처 *</label>
         <input
           id="custom-source-title"
           v-model="customSource.title"
           type="text"
-          placeholder="예: 성경, 연설문, 수필"
+          placeholder="어디서 나온 문장인가요?"
           maxlength="200"
           @input="clearNotice"
         />
@@ -141,7 +141,7 @@
           id="custom-source-author"
           v-model="customSource.author_name"
           type="text"
-          placeholder="선택 사항"
+          placeholder="작가 (선택)"
           maxlength="100"
         />
       </div>
@@ -150,9 +150,9 @@
         v-if="sourceMode === 'aladin' && selectedBook && !bookSearchOpen"
         class="glt-field book-search-reopen"
       >
-        <label>도서 검색</label>
+        <label>책 찾기</label>
         <button type="button" class="search-reopen" @click="openBookSearch">
-          작가 이름이나 도서명을 검색하세요
+          책·작가 검색해 보세요
         </button>
       </div>
 
@@ -189,23 +189,22 @@
       </div>
 
       <div class="glt-field">
-        <label>문장 *</label>
+        <label>한 줄 *</label>
         <textarea
           v-model="form.text"
           required
-          placeholder="문장"
+          placeholder="기억나는 문장을 적어 주세요"
           @input="clearNotice"
         />
       </div>
 
       <div class="submit-block submit-block--standalone">
-        <button
-          class="glt-btn glt-btn-primary submit-btn"
+        <RegisterIconButton
           type="submit"
+          label="등록"
+          large
           :disabled="submitting || !canSubmit"
-        >
-          등록
-        </button>
+        />
       </div>
 
       <p v-if="notice" class="register-notice" role="status">{{ notice }}</p>
@@ -228,10 +227,15 @@ import {
   routeAfterQuoteCreated,
 } from '../utils/registerBook'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
+import RegisterIconButton from '../components/RegisterIconButton.vue'
 
 export default {
 
   name: 'RegisterView',
+
+  components: {
+    RegisterIconButton,
+  },
 
   data() {
 
@@ -708,7 +712,7 @@ export default {
 
         if (this.sourceMode === 'aladin') {
           if (!this.selectedBook) {
-            this.showNotice('어떤 도서에서 나온 문장인지 선택해 주세요.')
+            this.showNotice('어떤 책인지 골라 주세요.')
             return
           }
           if (this.selectedBook.novel_id) {
@@ -716,7 +720,7 @@ export default {
           } else if (this.selectedBook.item_id) {
             payload.aladin_item_id = this.selectedBook.item_id
           } else {
-            this.showNotice('어떤 도서에서 나온 문장인지 선택해 주세요.')
+            this.showNotice('어떤 책인지 골라 주세요.')
             return
           }
         } else if (this.sourceMode === 'custom') {
@@ -748,7 +752,7 @@ export default {
 
 .register--sheet {
   position: fixed;
-  top: calc(var(--glt-header-height) + 6px);
+  top: calc(var(--glt-safe-top) + 6px);
   left: 0;
   right: 0;
   bottom: 0;
@@ -1079,6 +1083,11 @@ export default {
 .book-panel {
   padding: 14px;
   margin-top: var(--glt-space-2);
+  margin-bottom: var(--glt-space-2);
+}
+
+.book-panel + .glt-field {
+  margin-top: var(--glt-space-4);
 }
 
 .book-panel-head {
@@ -1189,17 +1198,14 @@ export default {
 .submit-block {
   margin-top: var(--glt-space-2);
   padding-top: var(--glt-space-4);
+  padding-bottom: var(--glt-space-2);
   border-top: 1px solid var(--glt-line);
+  display: flex;
+  justify-content: center;
 }
 
 .submit-block--standalone {
   margin-top: var(--glt-space-4);
-}
-
-.submit-btn {
-  width: 100%;
-  padding: 12px 18px;
-  font-size: 0.92rem;
 }
 
 .submit-hint {

@@ -24,7 +24,7 @@ async function parseJsonResponse(response) {
 
 function apiConnectionMessage(status) {
   if (status === 404) {
-    return 'API를 찾을 수 없습니다. 백엔드가 실행 중인지 확인해 주세요.'
+    return '서버에 연결하지 못했어요.'
   }
   return `서버 응답 오류 (${status})`
 }
@@ -66,10 +66,10 @@ async function requestRaw(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
     return parseJsonResponse(response)
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error('응답 시간이 초과되었습니다.')
+      throw new Error('응답이 늦어졌어요.')
     }
     if (err instanceof TypeError) {
-      throw new Error('API 서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인해 주세요.')
+      throw new Error('서버에 연결하지 못했어요.')
     }
     throw err
   } finally {
@@ -86,7 +86,7 @@ function request(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
 }
 
 export const api = {
-  getHome({ featuredLimit = 20, quoteLimit = 12 } = {}) {
+  getHome({ featuredLimit = 10, quoteLimit = 12 } = {}) {
     return request(
       `/api/home?featured_limit=${featuredLimit}&quote_limit=${quoteLimit}`,
     )

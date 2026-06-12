@@ -1,7 +1,7 @@
 <template>
   <section v-if="error && !loading" class="glt-empty glt-container glt-card">{{ error }}</section>
   <section v-else-if="novel && !loading" class="novel-detail glt-container">
-    <router-link to="/novels" class="back-link">← 책장</router-link>
+    <BackLink to="/novels" label="책장" />
 
     <div class="detail-body glt-card">
       <div class="detail-header">
@@ -45,16 +45,16 @@
           rel="noopener noreferrer"
           class="glt-btn glt-btn-ghost detail-action-btn"
         >
-          도서 구매 링크
+          구매
         </a>
       </div>
     </div>
 
     <section class="quotes-section">
-      <h2 class="section-title">등록된 문장</h2>
+      <h2 class="section-title">이 책의 한 줄</h2>
 
       <div v-if="!novel.quotes?.length" class="glt-empty glt-card">
-        <p>아직 등록된 문장이 없습니다.</p>
+        <p>아직 없어요</p>
         <router-link :to="registerRoute" class="glt-btn glt-btn-primary">첫 문장 등록</router-link>
       </div>
 
@@ -71,12 +71,14 @@
 
 <script>
 import { api } from '../api'
+import BackLink from '../components/BackLink.vue'
 import { getAladinPurchaseUrl } from '../utils/aladinLink'
 import { registerRouteForNovel } from '../utils/registerBook'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'NovelDetailView',
+  components: { BackLink },
   data() {
     return {
       novel: null,
@@ -105,7 +107,7 @@ export default {
     async loadNovel() {
       const id = Number(this.$route.params.id)
       if (!id) {
-        this.error = '잘못된 작품 주소입니다.'
+        this.error = '잘못된 주소예요.'
         this.loading = false
         return
       }
@@ -127,18 +129,6 @@ export default {
 </script>
 
 <style scoped>
-.back-link {
-  display: inline-block;
-  margin-bottom: var(--glt-space-3);
-  font-size: 0.82rem;
-  color: var(--glt-ink-tertiary);
-  text-decoration: none;
-}
-
-.back-link:hover {
-  color: var(--glt-accent-hover);
-}
-
 .detail-body {
   display: flex;
   flex-direction: column;

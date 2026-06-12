@@ -1,28 +1,26 @@
 <template>
   <section class="home glt-container">
     <header class="home-hero">
-      <h1 class="glt-title">우리가 알던 문장, 어디서 왔을까요?</h1>
-      <p class="hero-lead">괴테는 모든 것을 말했다고 합니다. 기억 속 문장의 출처를 찾아보세요.</p>
+      <h1 class="glt-title">이 문장, 어디서 들어봤더라?</h1>
 
       <div class="search-hero">
         <div class="search-row">
           <input
             v-model="query"
-            type="search"
+            type="text"
+            enterkeyhint="search"
             class="search-input"
-            placeholder="문장이나 도서명"
+            placeholder="들어본 것 같은 문장 검색해 보세요"
             @keyup.enter="handleSearch"
           />
-          <button type="button" class="search-submit" @click="handleSearch">검색</button>
+          <ClearIconButton v-if="query" @click="clearSearch" />
+          <SearchIconButton @click="handleSearch" />
         </div>
-        <button v-if="query" type="button" class="search-clear" @click="clearSearch">
-          입력 지우기
-        </button>
       </div>
     </header>
 
     <div v-if="error && !loading" class="error-panel glt-card">
-      <p class="error-title">불러오기 실패</p>
+      <p class="error-title">잠시 문제가 생겼어요</p>
       <p class="error-desc">{{ error }}</p>
       <button class="glt-btn glt-btn-primary" @click="loadHome">다시 시도</button>
     </div>
@@ -36,10 +34,9 @@
       />
 
       <div v-else-if="searched" class="empty-search glt-card">
-        <p class="empty-title">검색 결과가 없습니다.</p>
-        <p class="empty-hint">이 문장이 아직 등록되지 않았을 수 있어요.</p>
+        <p class="empty-title">아직 없어요</p>
         <router-link :to="registerRoute" class="glt-btn glt-btn-primary">
-          이 문장 등록하기
+          직접 등록하기
         </router-link>
       </div>
 
@@ -56,7 +53,9 @@
 
 <script>
 import { api } from '../api'
+import ClearIconButton from '../components/ClearIconButton.vue'
 import FeaturedBooks from '../components/FeaturedBooks.vue'
+import SearchIconButton from '../components/SearchIconButton.vue'
 import RecentQuotes from '../components/RecentQuotes.vue'
 import SourceSearchResults from '../components/SourceSearchResults.vue'
 import { registerRouteForSearchQuery } from '../utils/registerBook'
@@ -64,7 +63,7 @@ import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'HomeView',
-  components: { SourceSearchResults, FeaturedBooks, RecentQuotes },
+  components: { ClearIconButton, SourceSearchResults, FeaturedBooks, RecentQuotes, SearchIconButton },
   data() {
     return {
       query: '',
@@ -96,13 +95,13 @@ export default {
       this.recentQuotes = []
 
       try {
-        const home = await api.getHome({ featuredLimit: 20, quoteLimit: 12 })
+        const home = await api.getHome({ featuredLimit: 10, quoteLimit: 12 })
         this.libraryStats = home.stats
         this.featuredBooks = Array.isArray(home.featured_books) ? home.featured_books : []
         this.recentQuotes = Array.isArray(home.recent_quotes) ? home.recent_quotes : []
         this.bookmarkIds = new Set(home.bookmark_ids || [])
       } catch (e) {
-        this.error = e.message || '불러오기에 실패했습니다.'
+        this.error = e.message || '잠시 문제가 생겼어요.'
         this.bookmarkIds = new Set()
       } finally {
         this.loading = false
@@ -158,11 +157,10 @@ export default {
   margin-bottom: var(--glt-space-4);
 }
 
-.hero-lead {
-  margin: 4px 0 var(--glt-space-4);
-  font-size: 0.84rem;
-  line-height: 1.55;
-  color: var(--glt-ink-secondary);
+.home-hero .glt-title {
+  margin: 0 0 var(--glt-space-5);
+  font-size: 1.35rem;
+  line-height: 1.4;
 }
 
 .search-hero {
@@ -200,39 +198,6 @@ export default {
   color: var(--glt-ink-tertiary);
 }
 
-.search-submit {
-  flex-shrink: 0;
-  border: none;
-  border-radius: var(--glt-radius-full);
-  background: var(--glt-accent);
-  color: #fff;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 8px 14px;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(196, 105, 58, 0.25);
-  transition: background var(--glt-duration);
-}
-
-.search-submit:hover {
-  background: var(--glt-accent-hover);
-}
-
-.search-clear {
-  margin-top: 8px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--glt-ink-tertiary);
-  cursor: pointer;
-}
-
-.search-clear:hover {
-  color: var(--glt-accent-hover);
-}
-
 .error-panel {
   padding: var(--glt-space-6);
   text-align: center;
@@ -264,14 +229,8 @@ export default {
 }
 
 .empty-title {
-  margin: 0 0 var(--glt-space-2);
+  margin: 0 0 var(--glt-space-4);
   font-weight: 600;
   color: var(--glt-ink);
-}
-
-.empty-hint {
-  margin: 0 0 var(--glt-space-4);
-  font-size: 0.86rem;
-  color: var(--glt-ink-secondary);
 }
 </style>

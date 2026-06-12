@@ -46,7 +46,7 @@ def library_stats(response: Response, db: Session = Depends(get_db)):
 @router.get("/home", response_model=HomeOut)
 def home(
     response: Response,
-    featured_limit: int = Query(20, ge=1, le=20),
+    featured_limit: int = Query(10, ge=1, le=20),
     quote_limit: int = Query(12, ge=1, le=24),
     client_id: str | None = Depends(_optional_client_id),
     db: Session = Depends(get_db),
@@ -64,7 +64,7 @@ def home(
 @router.get("/library/featured", response_model=list[NovelWithQuotesOut])
 def featured_books(
     response: Response,
-    limit: int = Query(20, ge=1, le=20),
+    limit: int = Query(10, ge=1, le=20),
     db: Session = Depends(get_db),
 ):
     if settings.cache_enabled:

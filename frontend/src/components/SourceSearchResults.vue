@@ -1,7 +1,7 @@
 <template>
   <section class="source-results">
     <header class="results-head">
-      <h2 class="results-title">출처 {{ results.length }}건</h2>
+      <h2 class="results-title">{{ results.length }}건</h2>
     </header>
 
     <ul class="source-list">
@@ -31,17 +31,13 @@
         </component>
 
         <div class="result-actions">
-          <router-link :to="`/quotes/${item.quote.id}`" class="glt-btn glt-btn-ghost result-detail">
-            상세
-          </router-link>
-          <button
-            type="button"
-            class="result-bookmark"
-            :class="{ 'is-saved': bookmarkIds.has(item.quote.id) }"
+          <DetailIconLink :to="`/quotes/${item.quote.id}`" />
+          <BookmarkIconButton
+            :saved="bookmarkIds.has(item.quote.id)"
+            :action-label="COLLECT.action"
+            :saved-label="COLLECT.done"
             @click="$emit('toggle-bookmark', item.quote.id)"
-          >
-            {{ bookmarkIds.has(item.quote.id) ? COLLECT.done : COLLECT.action }}
-          </button>
+          />
         </div>
       </li>
     </ul>
@@ -49,6 +45,8 @@
 </template>
 
 <script>
+import BookmarkIconButton from './BookmarkIconButton.vue'
+import DetailIconLink from './DetailIconLink.vue'
 import { COLLECT } from '../utils/collectLabels'
 import {
   quoteAuthorName,
@@ -59,6 +57,7 @@ import {
 
 export default {
   name: 'SourceSearchResults',
+  components: { BookmarkIconButton, DetailIconLink },
   props: {
     results: { type: Array, required: true },
     bookmarkIds: { type: Set, required: true },
@@ -201,38 +200,7 @@ export default {
 
 .result-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
-  flex-wrap: wrap;
-}
-
-.result-detail {
-  font-size: 0.78rem;
-  padding: 6px 12px;
-}
-
-.result-bookmark {
-  border: 1px solid var(--glt-glass-border);
-  border-radius: var(--glt-radius-full);
-  background: var(--glt-surface);
-  color: var(--glt-ink-secondary);
-  font-size: 0.76rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition:
-    color var(--glt-duration),
-    border-color var(--glt-duration),
-    background var(--glt-duration);
-}
-
-.result-bookmark.is-saved {
-  background: var(--glt-accent-soft);
-  border-color: var(--glt-accent-muted);
-  color: var(--glt-accent-hover);
-}
-
-.result-bookmark:hover {
-  color: var(--glt-accent-hover);
-  border-color: var(--glt-accent-muted);
 }
 </style>

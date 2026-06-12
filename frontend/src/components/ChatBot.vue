@@ -4,23 +4,29 @@
       class="chat-fab"
       type="button"
       :aria-expanded="open"
-      aria-label="AI 책 추천"
+      aria-label="AI 채팅"
       @click="toggle"
     >
       <svg v-if="!open" class="chat-fab-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 7v13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
         <path
-          d="M5 5.2A2.2 2.2 0 0 1 7.2 3H12v17H7.2A2.2 2.2 0 0 1 5 17.8V5.2z"
+          d="M6 6.5h11A2.5 2.5 0 0 1 19.5 9v6.5A2.5 2.5 0 0 1 17 18H11.5L8 20.5V18H6A2.5 2.5 0 0 1 3.5 15.5V9A2.5 2.5 0 0 1 6 6.5z"
           fill="none"
           stroke="currentColor"
           stroke-width="1.75"
           stroke-linejoin="round"
         />
         <path
-          d="M19 5.2A2.2 2.2 0 0 0 16.8 3H12v17h4.8A2.2 2.2 0 0 0 19 17.8V5.2z"
+          d="M8 11.5h7M8 14.5h4.5"
           fill="none"
           stroke="currentColor"
           stroke-width="1.75"
+          stroke-linecap="round"
+        />
+        <path
+          d="M17.5 4.5l.55 1.85 1.85.55-1.85.55-.55 1.85-.55-1.85-1.85-.55 1.85-.55.55-1.85z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
           stroke-linejoin="round"
         />
       </svg>
@@ -37,24 +43,17 @@
 
     <div v-if="open" class="chat-panel glt-card">
       <header class="chat-header">
-        <h2 class="chat-title">AI 책 추천</h2>
-        <p class="chat-desc">
-          기분이나 좋아하는 책을 알려주세요. 등록된 도서와 AI가 아는 책을 함께 추천해 드려요.
-        </p>
+        <h2 class="chat-title">뭐 읽을까</h2>
       </header>
 
       <div ref="messagesEl" class="chat-messages">
         <div v-if="showIntro" class="chat-intro">
           <div class="chat-message chat-message--assistant">
-            <p class="chat-bubble">
-              안녕하세요. 읽고 싶은 분위기나 떠오르는 책을 말씀해 주세요.
-              우리 서비스에 등록된 도서가 있으면 함께 보여 드리고,
-              그밖에 어울리는 책도 AI가 추천해 드려요.
-            </p>
+            <p class="chat-bubble">요즘 어떤 책이 끌려요?</p>
           </div>
 
           <div class="chat-suggestions">
-            <p class="suggestions-label">예시를 눌러 바로 물어보기</p>
+            <p class="suggestions-label">예시</p>
             <div class="suggestions-list">
               <button
                 v-for="example in examples"
@@ -86,8 +85,8 @@
             >
               <div class="rec-head">
                 <strong>{{ rec.title }}</strong>
-                <span v-if="rec.in_library" class="rec-badge rec-badge--library">등록된 도서</span>
-                <span v-else class="rec-badge rec-badge--ai">AI 추천</span>
+                <span v-if="rec.in_library" class="rec-badge rec-badge--library">등록</span>
+                <span v-else class="rec-badge rec-badge--ai">AI</span>
               </div>
               <p class="rec-author">{{ rec.author }}</p>
               <p class="rec-reason">{{ rec.reason }}</p>
@@ -96,7 +95,7 @@
         </div>
 
         <div v-if="loading" class="chat-message chat-message--assistant">
-          <p class="chat-bubble chat-bubble--loading">추천하고 있어요…</p>
+          <p class="chat-bubble chat-bubble--loading">…</p>
         </div>
       </div>
 
@@ -104,11 +103,25 @@
         <input
           v-model="input"
           type="text"
-          placeholder="예: 차분한 밤에 읽을 책"
+          placeholder="메시지 입력"
           :disabled="loading"
         />
-        <button class="glt-btn glt-btn-primary" type="submit" :disabled="loading || !input.trim()">
-          보내기
+        <button
+          class="chat-send-btn"
+          type="submit"
+          :disabled="loading || !input.trim()"
+          aria-label="보내기"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M5 12h12M13 8l4 4-4 4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
         </button>
       </form>
 
@@ -122,11 +135,11 @@ import { api } from '../api'
 import { friendlyRegisterError } from '../utils/registerErrors'
 
 const EXAMPLE_PROMPTS = [
-  '외로운 밤에 읽기 좋은 책 추천해 주세요',
-  '슬플 때 위로가 되는 문장이 있는 작품이요',
-  '《데미안》 같은 성장 소설 찾고 있어요',
-  '짧고 감각적인 문장이 많은 책이요',
-  '한국 소설 중에 잔잔한 분위기의 책이요',
+  '외로운 밤에 읽을 책',
+  '위로가 되는 문장',
+  '《데미안》 같은 소설',
+  '짧고 감각적인 문장',
+  '잔잔한 한국 소설',
 ]
 
 export default {
@@ -194,7 +207,7 @@ export default {
 .chatbot {
   position: fixed;
   right: max(14px, calc((100vw - var(--glt-app-width)) / 2 + 14px));
-  bottom: calc(var(--glt-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
+  bottom: calc(var(--glt-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 20px);
   z-index: 200;
 }
 
@@ -227,7 +240,7 @@ export default {
   right: 0;
   bottom: 64px;
   width: min(340px, calc(var(--glt-app-width) - 24px));
-  height: min(460px, calc(100dvh - var(--glt-bottom-nav-height) - env(safe-area-inset-bottom, 0px) - 100px));
+  height: min(460px, calc(100dvh - var(--glt-bottom-nav-height) - env(safe-area-inset-bottom, 0px) - 108px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -435,9 +448,33 @@ export default {
   box-shadow: 0 0 0 3px var(--glt-accent-soft);
 }
 
-.chat-input .glt-btn {
-  padding: 10px 14px;
-  font-size: 0.8rem;
+.chat-send-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--glt-accent);
+  color: #fff;
+  cursor: pointer;
+  transition: background var(--glt-duration), opacity var(--glt-duration);
+}
+
+.chat-send-btn:hover:not(:disabled) {
+  background: var(--glt-accent-hover);
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chat-send-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 .chat-error {

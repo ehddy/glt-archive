@@ -41,9 +41,9 @@
   --glt-bubble-border: rgba(212, 195, 170, 0.75);
   --glt-bubble-shadow: 0 3px 14px rgba(61, 52, 41, 0.06);
 
-  /* Typography */
-  --glt-font-sans: 'DM Sans', 'Noto Sans KR', -apple-system, sans-serif;
-  --glt-font-serif: 'Noto Serif KR', Georgia, serif;
+  /* Typography — Pretendard (토스·당근·뱅크샐러드 등 국내 앱 표준) */
+  --glt-font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --glt-font-serif: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
 
   /* Spacing */
   --glt-space-1: 4px;
@@ -78,8 +78,8 @@
   /* Layout — iPhone 17 baseline (402 × 874 CSS px, @3x) */
   --glt-app-width: 402px;
   --glt-app-height: 874px;
-  --glt-header-height: 56px;
-  --glt-bottom-nav-height: 62px;
+  --glt-header-height: 0px;
+  --glt-bottom-nav-height: 68px;
   --glt-container: 100%;
   --glt-book-width: 152px;
   --glt-book-min-height: 118px;

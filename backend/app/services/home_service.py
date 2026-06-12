@@ -33,7 +33,7 @@ def _build_home(
 def get_home(
     db: Session,
     *,
-    featured_limit: int = 20,
+    featured_limit: int = 10,
     quote_limit: int = 12,
     client_id: str | None = None,
 ) -> HomeOut:

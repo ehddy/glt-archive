@@ -1,9 +1,9 @@
 export const COLLECT = {
-  action: '문장 담기',
-  done: '담아 둠',
-  remove: '담기 해제',
-  nav: '담은 문장',
-  pageTitle: '담은 문장',
-  empty: '담은 문장이 없습니다.',
-  flash: '문장을 담았습니다.',
+  action: '담기',
+  done: '담아둠',
+  remove: '빼기',
+  nav: '담은',
+  pageTitle: '담아둔 한 줄',
+  empty: '아직 담은 게 없어요',
+  flash: '담아뒀어요',
 }

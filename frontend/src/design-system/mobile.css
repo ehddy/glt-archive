@@ -8,12 +8,21 @@
 .glt-title {
   font-size: 1.2rem;
   margin-top: 0;
-  margin-bottom: 4px;
+  margin-bottom: var(--glt-space-3);
   line-height: 1.35;
 }
 
 .page-head {
-  margin-bottom: var(--glt-space-3);
+  margin-bottom: var(--glt-space-4);
+}
+
+.page-head .search-hero,
+.page-head .glt-search {
+  margin-top: var(--glt-space-2);
+}
+
+.page-head + .glt-search {
+  margin-top: var(--glt-space-2);
 }
 
 .page-head .glt-title,
@@ -25,10 +34,6 @@
   margin: 0;
   font-size: 0.84rem;
   line-height: 1.55;
-}
-
-.back-link {
-  margin-bottom: 6px;
 }
 
 .glt-search {

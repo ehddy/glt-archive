@@ -2,10 +2,10 @@
   <section v-if="books.length" class="featured">
     <header class="featured-head">
       <div class="featured-head-left">
-        <h2 class="featured-title">대표 도서</h2>
+        <h2 class="featured-title">많이 찾는 책</h2>
         <span v-if="stats" class="featured-stats">{{ stats.total_books }}권 · {{ stats.total_quotes }}문장</span>
       </div>
-      <router-link to="/novels" class="featured-more">책장 보기</router-link>
+      <router-link to="/novels" class="featured-more">모두 보기</router-link>
     </header>
 
     <div class="featured-scroll-wrap">

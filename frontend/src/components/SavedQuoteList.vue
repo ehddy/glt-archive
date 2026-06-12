@@ -29,16 +29,11 @@
         </component>
 
         <div class="saved-actions">
-          <router-link :to="`/quotes/${quote.id}`" class="glt-btn glt-btn-ghost saved-detail">
-            상세
-          </router-link>
-          <button
-            type="button"
-            class="saved-remove"
+          <DetailIconLink :to="`/quotes/${quote.id}`" />
+          <RemoveIconButton
+            :label="COLLECT.remove"
             @click="$emit('remove', quote.id)"
-          >
-            {{ COLLECT.remove }}
-          </button>
+          />
         </div>
       </li>
     </ul>
@@ -46,6 +41,8 @@
 </template>
 
 <script>
+import DetailIconLink from './DetailIconLink.vue'
+import RemoveIconButton from './RemoveIconButton.vue'
 import { COLLECT } from '../utils/collectLabels'
 import {
   quoteAuthorName,
@@ -56,6 +53,7 @@ import {
 
 export default {
   name: 'SavedQuoteList',
+  components: { DetailIconLink, RemoveIconButton },
   props: {
     quotes: { type: Array, required: true },
   },
@@ -193,33 +191,7 @@ export default {
 
 .saved-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
-  flex-wrap: wrap;
-}
-
-.saved-detail {
-  font-size: 0.78rem;
-  padding: 6px 12px;
-}
-
-.saved-remove {
-  border: 1px solid var(--glt-glass-border);
-  border-radius: var(--glt-radius-full);
-  background: var(--glt-surface);
-  color: var(--glt-ink-secondary);
-  font-size: 0.76rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition:
-    color var(--glt-duration),
-    border-color var(--glt-duration),
-    background var(--glt-duration);
-}
-
-.saved-remove:hover {
-  color: var(--glt-accent-hover);
-  border-color: var(--glt-accent-muted);
-  background: rgba(196, 105, 58, 0.06);
 }
 </style>

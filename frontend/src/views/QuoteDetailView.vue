@@ -1,10 +1,10 @@
 <template>
   <section v-if="error && !loading" class="glt-empty">{{ error }}</section>
   <section v-else-if="quote && !loading" class="detail glt-container">
-    <router-link to="/" class="back-link">← 목록</router-link>
+    <BackLink to="/" label="뒤로" />
 
     <header class="detail-header">
-      <h1 class="glt-title">문장</h1>
+      <h1 class="glt-title">한 줄</h1>
       <router-link
         v-if="hasLinkedNovel"
         :to="registerRoute"
@@ -53,14 +53,14 @@
         <p v-if="authorName" class="readonly-author">{{ authorName }}</p>
       </div>
 
-      <button
-        type="button"
-        class="glt-btn collect-btn"
-        :class="isBookmarked ? 'glt-btn-ghost is-collected' : 'glt-btn-primary'"
-        @click="toggleBookmark"
-      >
-        {{ isBookmarked ? COLLECT.done : COLLECT.action }}
-      </button>
+      <div class="collect-action">
+        <BookmarkIconButton
+          :saved="isBookmarked"
+          :action-label="COLLECT.action"
+          :saved-label="COLLECT.done"
+          @click="toggleBookmark"
+        />
+      </div>
       <p v-if="collectMessage" class="collect-message" :class="{ 'is-error': collectIsError }">
         {{ collectMessage }}
       </p>
@@ -70,7 +70,9 @@
 
 <script>
 import { api } from '../api'
+import BackLink from '../components/BackLink.vue'
 import BookNode from '../components/BookNode.vue'
+import BookmarkIconButton from '../components/BookmarkIconButton.vue'
 import { COLLECT } from '../utils/collectLabels'
 import { quoteAuthorName, quoteCoverUrl, quoteNovelId, quoteSourceTitle } from '../utils/quoteDisplay'
 import { registerRouteForNovel, registerRouteForQuote } from '../utils/registerBook'
@@ -78,7 +80,7 @@ import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'QuoteDetailView',
-  components: { BookNode },
+  components: { BackLink, BookNode, BookmarkIconButton },
   data() {
     return {
       quote: null,
@@ -167,13 +169,6 @@ export default {
 </script>
 
 <style scoped>
-.back-link {
-  display: inline-block;
-  margin-bottom: var(--glt-space-3);
-  color: var(--glt-ink-secondary);
-  font-size: 0.85rem;
-}
-
 .detail-header {
   display: flex;
   align-items: center;
@@ -302,16 +297,20 @@ export default {
   color: var(--glt-ink-secondary);
 }
 
-.collect-btn {
-  width: 100%;
-  padding: 12px 18px;
-  font-size: 0.92rem;
+.collect-action {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--glt-space-1);
 }
 
-.collect-btn.is-collected {
-  color: var(--glt-accent-hover);
-  border-color: var(--glt-accent-muted);
-  background: var(--glt-accent-soft);
+.collect-action :deep(.bookmark-icon-btn) {
+  width: 44px;
+  height: 44px;
+}
+
+.collect-action :deep(.bookmark-icon-btn svg) {
+  width: 20px;
+  height: 20px;
 }
 
 .collect-message {

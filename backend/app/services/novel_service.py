@@ -37,7 +37,7 @@ def get_library_stats(db: Session) -> dict[str, int]:
     return dict(cached)
 
 
-def query_featured_books(db: Session, limit: int = 20) -> list[NovelWithQuotesOut]:
+def query_featured_books(db: Session, limit: int = 10) -> list[NovelWithQuotesOut]:
     quote_counts = (
         db.query(
             Quote.novel_id,
@@ -73,7 +73,7 @@ def query_featured_books(db: Session, limit: int = 20) -> list[NovelWithQuotesOu
     ]
 
 
-def get_featured_books(db: Session, limit: int = 20) -> list[NovelWithQuotesOut]:
+def get_featured_books(db: Session, limit: int = 10) -> list[NovelWithQuotesOut]:
     cache_key = f"featured:{limit}"
 
     def load() -> list[dict]:

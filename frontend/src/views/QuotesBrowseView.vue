@@ -1,20 +1,20 @@
 <template>
   <section class="quotes-browse glt-container">
     <header class="page-head">
-      <h1 class="glt-title page-title">명문장</h1>
-      <p class="page-lead">기억 속 문장의 출처를 찾아보세요.</p>
+      <h1 class="glt-title page-title">한줄 모음</h1>
     </header>
 
     <div class="browse-toolbar glt-card">
       <div class="glt-search browse-search">
         <input
           v-model="query"
-          type="search"
-          placeholder="문장, 도서명, 작가명"
+          type="text"
+          enterkeyhint="search"
+          placeholder="문장·책·작가 검색해 보세요"
           @keyup.enter="applySearch"
         />
-        <button v-if="query" class="glt-btn glt-btn-ghost" @click="clearSearch">지우기</button>
-        <button class="glt-btn glt-btn-primary" @click="applySearch">검색</button>
+        <ClearIconButton v-if="query" @click="clearSearch" />
+        <SearchIconButton @click="applySearch" />
       </div>
       <p v-if="!initialLoading && total !== null" class="result-count">
         <span class="result-count-num">{{ total }}</span>문장
@@ -25,9 +25,8 @@
     <div v-if="error && !initialLoading" class="state-panel state-panel--error">{{ error }}</div>
 
     <div v-else-if="!initialLoading && !quotes.length" class="state-panel state-panel--empty">
-      <p class="state-title">아직 문장이 없습니다</p>
-      <p class="state-desc">첫 문장을 등록해 보세요.</p>
-      <router-link :to="registerRoute" class="glt-btn glt-btn-primary">문장 등록</router-link>
+      <p class="state-title">아직 없어요</p>
+      <router-link :to="registerRoute" class="glt-btn glt-btn-primary">첫 문장 등록</router-link>
     </div>
 
     <template v-else-if="!initialLoading">
@@ -52,14 +51,16 @@
 
 <script>
 import { api } from '../api'
+import ClearIconButton from '../components/ClearIconButton.vue'
 import LoadMoreBar from '../components/LoadMoreBar.vue'
+import SearchIconButton from '../components/SearchIconButton.vue'
 import QuoteBrowseItem from '../components/QuoteBrowseItem.vue'
 import { registerRouteForSearchQuery } from '../utils/registerBook'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'QuotesBrowseView',
-  components: { LoadMoreBar, QuoteBrowseItem },
+  components: { ClearIconButton, LoadMoreBar, QuoteBrowseItem, SearchIconButton },
   data() {
     return {
       quotes: [],

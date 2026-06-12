@@ -1,4 +1,30 @@
 /* ── Layout ── */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: 0 0 var(--glt-space-2) -6px;
+  border-radius: 10px;
+  color: var(--glt-ink-secondary);
+  text-decoration: none;
+  transition: background var(--glt-duration), color var(--glt-duration);
+}
+
+.back-link:hover,
+.back-link:focus-visible {
+  background: var(--glt-overlay);
+  color: var(--glt-ink);
+  outline: none;
+}
+
+.back-link-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
 .glt-container {
   width: 100%;
   max-width: var(--glt-app-width);
@@ -151,6 +177,20 @@
 }
 
 /* ── Search ── */
+/* Custom clear buttons replace the browser default on type="search" */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+input[type="search"]::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .glt-search {
   display: flex;
   align-items: center;

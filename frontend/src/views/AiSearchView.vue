@@ -1,36 +1,24 @@
 <template>
   <section class="ai-search glt-container">
     <header class="page-head">
-      <h1 class="glt-title page-title">AI 문장 찾기</h1>
-      <p class="page-lead">
-        단어·감정·책 이름·책 속 문장으로 AI가 문장과 출처를 찾아드려요.
-      </p>
+      <h1 class="glt-title page-title">AI로 찾기</h1>
 
       <form class="search-hero" @submit.prevent="handleSearch">
         <div class="search-row">
           <input
             v-model="query"
-            type="search"
+            type="text"
+            enterkeyhint="search"
             class="search-input"
-            placeholder="예: 사랑, 감자, 바다 속 고요함"
+            placeholder="느낌·키워드로 검색해 보세요"
             :disabled="loading"
           />
-          <button
+          <ClearIconButton v-if="query" @click="clearQuery" />
+          <SearchIconButton
             type="submit"
-            class="search-submit"
             :disabled="loading || !query.trim()"
-          >
-            검색
-          </button>
+          />
         </div>
-        <button
-          v-if="query"
-          type="button"
-          class="search-clear"
-          @click="clearQuery"
-        >
-          입력 지우기
-        </button>
       </form>
     </header>
 
@@ -40,7 +28,7 @@
       <header class="news-head">
         <h2 class="news-summary">{{ result.summary }}</h2>
         <p class="news-meta">
-          키워드 <strong>{{ result.query }}</strong> · {{ result.articles.length }}건
+          <strong>{{ result.query }}</strong> · {{ result.articles.length }}건
         </p>
       </header>
 
@@ -49,56 +37,59 @@
           <article class="news-card">
             <blockquote class="news-quote">{{ article.quote }}</blockquote>
             <div class="news-byline">
-              <div class="news-field">
-                <span class="news-label">출처</span>
-                <span class="news-source">{{ article.source_title }}</span>
+              <div class="news-byline-fields">
+                <div class="news-field">
+                  <span class="news-label">출처</span>
+                  <span class="news-source">{{ article.source_title }}</span>
+                </div>
+                <div v-if="article.author" class="news-field">
+                  <span class="news-label">작가</span>
+                  <span class="news-author">{{ article.author }}</span>
+                </div>
               </div>
-              <div v-if="article.author" class="news-field">
-                <span class="news-label">작가</span>
-                <span class="news-author">{{ article.author }}</span>
+              <div class="news-byline-actions">
+                <a
+                  v-if="article.source_url"
+                  :href="article.source_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="news-link"
+                >
+                  출처
+                </a>
+                <RegisterIconButton
+                  label="등록"
+                  @click="registerArticle(article)"
+                />
               </div>
             </div>
             <p v-if="article.context" class="news-context">
               <span class="news-label">설명</span>
               <span>{{ article.context }}</span>
             </p>
-            <div class="news-actions">
-              <button
-                type="button"
-                class="glt-btn glt-btn-primary news-register-btn"
-                @click="registerArticle(article)"
-              >
-                이 문장 등록
-              </button>
-              <a
-                v-if="article.source_url"
-                :href="article.source_url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="news-link"
-              >
-                출처 보기 →
-              </a>
-            </div>
           </article>
         </li>
       </ul>
     </template>
 
     <div v-else-if="searched && !loading" class="state-panel">
-      결과가 없습니다.
+      아직 없어요
     </div>
   </section>
 </template>
 
 <script>
 import { api } from '../api'
+import ClearIconButton from '../components/ClearIconButton.vue'
+import RegisterIconButton from '../components/RegisterIconButton.vue'
+import SearchIconButton from '../components/SearchIconButton.vue'
 import { loadAiSearchState, saveAiSearchState } from '../utils/aiSearchState'
 import { registerRouteForAiArticle } from '../utils/registerBook'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'AiSearchView',
+  components: { ClearIconButton, RegisterIconButton, SearchIconButton },
   data() {
     return {
       query: '',
@@ -136,7 +127,7 @@ export default {
       if (!q) return
 
       this.loading = true
-      startPageLoading('AI가 문장을 찾는 중')
+      startPageLoading('AI가 찾는 중')
       this.error = ''
       this.result = null
       this.searched = true
@@ -173,7 +164,7 @@ export default {
 }
 
 .page-title {
-  margin-top: 0;
+  margin: 0 0 var(--glt-space-5);
 }
 
 .page-lead {
@@ -222,44 +213,6 @@ export default {
 
 .search-input:disabled {
   opacity: 0.6;
-}
-
-.search-submit {
-  flex-shrink: 0;
-  border: none;
-  border-radius: var(--glt-radius-full);
-  background: var(--glt-accent);
-  color: #fff;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 8px 14px;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(196, 105, 58, 0.25);
-  transition: background var(--glt-duration);
-}
-
-.search-submit:hover:not(:disabled) {
-  background: var(--glt-accent-hover);
-}
-
-.search-submit:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.search-clear {
-  margin-top: 8px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--glt-ink-tertiary);
-  cursor: pointer;
-}
-
-.search-clear:hover {
-  color: var(--glt-accent-hover);
 }
 
 .error-msg {
@@ -314,6 +267,13 @@ export default {
   box-shadow: 0 2px 10px rgba(61, 52, 41, 0.04);
 }
 
+.news-byline-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .news-quote {
   margin: 0;
   padding: 0;
@@ -329,11 +289,20 @@ export default {
 
 .news-byline {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid rgba(226, 213, 196, 0.65);
+}
+
+.news-byline-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .news-field {
@@ -372,20 +341,8 @@ export default {
   color: var(--glt-ink-secondary);
 }
 
-.news-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 14px;
-  margin-top: 12px;
-}
-
-.news-register-btn {
-  padding: 7px 14px;
-  font-size: 0.76rem;
-}
-
 .news-link {
+  flex-shrink: 0;
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--glt-ink-tertiary);

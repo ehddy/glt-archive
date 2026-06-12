@@ -12,24 +12,6 @@
 
 
 
-      <header class="header">
-
-        <div class="glt-container header-inner">
-
-          <router-link to="/" class="brand">
-
-            <span class="brand-mark">G</span>
-
-            <strong class="brand-name">괴테는 모든 것을 말했다</strong>
-
-          </router-link>
-
-        </div>
-
-      </header>
-
-
-
       <main class="main">
 
         <transition name="register-backdrop">
@@ -61,7 +43,7 @@
 
       <nav class="bottom-nav" aria-label="주 메뉴">
 
-        <router-link :to="{ name: 'home' }" class="tab-item">
+        <router-link :to="{ name: 'home' }" class="tab-item" aria-label="홈">
 
           <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
 
@@ -71,11 +53,9 @@
 
           </svg>
 
-          <span class="tab-label">찾기</span>
-
         </router-link>
 
-        <router-link :to="{ name: 'ai-search' }" class="tab-item">
+        <router-link :to="{ name: 'ai-search' }" class="tab-item" aria-label="AI">
 
           <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
 
@@ -97,15 +77,11 @@
 
           </svg>
 
-          <span class="tab-label">AI</span>
-
         </router-link>
 
-        <router-link :to="registerNavTarget" class="tab-item tab-item--register">
+        <router-link :to="registerNavTarget" class="tab-item tab-item--register" aria-label="등록">
 
           <span class="tab-register-btn">+</span>
-
-          <span class="tab-label">등록</span>
 
         </router-link>
 
@@ -116,6 +92,7 @@
           class="tab-item"
 
           :class="{ 'is-tab-active': $route.name === 'novel-detail' }"
+          aria-label="책장"
 
         >
 
@@ -141,11 +118,9 @@
 
           </svg>
 
-          <span class="tab-label">도서</span>
-
         </router-link>
 
-        <router-link :to="{ name: 'saved' }" class="tab-item">
+        <router-link :to="{ name: 'saved' }" class="tab-item" aria-label="담은">
 
           <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
 
@@ -159,8 +134,6 @@
             />
 
           </svg>
-
-          <span class="tab-label">담은</span>
 
         </router-link>
 
@@ -373,98 +346,6 @@ export default {
 
 
 
-.header {
-
-  position: sticky;
-
-  top: 0;
-
-  z-index: 100;
-
-  background: var(--glt-header-bg);
-
-  backdrop-filter: blur(12px);
-
-  border-bottom: 1px solid var(--glt-glass-border);
-
-  padding-top: env(safe-area-inset-top, 0px);
-
-}
-
-
-
-.header-inner {
-
-  display: flex;
-
-  align-items: center;
-
-  padding-top: 12px;
-
-  padding-bottom: 12px;
-
-}
-
-
-
-.brand {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  text-decoration: none;
-
-}
-
-
-
-.brand-mark {
-
-  width: 36px;
-
-  height: 36px;
-
-  flex-shrink: 0;
-
-  display: grid;
-
-  place-items: center;
-
-  border-radius: 11px;
-
-  background: var(--glt-accent);
-
-  color: #fff;
-
-  font-family: var(--glt-font-serif);
-
-  font-size: 1rem;
-
-  font-weight: 700;
-
-}
-
-
-
-.brand-name {
-
-  font-size: 0.82rem;
-
-  font-weight: 700;
-
-  line-height: 1.35;
-
-  letter-spacing: -0.03em;
-
-  color: var(--glt-ink);
-
-}
-
-
-
 .main {
 
   position: relative;
@@ -473,7 +354,7 @@ export default {
 
   flex: 1;
 
-  padding: var(--glt-space-3) 0 var(--glt-page-bottom);
+  padding: calc(var(--glt-safe-top) + var(--glt-space-3)) 0 var(--glt-page-bottom);
 
 }
 
@@ -499,11 +380,11 @@ export default {
 
   grid-template-columns: repeat(5, 1fr);
 
-  align-items: end;
+  align-items: center;
 
   gap: 2px;
 
-  padding: 6px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px));
 
   background: var(--glt-nav-bg);
 
@@ -527,11 +408,9 @@ export default {
 
   justify-content: center;
 
-  gap: 3px;
+  min-height: 44px;
 
-  min-height: 52px;
-
-  padding: 4px 2px;
+  padding: 6px 2px;
 
   border-radius: 12px;
 
@@ -547,27 +426,13 @@ export default {
 
 .tab-icon {
 
-  width: 20px;
+  width: 24px;
 
-  height: 20px;
+  height: 24px;
 
   flex-shrink: 0;
 
   display: block;
-
-}
-
-
-
-.tab-label {
-
-  font-size: 0.62rem;
-
-  font-weight: 600;
-
-  letter-spacing: -0.01em;
-
-  line-height: 1.1;
 
 }
 
@@ -585,19 +450,11 @@ export default {
 
 
 
-.tab-item--register {
-
-  margin-top: -10px;
-
-}
-
-
-
 .tab-register-btn {
 
-  width: 44px;
+  width: 48px;
 
-  height: 44px;
+  height: 48px;
 
   display: grid;
 
@@ -609,7 +466,7 @@ export default {
 
   color: #fff;
 
-  font-size: 1.35rem;
+  font-size: 1.45rem;
 
   font-weight: 500;
 
@@ -670,13 +527,13 @@ export default {
 
 .register-backdrop {
   position: fixed;
-  top: var(--glt-header-height);
+  top: 0;
   left: 50%;
   transform: translateX(-50%);
   z-index: 140;
   width: 100%;
   max-width: var(--glt-app-width);
-  height: calc(100dvh - var(--glt-header-height));
+  height: 100dvh;
   border: none;
   padding: 0;
   background: var(--glt-backdrop);
