@@ -2,10 +2,11 @@ import threading
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.config import settings
 
-_db_semaphore = threading.Semaphore(3)
+_db_semaphore = threading.Semaphore(2)
 
 def _is_sqlite(url: str) -> bool:
     return url.startswith("sqlite")
@@ -26,11 +27,9 @@ def _engine_kwargs(url: str) -> dict:
             connect_args["sslmode"] = "require"
         kwargs["connect_args"] = connect_args
         if "supabase" in url:
-            # Session pooler has a low connection cap; keep the pool small.
-            kwargs["pool_size"] = 1
-            kwargs["max_overflow"] = 2
-            kwargs["pool_timeout"] = 60
-            kwargs["pool_recycle"] = 300
+            # Supabase session pooler (5432) allows ~15 clients total across all apps.
+            # NullPool avoids holding idle connections in the API process.
+            kwargs["poolclass"] = NullPool
         else:
             kwargs["pool_size"] = 5
             kwargs["max_overflow"] = 5

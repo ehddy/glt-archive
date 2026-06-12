@@ -27,6 +27,15 @@ from app.services.source_service import migrate_sources
 app = FastAPI(title=settings.app_name)
 
 
+def _db_busy_message(exc: Exception) -> str | None:
+    message = str(exc).lower()
+    if "emaxconnsession" in message or "max clients reached" in message:
+        return "데이터베이스 연결이 가득 찼어요. 잠시 후 다시 시도해 주세요."
+    if "too many connections" in message:
+        return "데이터베이스 연결이 많아요. 잠시 후 다시 시도해 주세요."
+    return None
+
+
 @app.exception_handler(RuntimeError)
 def runtime_error_handler(_request, exc):
     from fastapi.responses import JSONResponse
@@ -35,6 +44,14 @@ def runtime_error_handler(_request, exc):
     if "데이터베이스" in message:
         return JSONResponse(status_code=503, content={"detail": message})
     return JSONResponse(status_code=500, content={"detail": message})
+
+
+@app.exception_handler(OperationalError)
+def operational_error_handler(_request, exc):
+    from fastapi.responses import JSONResponse
+
+    detail = _db_busy_message(exc) or "데이터베이스에 연결하지 못했어요. 잠시 후 다시 시도해 주세요."
+    return JSONResponse(status_code=503, content={"detail": detail})
 
 
 app.add_middleware(
