@@ -1,9 +1,13 @@
 const LETTER_RE = /[A-Za-z]/
 const SPECIAL_RE = /[^A-Za-z0-9]/
+const BCRYPT_MAX_BYTES = 72
 
 export function getPasswordValidationError(password) {
   if (!password || password.length < 8) {
     return '비밀번호는 8자 이상이어야 해요.'
+  }
+  if (new TextEncoder().encode(password).length > BCRYPT_MAX_BYTES) {
+    return '비밀번호가 너무 길어요.'
   }
   if (!LETTER_RE.test(password)) {
     return '비밀번호에 영문자를 포함해 주세요.'
