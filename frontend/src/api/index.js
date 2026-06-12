@@ -1,5 +1,6 @@
 // 모든 요청은 /api 경로로 백엔드에 전달 (개발: Vite 프록시, 배포: nginx)
 import { getClientId } from '../utils/clientId'
+import { dbRequestQueue } from './requestQueue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
@@ -7,11 +8,10 @@ const REQUEST_TIMEOUT_MS = 8000
 const CHAT_TIMEOUT_MS = 60000
 const AI_SEARCH_TIMEOUT_MS = 90000
 
-function apiConnectionMessage(status) {
-  if (status === 404) {
-    return 'API를 찾을 수 없습니다. 백엔드가 실행 중인지 확인해 주세요.'
-  }
-  return `서버 응답 오류 (${status})`
+function shouldUseQueue(path, options = {}) {
+  if (path.includes('/chat') || path.includes('/ai-search')) return false
+  const method = (options.method || 'GET').toUpperCase()
+  return method === 'GET' || method === 'HEAD'
 }
 
 async function parseJsonResponse(response) {
@@ -22,7 +22,14 @@ async function parseJsonResponse(response) {
   return response.json()
 }
 
-async function request(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+function apiConnectionMessage(status) {
+  if (status === 404) {
+    return 'API를 찾을 수 없습니다. 백엔드가 실행 중인지 확인해 주세요.'
+  }
+  return `서버 응답 오류 (${status})`
+}
+
+async function requestRaw(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
 
@@ -70,12 +77,25 @@ async function request(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   }
 }
 
+function request(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+  const exec = () => requestRaw(path, options, timeoutMs)
+  if (shouldUseQueue(path, options)) {
+    return dbRequestQueue.enqueue(exec)
+  }
+  return exec()
+}
+
 export const api = {
   getLibrary() {
     return request('/api/library')
   },
   getLibraryStats() {
     return request('/api/library/stats')
+  },
+  getHome({ featuredLimit = 20, quoteLimit = 12 } = {}) {
+    return request(
+      `/api/home?featured_limit=${featuredLimit}&quote_limit=${quoteLimit}`,
+    )
   },
   getFeaturedBooks(limit = 20) {
     return request(`/api/library/featured?limit=${limit}`)

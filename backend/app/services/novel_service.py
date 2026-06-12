@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, text
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.models import Author, Novel, Quote, Source
@@ -66,34 +66,50 @@ def get_library(db: Session) -> LibraryOut:
 
 
 def get_library_stats(db: Session) -> dict[str, int]:
-    total_books = db.query(func.count(Novel.id)).scalar() or 0
-    total_quotes = db.query(func.count(Quote.id)).scalar() or 0
-    return {"total_books": total_books, "total_quotes": total_quotes}
+    row = db.execute(
+        text(
+            "SELECT "
+            "(SELECT COUNT(*) FROM novels), "
+            "(SELECT COUNT(*) FROM quotes)"
+        )
+    ).one()
+    return {"total_books": int(row[0] or 0), "total_quotes": int(row[1] or 0)}
 
 
 def get_featured_books(db: Session, limit: int = 20) -> list[NovelWithQuotesOut]:
-    novels = (
-        db.query(Novel)
-        .options(joinedload(Novel.author), joinedload(Novel.quotes))
+    quote_counts = (
+        db.query(
+            Quote.novel_id,
+            func.count(Quote.id).label("quote_count"),
+        )
+        .filter(Quote.novel_id.isnot(None))
+        .group_by(Quote.novel_id)
+        .subquery()
+    )
+
+    rows = (
+        db.query(Novel, quote_counts.c.quote_count)
+        .options(joinedload(Novel.author))
+        .outerjoin(quote_counts, Novel.id == quote_counts.c.novel_id)
+        .order_by(quote_counts.c.quote_count.desc().nullslast(), Novel.title)
+        .limit(limit)
         .all()
     )
-    ranked = sorted(novels, key=lambda novel: len(novel.quotes or []), reverse=True)
-    featured = []
-    for novel in ranked[:limit]:
-        featured.append(
-            NovelWithQuotesOut(
-                id=novel.id,
-                title=novel.title,
-                author=novel.author,
-                quote_count=len(novel.quotes or []),
-                quotes=[],
-                cover_url=novel.cover_url,
-                publisher=novel.publisher,
-                pub_date=novel.pub_date,
-                aladin_item_id=novel.aladin_item_id,
-            )
+
+    return [
+        NovelWithQuotesOut(
+            id=novel.id,
+            title=novel.title,
+            author=novel.author,
+            quote_count=int(count or 0),
+            quotes=[],
+            cover_url=novel.cover_url,
+            publisher=novel.publisher,
+            pub_date=novel.pub_date,
+            aladin_item_id=novel.aladin_item_id,
         )
-    return featured
+        for novel, count in rows
+    ]
 
 
 def _novels_filter_query(db: Session, q: str | None = None):

@@ -27,6 +27,15 @@ from app.services.source_service import migrate_sources
 app = FastAPI(title=settings.app_name)
 
 
+@app.exception_handler(RuntimeError)
+def runtime_error_handler(_request, exc):
+    from fastapi.responses import JSONResponse
+
+    message = str(exc)
+    if "데이터베이스" in message:
+        return JSONResponse(status_code=503, content={"detail": message})
+    return JSONResponse(status_code=500, content={"detail": message})
+
 
 app.add_middleware(
 

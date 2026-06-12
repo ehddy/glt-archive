@@ -99,43 +99,24 @@ export default {
     async loadHome() {
       this.loading = true
       this.error = ''
-      const errors = []
 
-      const [statsRes, featuredRes, quotesRes, bookmarkRes] = await Promise.allSettled([
-        api.getLibraryStats(),
-        api.getFeaturedBooks(20),
-        api.listQuotes(0, 12),
-        api.getBookmarkIds(),
-      ])
-
-      if (statsRes.status === 'fulfilled') {
-        this.libraryStats = statsRes.value
-      } else {
-        errors.push('통계')
+      try {
+        const home = await api.getHome({ featuredLimit: 20, quoteLimit: 12 })
+        this.libraryStats = home.stats
+        this.featuredBooks = Array.isArray(home.featured_books) ? home.featured_books : []
+        this.recentQuotes = Array.isArray(home.recent_quotes) ? home.recent_quotes : []
+      } catch (e) {
+        this.error = e.message || '불러오기에 실패했습니다.'
+        this.libraryStats = null
+        this.featuredBooks = []
+        this.recentQuotes = []
       }
 
-      if (featuredRes.status === 'fulfilled') {
-        this.featuredBooks = Array.isArray(featuredRes.value) ? featuredRes.value : []
-      } else {
-        errors.push('대표 도서')
-      }
-
-      if (quotesRes.status === 'fulfilled') {
-        this.recentQuotes = Array.isArray(quotesRes.value) ? quotesRes.value : []
-      } else {
-        errors.push('최근 문장')
-      }
-
-      if (bookmarkRes.status === 'fulfilled') {
-        this.bookmarkIds = new Set(bookmarkRes.value?.quote_ids || [])
-      }
-
-      if (errors.length === 4) {
-        const firstError = [statsRes, featuredRes, quotesRes, bookmarkRes]
-          .find((res) => res.status === 'rejected')
-        this.error = firstError?.reason?.message || '불러오기에 실패했습니다.'
-      } else if (errors.length > 0) {
-        this.error = `${errors.join(', ')}을(를) 불러오지 못했습니다.`
+      try {
+        const bookmarkRes = await api.getBookmarkIds()
+        this.bookmarkIds = new Set(bookmarkRes?.quote_ids || [])
+      } catch {
+        // 북마크는 홈 콘텐츠 표시에 필수가 아님
       }
 
       this.loading = false

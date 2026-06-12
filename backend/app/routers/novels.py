@@ -3,12 +3,14 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.schemas.schemas import (
+    HomeOut,
     LibraryOut,
     LibraryStatsOut,
     NovelDetailOut,
     NovelWithQuotesOut,
     PaginatedNovelsOut,
 )
+from app.services.home_service import get_home
 from app.services.novel_service import (
     count_novels,
     get_featured_books,
@@ -37,6 +39,15 @@ def library(db: Session = Depends(get_db)):
 @router.get("/library/stats", response_model=LibraryStatsOut)
 def library_stats(db: Session = Depends(get_db)):
     return LibraryStatsOut.model_validate(get_library_stats(db))
+
+
+@router.get("/home", response_model=HomeOut)
+def home(
+    featured_limit: int = Query(20, ge=1, le=20),
+    quote_limit: int = Query(12, ge=1, le=24),
+    db: Session = Depends(get_db),
+):
+    return get_home(db, featured_limit=featured_limit, quote_limit=quote_limit)
 
 
 @router.get("/library/featured", response_model=list[NovelWithQuotesOut])

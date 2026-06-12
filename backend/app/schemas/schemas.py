@@ -184,6 +184,12 @@ class LibraryStatsOut(BaseModel):
     total_quotes: int
 
 
+class HomeOut(BaseModel):
+    stats: LibraryStatsOut
+    featured_books: list[NovelWithQuotesOut]
+    recent_quotes: list[QuoteOut]
+
+
 class BookmarkIdsOut(BaseModel):
     quote_ids: list[int]
 
