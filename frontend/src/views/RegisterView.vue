@@ -142,12 +142,6 @@
 
         </ul>
 
-
-
-        <p v-else-if="bookQuery.trim() && searched && !searching" class="search-empty">
-          검색 결과가 없어요. 다른 키워드로 시도해 보세요.
-        </p>
-
       </div>
 
       <div v-if="sourceMode === 'custom'" class="glt-field custom-source-fields">
@@ -251,7 +245,11 @@
 
 import { api } from '../api'
 import { friendlyRegisterError } from '../utils/registerErrors'
-import { novelToSelectedBook, routeAfterQuoteCreated } from '../utils/registerBook'
+import {
+  novelToSelectedBook,
+  pickAladinBookMatch,
+  routeAfterQuoteCreated,
+} from '../utils/registerBook'
 
 export default {
 
@@ -447,6 +445,21 @@ export default {
         this.form.text = text
       }
 
+      if (history.state?.fromAiSearch && stateBookQ && typeof stateBookQ === 'string') {
+        this.sourceMode = 'aladin'
+        const matched = await this.prefillFromAladinQuery(
+          stateBookQ,
+          stateSourceTitle,
+          history.state?.prefillAuthor || stateCustomSource?.author || '',
+        )
+        if (!matched && stateCustomSource) {
+          this.sourceMode = 'custom'
+          this.customSource.title = stateCustomSource.title || ''
+          this.customSource.author_name = stateCustomSource.author || ''
+        }
+        return
+      }
+
       if (stateSourceMode === 'custom' || stateCustomSource) {
         this.sourceMode = 'custom'
         if (stateCustomSource) {
@@ -458,7 +471,11 @@ export default {
 
       if (stateBookQ && typeof stateBookQ === 'string') {
         this.sourceMode = 'aladin'
-        await this.prefillFromAladinQuery(stateBookQ, stateSourceTitle)
+        await this.prefillFromAladinQuery(
+          stateBookQ,
+          stateSourceTitle,
+          history.state?.prefillAuthor || '',
+        )
         return
       }
 
@@ -530,17 +547,32 @@ export default {
 
     },
 
-    async prefillFromAladinQuery(bookQ, sourceTitle = '') {
-      this.bookQuery = bookQ
+    async prefillFromAladinQuery(bookQ, sourceTitle = '', author = '') {
+      const initialQuery = (bookQ || '').trim()
+      const titleHint = (sourceTitle || initialQuery).trim()
+
+      this.bookQuery = initialQuery
       this.prefilledFromContext = false
+      this.bookSearchOpen = true
+
+      if (!initialQuery) return false
+
       await this.searchBooks()
-      if (!this.searchResults.length && sourceTitle && sourceTitle !== bookQ) {
-        this.bookQuery = sourceTitle
+
+      let match = pickAladinBookMatch(this.searchResults, titleHint, author)
+
+      if (!match && titleHint && titleHint !== initialQuery) {
+        this.bookQuery = titleHint
         await this.searchBooks()
+        match = pickAladinBookMatch(this.searchResults, titleHint, author)
       }
-      if (this.searchResults.length === 1) {
-        await this.selectBook(this.searchResults[0])
+
+      if (match) {
+        await this.selectBook(match)
+        return true
       }
+
+      return false
     },
 
     async setSelectedFromNovel(novel) {
@@ -1081,7 +1113,6 @@ export default {
 
 
 
-.search-empty,
 .search-hint {
   margin: 8px 0 0;
   padding: 10px 12px;

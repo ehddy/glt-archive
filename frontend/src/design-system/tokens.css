@@ -102,4 +102,11 @@
   --glt-shelf-wood: #c4a882;
   --glt-shelf-wood-dark: #8f7358;
   --glt-shelf-wall: #ebe2d6;
+
+  /* Chrome */
+  --glt-header-bg: rgba(250, 246, 240, 0.94);
+  --glt-nav-bg: rgba(255, 253, 249, 0.96);
+  --glt-backdrop: rgba(45, 38, 32, 0.34);
+  --glt-bg-warm-1: rgba(253, 238, 228, 0.95);
+  --glt-bg-warm-2: rgba(232, 220, 200, 0.32);
 }

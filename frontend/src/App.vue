@@ -77,7 +77,25 @@
 
         <router-link :to="{ name: 'ai-search' }" class="tab-item">
 
-          <span class="tab-icon" aria-hidden="true">✦</span>
+          <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+
+            <path
+              d="M12 4.5l.9 3.1 3.1.9-3.1.9-.9 3.1-.9-3.1-3.1-.9 3.1-.9.9-3.1z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linejoin="round"
+            />
+
+            <path
+              d="M18 15l.5 1.7 1.7.5-1.7.5-.5 1.7-.5-1.7-1.7-.5 1.7-.5.5-1.7z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linejoin="round"
+            />
+
+          </svg>
 
           <span class="tab-label">AI</span>
 
@@ -339,9 +357,9 @@ export default {
 
   background:
 
-    radial-gradient(ellipse 90% 55% at 50% -8%, rgba(253, 238, 228, 0.95) 0%, transparent 58%),
+    radial-gradient(ellipse 90% 55% at 50% -8%, var(--glt-bg-warm-1) 0%, transparent 58%),
 
-    radial-gradient(ellipse 65% 45% at 100% 85%, rgba(232, 220, 200, 0.32) 0%, transparent 52%);
+    radial-gradient(ellipse 65% 45% at 100% 85%, var(--glt-bg-warm-2) 0%, transparent 52%);
 
 }
 
@@ -355,7 +373,7 @@ export default {
 
   z-index: 100;
 
-  background: rgba(250, 246, 240, 0.94);
+  background: var(--glt-header-bg);
 
   backdrop-filter: blur(12px);
 
@@ -479,7 +497,7 @@ export default {
 
   padding: 6px 10px calc(8px + env(safe-area-inset-bottom, 0px));
 
-  background: rgba(255, 253, 249, 0.96);
+  background: var(--glt-nav-bg);
 
   backdrop-filter: blur(14px);
 
@@ -653,7 +671,7 @@ export default {
   height: calc(100dvh - var(--glt-header-height));
   border: none;
   padding: 0;
-  background: rgba(45, 38, 32, 0.34);
+  background: var(--glt-backdrop);
   backdrop-filter: blur(2px);
   cursor: pointer;
 }

@@ -1,35 +1,44 @@
 <template>
   <section class="ai-search glt-container">
     <header class="page-head">
-      <h1 class="glt-title page-title">AI로 찾기</h1>
+      <h1 class="glt-title page-title">AI 문장 찾기</h1>
       <p class="page-lead">
-        떠오르는 단어나 감정을 입력하면, AI가 어울리는 명문장과 출처를 골라 드려요.
+        단어·감정·책 이름·책 속 문장으로 AI가 문장과 출처를 찾아드려요.
       </p>
-    </header>
 
-    <form class="search-form glt-card" @submit.prevent="handleSearch">
-      <div class="glt-search">
-        <input
-          v-model="query"
-          type="search"
-          placeholder="예: 사랑, 고통, 바다"
-          :disabled="loading"
-        />
+      <form class="search-hero" @submit.prevent="handleSearch">
+        <div class="search-row">
+          <input
+            v-model="query"
+            type="search"
+            class="search-input"
+            placeholder="예: 사랑, 감자, 바다 속 고요함"
+            :disabled="loading"
+          />
+          <button
+            type="submit"
+            class="search-submit"
+            :disabled="loading || !query.trim()"
+          >
+            {{ loading ? '검색 중…' : '검색' }}
+          </button>
+        </div>
         <button
-          type="submit"
-          class="glt-btn glt-btn-primary"
-          :disabled="loading || !query.trim()"
+          v-if="query"
+          type="button"
+          class="search-clear"
+          @click="clearQuery"
         >
-          {{ loading ? '검색 중…' : '검색' }}
+          입력 지우기
         </button>
-      </div>
-    </form>
+      </form>
+    </header>
 
     <p v-if="error" class="error-msg">{{ error }}</p>
 
     <div v-if="loading" class="state-panel">
       <span class="state-spinner" aria-hidden="true" />
-      AI가 명문장을 찾는 중…
+      AI가 문장을 찾는 중…
     </div>
 
     <template v-else-if="result">
@@ -119,6 +128,13 @@ export default {
       this.loading = false
     },
 
+    clearQuery() {
+      this.query = ''
+      this.result = null
+      this.searched = false
+      this.error = ''
+    },
+
     async handleSearch() {
       const q = this.query.trim()
       if (!q) return
@@ -155,21 +171,97 @@ export default {
 
 <style scoped>
 .page-head {
-  margin-bottom: var(--glt-space-3);
+  margin-bottom: var(--glt-space-5);
 }
 
 .page-title {
   margin-top: 0;
 }
 
-
-.search-form {
-  padding: var(--glt-space-4);
-  margin-bottom: var(--glt-space-5);
+.page-lead {
+  margin: 4px 0 var(--glt-space-4);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+  color: var(--glt-ink-secondary);
 }
 
-.search-form .glt-search {
+.search-hero {
   width: 100%;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 5px 5px 14px;
+  background: var(--glt-surface);
+  border: 1px solid rgba(212, 195, 170, 0.5);
+  border-radius: var(--glt-radius-full);
+  box-shadow: 0 2px 10px rgba(61, 52, 41, 0.04);
+}
+
+.search-row:focus-within {
+  border-color: var(--glt-accent-muted);
+  box-shadow: 0 0 0 3px var(--glt-accent-soft);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.92rem;
+  color: var(--glt-ink);
+  padding: 9px 0;
+}
+
+.search-input::placeholder {
+  color: var(--glt-ink-tertiary);
+}
+
+.search-input:disabled {
+  opacity: 0.6;
+}
+
+.search-submit {
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--glt-radius-full);
+  background: var(--glt-accent);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(196, 105, 58, 0.25);
+  transition: background var(--glt-duration);
+}
+
+.search-submit:hover:not(:disabled) {
+  background: var(--glt-accent-hover);
+}
+
+.search-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.search-clear {
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--glt-ink-tertiary);
+  cursor: pointer;
+}
+
+.search-clear:hover {
+  color: var(--glt-accent-hover);
 }
 
 .error-msg {

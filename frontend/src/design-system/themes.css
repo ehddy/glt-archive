@@ -1,0 +1,163 @@
+/* Theme 2 — 밤의 서재 */
+[data-theme='night'] {
+  --glt-bg: #1c2433;
+  --glt-bg-outer: #121820;
+  --glt-bg-subtle: #242d3d;
+  --glt-surface: #2a3446;
+  --glt-surface-raised: #313c50;
+  --glt-overlay: rgba(255, 255, 255, 0.04);
+  --glt-glass: #2a3446;
+  --glt-glass-border: rgba(255, 255, 255, 0.1);
+
+  --glt-ink: #f2ebe0;
+  --glt-ink-secondary: #c8bfb0;
+  --glt-ink-tertiary: #9a9285;
+  --glt-ink-faint: #6f6860;
+
+  --glt-accent: #d4a853;
+  --glt-accent-hover: #e8be6a;
+  --glt-accent-soft: rgba(212, 168, 83, 0.14);
+  --glt-accent-muted: rgba(212, 168, 83, 0.34);
+
+  --glt-line: rgba(255, 255, 255, 0.1);
+  --glt-line-active: rgba(212, 168, 83, 0.45);
+  --glt-node-glow: rgba(212, 168, 83, 0.16);
+
+  --glt-bubble-bg: #313c50;
+  --glt-bubble-border: rgba(255, 255, 255, 0.12);
+  --glt-bubble-shadow: 0 3px 14px rgba(0, 0, 0, 0.28);
+
+  --glt-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.22);
+  --glt-shadow-md: 0 6px 20px rgba(0, 0, 0, 0.28);
+  --glt-shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.34);
+  --glt-shadow-app: 0 8px 40px rgba(0, 0, 0, 0.42);
+
+  --glt-header-bg: rgba(28, 36, 51, 0.94);
+  --glt-nav-bg: rgba(26, 33, 47, 0.96);
+  --glt-backdrop: rgba(0, 0, 0, 0.52);
+  --glt-bg-warm-1: rgba(212, 168, 83, 0.08);
+  --glt-bg-warm-2: rgba(255, 255, 255, 0.03);
+}
+
+/* Theme 3 — 이른 아침 */
+[data-theme='mist'] {
+  --glt-bg: #eef2f4;
+  --glt-bg-outer: #d8e0e5;
+  --glt-bg-subtle: #e4eaee;
+  --glt-surface: #f8fafb;
+  --glt-surface-raised: #ffffff;
+  --glt-overlay: rgba(44, 62, 72, 0.04);
+  --glt-glass: #ffffff;
+  --glt-glass-border: rgba(148, 168, 180, 0.45);
+
+  --glt-ink: #24343d;
+  --glt-ink-secondary: #4d616c;
+  --glt-ink-tertiary: #7a8f99;
+  --glt-ink-faint: #a8b8c0;
+
+  --glt-accent: #5f8f7a;
+  --glt-accent-hover: #4d7764;
+  --glt-accent-soft: #e4f0ea;
+  --glt-accent-muted: #b8d4c4;
+
+  --glt-line: #d2dde3;
+  --glt-line-active: #9eb5a8;
+  --glt-node-glow: rgba(95, 143, 122, 0.12);
+
+  --glt-bubble-bg: #ffffff;
+  --glt-bubble-border: rgba(148, 168, 180, 0.5);
+  --glt-bubble-shadow: 0 3px 14px rgba(36, 52, 61, 0.06);
+
+  --glt-shadow-sm: 0 2px 8px rgba(36, 52, 61, 0.06);
+  --glt-shadow-md: 0 6px 20px rgba(36, 52, 61, 0.08);
+  --glt-shadow-lg: 0 12px 36px rgba(36, 52, 61, 0.1);
+  --glt-shadow-app: 0 8px 40px rgba(36, 52, 61, 0.12);
+
+  --glt-header-bg: rgba(238, 242, 244, 0.94);
+  --glt-nav-bg: rgba(248, 250, 251, 0.96);
+  --glt-backdrop: rgba(36, 52, 61, 0.34);
+  --glt-bg-warm-1: rgba(228, 240, 234, 0.95);
+  --glt-bg-warm-2: rgba(184, 212, 196, 0.28);
+}
+
+/* Theme 4 — 장미빛 오후 */
+[data-theme='rose'] {
+  --glt-bg: #faf0ee;
+  --glt-bg-outer: #ead8d4;
+  --glt-bg-subtle: #f3e4e1;
+  --glt-surface: #fff9f8;
+  --glt-surface-raised: #ffffff;
+  --glt-overlay: rgba(92, 48, 48, 0.04);
+  --glt-glass: #ffffff;
+  --glt-glass-border: rgba(214, 176, 170, 0.65);
+
+  --glt-ink: #4a2f33;
+  --glt-ink-secondary: #73565a;
+  --glt-ink-tertiary: #a08286;
+  --glt-ink-faint: #c9aeb2;
+
+  --glt-accent: #b85c5f;
+  --glt-accent-hover: #9c484b;
+  --glt-accent-soft: #fce8e8;
+  --glt-accent-muted: #e8bcbc;
+
+  --glt-line: #e8d4d0;
+  --glt-line-active: #cfa8a4;
+  --glt-node-glow: rgba(184, 92, 95, 0.12);
+
+  --glt-bubble-bg: #ffffff;
+  --glt-bubble-border: rgba(214, 176, 170, 0.75);
+  --glt-bubble-shadow: 0 3px 14px rgba(74, 47, 51, 0.06);
+
+  --glt-shadow-sm: 0 2px 8px rgba(74, 47, 51, 0.06);
+  --glt-shadow-md: 0 6px 20px rgba(74, 47, 51, 0.08);
+  --glt-shadow-lg: 0 12px 36px rgba(74, 47, 51, 0.1);
+  --glt-shadow-app: 0 8px 40px rgba(74, 47, 51, 0.14);
+
+  --glt-header-bg: rgba(250, 240, 238, 0.94);
+  --glt-nav-bg: rgba(255, 249, 248, 0.96);
+  --glt-backdrop: rgba(74, 47, 51, 0.34);
+  --glt-bg-warm-1: rgba(252, 232, 232, 0.95);
+  --glt-bg-warm-2: rgba(232, 188, 188, 0.32);
+}
+
+/* Theme 5 — 숲속 서재 */
+[data-theme='forest'] {
+  --glt-bg: #edf0e8;
+  --glt-bg-outer: #d5dacb;
+  --glt-bg-subtle: #e3e7dc;
+  --glt-surface: #f8faf4;
+  --glt-surface-raised: #ffffff;
+  --glt-overlay: rgba(45, 56, 40, 0.05);
+  --glt-glass: #ffffff;
+  --glt-glass-border: rgba(168, 180, 148, 0.55);
+
+  --glt-ink: #2f3828;
+  --glt-ink-secondary: #556048;
+  --glt-ink-tertiary: #7f8c72;
+  --glt-ink-faint: #a8b29c;
+
+  --glt-accent: #6d8b55;
+  --glt-accent-hover: #587344;
+  --glt-accent-soft: #e8f0df;
+  --glt-accent-muted: #c0d4b0;
+
+  --glt-line: #d5dcc8;
+  --glt-line-active: #a8b892;
+  --glt-node-glow: rgba(109, 139, 85, 0.12);
+
+  --glt-bubble-bg: #ffffff;
+  --glt-bubble-border: rgba(168, 180, 148, 0.65);
+  --glt-bubble-shadow: 0 3px 14px rgba(47, 56, 40, 0.06);
+
+  --glt-shadow-sm: 0 2px 8px rgba(47, 56, 40, 0.06);
+  --glt-shadow-md: 0 6px 20px rgba(47, 56, 40, 0.08);
+  --glt-shadow-lg: 0 12px 36px rgba(47, 56, 40, 0.1);
+  --glt-shadow-app: 0 8px 40px rgba(47, 56, 40, 0.14);
+
+  --glt-header-bg: rgba(237, 240, 232, 0.94);
+  --glt-nav-bg: rgba(248, 250, 244, 0.96);
+  --glt-backdrop: rgba(47, 56, 40, 0.34);
+  --glt-bg-warm-1: rgba(232, 240, 223, 0.95);
+  --glt-bg-warm-2: rgba(192, 212, 176, 0.28);
+}

@@ -17,13 +17,20 @@
 
     <div class="detail-graph glt-card">
       <div class="detail-source">
-        <BookNode
+        <component
+          :is="novelLinkId ? 'router-link' : 'div'"
           v-if="novelTitle"
-          :title="novelTitle"
-          :author="authorName"
-          :cover-url="coverUrl"
-          :color-index="bookColorIndex"
-        />
+          v-bind="novelLinkId ? { to: `/novels/${novelLinkId}` } : {}"
+          class="detail-book-link"
+          :class="{ 'detail-book-link--static': !novelLinkId }"
+        >
+          <BookNode
+            :title="novelTitle"
+            :author="authorName"
+            :cover-url="coverUrl"
+            :color-index="bookColorIndex"
+          />
+        </component>
         <div v-else-if="authorName" class="detail-source-fallback">
           <p class="fallback-author">{{ authorName }}</p>
         </div>
@@ -207,6 +214,16 @@ export default {
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
+}
+
+.detail-book-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.detail-book-link--static {
+  cursor: default;
 }
 
 .detail-connector {
