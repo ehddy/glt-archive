@@ -134,8 +134,8 @@ export default {
 
 <style scoped>
 .featured {
-  margin-top: var(--glt-space-5);
-  padding: var(--glt-space-4) 0 var(--glt-space-3);
+  margin-top: 0;
+  padding: var(--glt-space-2) 0 var(--glt-space-3);
 }
 
 .featured-head {

@@ -270,7 +270,7 @@ export default {
 .home-feed {
   display: flex;
   flex-direction: column;
-  gap: var(--glt-space-6);
+  gap: var(--glt-space-5);
 }
 
 .empty-search {
