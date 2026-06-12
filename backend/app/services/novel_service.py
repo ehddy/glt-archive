@@ -65,22 +65,32 @@ def get_library(db: Session) -> LibraryOut:
     )
 
 
-def get_featured_books(db: Session, limit: int = 8) -> list[NovelWithQuotesOut]:
-    library = get_library(db)
-    ranked = sorted(library.books, key=lambda b: b.quote_count, reverse=True)
+def get_library_stats(db: Session) -> dict[str, int]:
+    total_books = db.query(func.count(Novel.id)).scalar() or 0
+    total_quotes = db.query(func.count(Quote.id)).scalar() or 0
+    return {"total_books": total_books, "total_quotes": total_quotes}
+
+
+def get_featured_books(db: Session, limit: int = 20) -> list[NovelWithQuotesOut]:
+    novels = (
+        db.query(Novel)
+        .options(joinedload(Novel.author), joinedload(Novel.quotes))
+        .all()
+    )
+    ranked = sorted(novels, key=lambda novel: len(novel.quotes or []), reverse=True)
     featured = []
-    for book in ranked[:limit]:
+    for novel in ranked[:limit]:
         featured.append(
             NovelWithQuotesOut(
-                id=book.id,
-                title=book.title,
-                author=book.author,
-                quote_count=book.quote_count,
+                id=novel.id,
+                title=novel.title,
+                author=novel.author,
+                quote_count=len(novel.quotes or []),
                 quotes=[],
-                cover_url=book.cover_url,
-                publisher=book.publisher,
-                pub_date=book.pub_date,
-                aladin_item_id=book.aladin_item_id,
+                cover_url=novel.cover_url,
+                publisher=novel.publisher,
+                pub_date=novel.pub_date,
+                aladin_item_id=novel.aladin_item_id,
             )
         )
     return featured

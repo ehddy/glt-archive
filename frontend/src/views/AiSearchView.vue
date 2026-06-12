@@ -1,7 +1,6 @@
 <template>
   <section class="ai-search glt-container">
     <header class="page-head">
-      <span class="ai-badge">AI</span>
       <h1 class="glt-title page-title">AI로 찾기</h1>
       <p class="page-lead">
         떠오르는 단어나 감정을 입력하면, AI가 어울리는 명문장과 출처를 골라 드려요.
@@ -35,7 +34,6 @@
 
     <template v-else-if="result">
       <header class="news-head">
-        <p class="news-kicker">검색 결과</p>
         <h2 class="news-summary">{{ result.summary }}</h2>
         <p class="news-meta">
           키워드 <strong>{{ result.query }}</strong> · {{ result.articles.length }}건
@@ -157,32 +155,13 @@ export default {
 
 <style scoped>
 .page-head {
-  margin-bottom: var(--glt-space-5);
-}
-
-.ai-badge {
-  display: inline-block;
-  margin-bottom: var(--glt-space-2);
-  padding: 4px 10px;
-  border-radius: var(--glt-radius-full);
-  background: var(--glt-accent-soft);
-  border: 1px solid var(--glt-accent-muted);
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--glt-accent-hover);
-  letter-spacing: 0.02em;
+  margin-bottom: var(--glt-space-3);
 }
 
 .page-title {
   margin-top: 0;
 }
 
-.page-lead {
-  margin: var(--glt-space-2) 0 0;
-  font-size: 0.9rem;
-  line-height: 1.65;
-  color: var(--glt-ink-secondary);
-}
 
 .search-form {
   padding: var(--glt-space-4);
@@ -204,32 +183,23 @@ export default {
 }
 
 .news-head {
-  margin-bottom: var(--glt-space-5);
-  padding-bottom: var(--glt-space-4);
-  border-bottom: 2px solid var(--glt-ink);
-}
-
-.news-kicker {
-  margin: 0 0 var(--glt-space-2);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--glt-accent-hover);
+  margin-bottom: var(--glt-space-4);
+  padding-bottom: var(--glt-space-3);
+  border-bottom: 1px solid var(--glt-glass-border);
 }
 
 .news-summary {
-  margin: 0 0 var(--glt-space-2);
-  font-size: 1.15rem;
-  font-weight: 700;
-  line-height: 1.45;
-  letter-spacing: -0.02em;
-  color: var(--glt-ink);
+  margin: 0 0 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  color: var(--glt-ink-secondary);
 }
 
 .news-meta {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   color: var(--glt-ink-tertiary);
 }
 
@@ -243,11 +213,11 @@ export default {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--glt-space-5);
+  gap: 10px;
 }
 
 .news-card {
-  padding: 16px 18px;
+  padding: 14px 16px;
   border: 1px solid rgba(212, 195, 170, 0.42);
   border-radius: var(--glt-radius-lg);
   background: var(--glt-surface);
@@ -255,12 +225,14 @@ export default {
 }
 
 .news-quote {
-  margin: 0 0 var(--glt-space-3);
+  margin: 0;
   padding: 0;
   border: none;
   font-family: var(--glt-font-serif);
-  font-size: 1.12rem;
-  line-height: 1.75;
+  font-size: 0.94rem;
+  font-weight: 400;
+  line-height: 1.72;
+  letter-spacing: -0.01em;
   color: var(--glt-ink);
   word-break: keep-all;
 }
@@ -268,42 +240,45 @@ export default {
 .news-byline {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 16px;
-  margin-bottom: var(--glt-space-2);
+  gap: 6px 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(226, 213, 196, 0.65);
 }
 
 .news-field {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 8px;
+  gap: 5px 6px;
 }
 
 .news-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--glt-accent-hover);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--glt-ink-tertiary);
 }
 
 .news-source {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--glt-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--glt-ink-secondary);
 }
 
 .news-author {
-  font-size: 0.8rem;
-  color: var(--glt-ink-secondary);
+  font-size: 0.78rem;
+  color: var(--glt-ink-tertiary);
 }
 
 .news-context {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin: 0 0 var(--glt-space-3);
-  font-size: 0.88rem;
-  line-height: 1.65;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(226, 213, 196, 0.45);
+  font-size: 0.8rem;
+  line-height: 1.6;
   color: var(--glt-ink-secondary);
 }
 
@@ -311,12 +286,13 @@ export default {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 16px;
+  gap: 10px 14px;
+  margin-top: 12px;
 }
 
 .news-register-btn {
-  padding: 8px 16px;
-  font-size: 0.8rem;
+  padding: 7px 14px;
+  font-size: 0.76rem;
 }
 
 .news-link {

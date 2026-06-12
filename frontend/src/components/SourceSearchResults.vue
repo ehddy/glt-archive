@@ -106,7 +106,7 @@ export default {
 
 .results-title {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--glt-ink-secondary);
 }
@@ -122,21 +122,23 @@ export default {
 
 .source-node {
   display: grid;
-  grid-template-columns: 1fr auto 200px;
-  gap: var(--glt-space-3);
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto;
+  gap: var(--glt-space-2);
   align-items: stretch;
 }
 
 .node-quote {
-  padding: var(--glt-space-4);
+  padding: var(--glt-space-3);
   min-width: 0;
 }
 
 .quote-text {
-  margin: 0 0 var(--glt-space-3);
+  margin: 0 0 var(--glt-space-2);
   font-family: var(--glt-font-sans);
-  font-size: 0.95rem;
-  line-height: 1.65;
+  font-size: 0.86rem;
+  font-weight: 400;
+  line-height: 1.6;
   color: var(--glt-ink);
   word-break: keep-all;
 }
@@ -171,26 +173,30 @@ export default {
 
 .node-connector {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  padding: var(--glt-space-2) 0;
+  width: auto;
+  height: 16px;
+  padding: 0 var(--glt-space-2);
 }
 
 .connector-line {
   flex: 1;
-  width: 2px;
-  background: linear-gradient(180deg, var(--glt-line), var(--glt-accent-muted));
+  height: 2px;
+  width: auto;
+  background: linear-gradient(90deg, var(--glt-line), var(--glt-accent-muted));
   border-radius: 1px;
 }
 
 .connector-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--glt-accent);
-  margin-top: 4px;
+  margin-top: 0;
+  margin-left: 4px;
+  flex-shrink: 0;
 }
 
 .node-source {
@@ -247,39 +253,19 @@ export default {
 }
 
 .source-title {
-  font-size: 0.82rem;
-  line-height: 1.35;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.4;
   color: var(--glt-ink);
   word-break: keep-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .source-author {
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   color: var(--glt-ink-tertiary);
-}
-
-@media (max-width: 720px) {
-  .source-node {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-  }
-
-  .node-connector {
-    flex-direction: row;
-    width: auto;
-    height: 20px;
-    padding: 0 var(--glt-space-2);
-  }
-
-  .connector-line {
-    flex: 1;
-    height: 2px;
-    width: auto;
-  }
-
-  .connector-dot {
-    margin-top: 0;
-    margin-left: 4px;
-  }
 }
 </style>

@@ -7,8 +7,32 @@
       aria-label="AI 책 추천"
       @click="toggle"
     >
-      <span v-if="!open" class="chat-fab-icon">📚</span>
-      <span v-else>✕</span>
+      <svg v-if="!open" class="chat-fab-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 7v13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+        <path
+          d="M5 5.2A2.2 2.2 0 0 1 7.2 3H12v17H7.2A2.2 2.2 0 0 1 5 17.8V5.2z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M19 5.2A2.2 2.2 0 0 0 16.8 3H12v17h4.8A2.2 2.2 0 0 0 19 17.8V5.2z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <svg v-else class="chat-fab-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M8 8l8 8M16 8l-8 8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+        />
+      </svg>
     </button>
 
     <div v-if="open" class="chat-panel glt-card">
@@ -177,11 +201,12 @@ export default {
 .chat-fab {
   width: 52px;
   height: 52px;
+  display: grid;
+  place-items: center;
   border: none;
   border-radius: 50%;
   background: var(--glt-accent);
   color: #fff;
-  font-size: 1.2rem;
   box-shadow: var(--glt-shadow-md);
   cursor: pointer;
   transition: transform var(--glt-duration) var(--glt-ease);
@@ -192,7 +217,9 @@ export default {
 }
 
 .chat-fab-icon {
-  line-height: 1;
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 .chat-panel {

@@ -82,6 +82,6 @@ export default {
 
 <style scoped>
 .saved .glt-title {
-  margin-bottom: var(--glt-space-4);
+  margin-bottom: var(--glt-space-3);
 }
 </style>

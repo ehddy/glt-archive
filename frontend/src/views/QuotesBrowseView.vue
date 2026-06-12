@@ -137,14 +137,6 @@ export default {
 </script>
 
 <style scoped>
-.page-head {
-  margin-bottom: var(--glt-space-5);
-}
-
-.page-title {
-  margin-top: var(--glt-space-2);
-}
-
 .back-link {
   display: inline-block;
   font-size: 0.82rem;
@@ -154,13 +146,6 @@ export default {
 
 .back-link:hover {
   color: var(--glt-accent-hover);
-}
-
-.page-lead {
-  margin: var(--glt-space-2) 0 0;
-  font-size: 0.9rem;
-  color: var(--glt-ink-secondary);
-  line-height: 1.6;
 }
 
 .browse-toolbar {

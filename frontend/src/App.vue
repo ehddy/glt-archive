@@ -32,7 +32,28 @@
 
       <main class="main">
 
-        <router-view />
+        <transition name="register-backdrop">
+          <button
+            v-if="isRegisterOpen"
+            type="button"
+            class="register-backdrop"
+            aria-label="등록 닫기"
+            @click="closeRegister"
+          />
+        </transition>
+
+        <router-view v-slot="{ Component, route }">
+          <component
+            v-if="route.name === 'register' && backgroundView"
+            :is="backgroundView"
+            :key="lastRouteFullPath"
+            class="route-background"
+            aria-hidden="true"
+          />
+          <transition :name="pageTransition">
+            <component :is="Component" :key="route.fullPath" />
+          </transition>
+        </router-view>
 
       </main>
 
@@ -129,7 +150,7 @@
 
 
 
-      <ChatBot />
+      <ChatBot v-if="$route.name !== 'register'" />
 
     </div>
 
@@ -142,10 +163,27 @@
 <script>
 
 import ChatBot from './components/ChatBot.vue'
+import AiSearchView from './views/AiSearchView.vue'
+import HomeView from './views/HomeView.vue'
+import NovelDetailView from './views/NovelDetailView.vue'
+import NovelsView from './views/NovelsView.vue'
+import QuoteDetailView from './views/QuoteDetailView.vue'
+import QuotesBrowseView from './views/QuotesBrowseView.vue'
+import SavedView from './views/SavedView.vue'
 
 import { COLLECT } from './utils/collectLabels'
 
 import { registerRouteForQuote } from './utils/registerBook'
+
+const ROUTE_VIEWS = {
+  home: HomeView,
+  'ai-search': AiSearchView,
+  saved: SavedView,
+  novels: NovelsView,
+  'novel-detail': NovelDetailView,
+  'quotes-browse': QuotesBrowseView,
+  'quote-detail': QuoteDetailView,
+}
 
 
 
@@ -157,11 +195,25 @@ export default {
 
   data() {
 
-    return { COLLECT }
+    return {
+      COLLECT,
+      pageTransition: 'page-fade',
+      lastRouteName: null,
+      lastRouteFullPath: '/',
+    }
 
   },
 
   computed: {
+
+    isRegisterOpen() {
+      return this.$route.name === 'register'
+    },
+
+    backgroundView() {
+      if (!this.isRegisterOpen || !this.lastRouteName) return null
+      return ROUTE_VIEWS[this.lastRouteName] || null
+    },
 
     registerNavTarget() {
 
@@ -175,6 +227,44 @@ export default {
 
     },
 
+  },
+
+  watch: {
+    $route: {
+      immediate: true,
+      handler(to, from) {
+        if (to.name === 'register') {
+          if (from?.name && from.name !== 'register') {
+            this.lastRouteName = from.name
+            this.lastRouteFullPath = from.fullPath
+          }
+          this.pageTransition = 'sheet-up'
+          document.body.style.overflow = 'hidden'
+          return
+        }
+
+        if (from?.name === 'register') {
+          this.pageTransition = 'sheet-down'
+        } else {
+          this.pageTransition = 'page-fade'
+        }
+        document.body.style.overflow = ''
+      },
+    },
+  },
+
+  beforeUnmount() {
+    document.body.style.overflow = ''
+  },
+
+  methods: {
+    closeRegister() {
+      if (window.history.length > 1) {
+        this.$router.back()
+      } else {
+        this.$router.push('/')
+      }
+    },
   },
 
 }
@@ -533,6 +623,75 @@ export default {
 
   }
 
+}
+
+
+
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.22s var(--glt-ease);
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
+}
+
+.route-background {
+  pointer-events: none;
+  user-select: none;
+}
+
+.register-backdrop {
+  position: fixed;
+  top: var(--glt-header-height);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 140;
+  width: 100%;
+  max-width: var(--glt-app-width);
+  height: calc(100dvh - var(--glt-header-height));
+  border: none;
+  padding: 0;
+  background: rgba(45, 38, 32, 0.34);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+
+.register-backdrop-enter-active,
+.register-backdrop-leave-active {
+  transition: opacity 0.3s var(--glt-ease);
+}
+
+.register-backdrop-enter-from,
+.register-backdrop-leave-to {
+  opacity: 0;
+}
+
+.sheet-up-enter-active,
+.sheet-up-leave-active {
+  transition: transform 0.36s var(--glt-ease);
+}
+
+.sheet-up-enter-from,
+.sheet-up-leave-to {
+  transform: translateY(100%);
+}
+
+.sheet-down-enter-active {
+  transition: opacity 0.22s var(--glt-ease);
+}
+
+.sheet-down-enter-from {
+  opacity: 0;
+}
+
+.sheet-down-leave-active {
+  transition: transform 0.36s var(--glt-ease);
+}
+
+.sheet-down-leave-to {
+  transform: translateY(100%);
 }
 
 </style>

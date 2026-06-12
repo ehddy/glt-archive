@@ -179,6 +179,11 @@ class LibraryOut(BaseModel):
     total_books: int
 
 
+class LibraryStatsOut(BaseModel):
+    total_books: int
+    total_quotes: int
+
+
 class BookmarkIdsOut(BaseModel):
     quote_ids: list[int]
 

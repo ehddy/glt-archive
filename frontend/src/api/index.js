@@ -7,6 +7,21 @@ const REQUEST_TIMEOUT_MS = 8000
 const CHAT_TIMEOUT_MS = 60000
 const AI_SEARCH_TIMEOUT_MS = 90000
 
+function apiConnectionMessage(status) {
+  if (status === 404) {
+    return 'API를 찾을 수 없습니다. 백엔드가 실행 중인지 확인해 주세요.'
+  }
+  return `서버 응답 오류 (${status})`
+}
+
+async function parseJsonResponse(response) {
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error(apiConnectionMessage(response.status))
+  }
+  return response.json()
+}
+
 async function request(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
@@ -23,24 +38,31 @@ async function request(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
     })
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      const detail = error.detail
-      const message = typeof detail === 'string'
-        ? detail
-        : Array.isArray(detail)
-          ? detail.map((d) => d.msg).join(', ')
-          : '요청에 실패했습니다.'
-      if (response.status === 404 && message === 'Not Found') {
-        throw new Error('API를 찾을 수 없습니다.')
+      try {
+        const error = await parseJsonResponse(response)
+        const detail = error.detail
+        const message = typeof detail === 'string'
+          ? detail
+          : Array.isArray(detail)
+            ? detail.map((d) => d.msg).join(', ')
+            : apiConnectionMessage(response.status)
+        throw new Error(message)
+      } catch (parseErr) {
+        if (parseErr.message && !parseErr.message.startsWith('서버 응답') && !parseErr.message.startsWith('API를')) {
+          throw parseErr
+        }
+        throw new Error(apiConnectionMessage(response.status))
       }
-      throw new Error(message)
     }
 
     if (response.status === 204) return null
-    return response.json()
+    return parseJsonResponse(response)
   } catch (err) {
     if (err.name === 'AbortError') {
       throw new Error('응답 시간이 초과되었습니다.')
+    }
+    if (err instanceof TypeError) {
+      throw new Error('API 서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인해 주세요.')
     }
     throw err
   } finally {
@@ -52,7 +74,10 @@ export const api = {
   getLibrary() {
     return request('/api/library')
   },
-  getFeaturedBooks(limit = 8) {
+  getLibraryStats() {
+    return request('/api/library/stats')
+  },
+  getFeaturedBooks(limit = 20) {
     return request(`/api/library/featured?limit=${limit}`)
   },
   getBookmarkIds() {

@@ -133,13 +133,8 @@ export default {
 </script>
 
 <style scoped>
-.page-head {
-  margin-bottom: var(--glt-space-4);
-}
-
 .back-link {
   display: inline-block;
-  margin-bottom: var(--glt-space-2);
   font-size: 0.82rem;
   color: var(--glt-ink-tertiary);
   text-decoration: none;
@@ -147,12 +142,6 @@ export default {
 
 .back-link:hover {
   color: var(--glt-accent-hover);
-}
-
-.page-lead {
-  margin: var(--glt-space-2) 0 0;
-  font-size: 0.88rem;
-  color: var(--glt-ink-secondary);
 }
 
 .browse-search {

@@ -20,7 +20,7 @@
         @pointercancel="onPointerUp"
       >
       <article
-        v-for="book in books"
+        v-for="book in displayBooks"
         :key="book.id"
         class="featured-card"
       >
@@ -62,6 +62,11 @@ export default {
   props: {
     books: { type: Array, required: true },
     stats: { type: Object, default: null },
+  },
+  computed: {
+    displayBooks() {
+      return this.books.slice(0, 20)
+    },
   },
   data() {
     return {
@@ -130,7 +135,7 @@ export default {
 <style scoped>
 .featured {
   margin-top: var(--glt-space-5);
-  padding-top: var(--glt-space-2);
+  padding: var(--glt-space-4) 0 var(--glt-space-3);
 }
 
 .featured-head {
@@ -138,7 +143,8 @@ export default {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--glt-space-3);
-  margin-bottom: var(--glt-space-3);
+  margin-bottom: var(--glt-space-4);
+  padding: 0 2px;
 }
 
 .featured-head-left {
@@ -175,7 +181,6 @@ export default {
 
 .featured-scroll-wrap {
   position: relative;
-  margin: 0 calc(-1 * var(--glt-space-4));
 }
 
 .featured-scroll-wrap::after {
@@ -191,10 +196,10 @@ export default {
 
 .featured-scroll {
   display: flex;
-  gap: 14px;
+  gap: 16px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 2px var(--glt-space-4) 4px;
+  padding: var(--glt-space-2) 2px var(--glt-space-3);
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   scrollbar-width: none;
@@ -224,8 +229,9 @@ export default {
   width: 108px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   scroll-snap-align: start;
+  padding-bottom: 2px;
 }
 
 .featured-cover-btn {

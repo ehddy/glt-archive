@@ -1,11 +1,21 @@
 <template>
 
-  <section class="register glt-container">
-
-    <header class="register-head">
-      <button type="button" class="back-btn" @click="goBack">← 뒤로</button>
-      <h1 class="glt-title">문장 등록</h1>
-    </header>
+  <section
+    ref="sheetEl"
+    class="register glt-container register--sheet"
+    :class="{ 'is-sheet-dragging': sheetDragging }"
+    :style="sheetStyle"
+  >
+    <div
+      class="sheet-drag-zone"
+      @pointerdown="onSheetDragStart"
+      @pointermove="onSheetDragMove"
+      @pointerup="onSheetDragEnd"
+      @pointercancel="onSheetDragEnd"
+    >
+      <div class="sheet-handle" aria-hidden="true" />
+      <h1 class="glt-title sheet-title">문장 등록</h1>
+    </div>
 
     <form class="form-card glt-card" @submit.prevent="submit">
 
@@ -50,24 +60,31 @@
       </div>
 
       <div
-        v-if="sourceMode === 'aladin' && (!prefilledFromContext || !selectedBook)"
+        v-if="sourceMode === 'aladin' && bookSearchOpen"
         class="glt-field book-search-field"
       >
 
-        <label>도서 검색</label>
+        <div class="book-search-head">
+          <label>도서 검색</label>
+          <button
+            v-if="selectedBook"
+            type="button"
+            class="search-keep-btn"
+            @click="bookSearchOpen = false"
+          >
+            선택 유지
+          </button>
+        </div>
 
         <div class="search-wrap">
 
           <input
-
+            ref="bookSearchInput"
             v-model="bookQuery"
-
             type="search"
-
             placeholder="작가 이름이나 도서명을 검색하세요"
-
             @input="onSearchInput"
-
+            @focus="bookSearchOpen = true"
           />
 
           <span v-if="searching" class="search-status">…</span>
@@ -153,7 +170,17 @@
       </div>
 
       <div
-        v-if="sourceMode === 'aladin' && selectedBook"
+        v-if="sourceMode === 'aladin' && selectedBook && !bookSearchOpen"
+        class="glt-field book-search-reopen"
+      >
+        <label>도서 검색</label>
+        <button type="button" class="search-reopen" @click="openBookSearch">
+          작가 이름이나 도서명을 검색하세요
+        </button>
+      </div>
+
+      <div
+        v-if="sourceMode === 'aladin' && selectedBook && !bookSearchOpen"
         class="book-panel glt-card-raised"
         :class="{ 'book-panel--prefilled': prefilledFromContext }"
       >
@@ -266,11 +293,24 @@ export default {
 
       },
 
+      sheetDragY: 0,
+      sheetDragging: false,
+      sheetDragPointerId: null,
+      sheetDragStartY: 0,
+      sheetDragStartOffset: 0,
+
+      bookSearchOpen: true,
+
     }
 
   },
 
   computed: {
+
+    sheetStyle() {
+      if (this.sheetDragY <= 0) return null
+      return { transform: `translateY(${this.sheetDragY}px)` }
+    },
 
     searchHint() {
       return this.searchError ? friendlyRegisterError(this.searchError) : ''
@@ -326,6 +366,49 @@ export default {
       }
     },
 
+    onSheetDragStart(event) {
+      const sheet = this.$refs.sheetEl
+      if (!sheet || sheet.scrollTop > 0) return
+      if (event.pointerType === 'mouse' && event.button !== 0) return
+
+      this.sheetDragging = true
+      this.sheetDragPointerId = event.pointerId
+      this.sheetDragStartY = event.clientY
+      this.sheetDragStartOffset = this.sheetDragY
+      event.currentTarget.setPointerCapture(event.pointerId)
+    },
+
+    onSheetDragMove(event) {
+      if (!this.sheetDragging || event.pointerId !== this.sheetDragPointerId) return
+
+      const delta = event.clientY - this.sheetDragStartY
+      this.sheetDragY = Math.max(0, this.sheetDragStartOffset + delta)
+    },
+
+    onSheetDragEnd(event) {
+      if (event.pointerId !== this.sheetDragPointerId) return
+
+      const zone = event.currentTarget
+      if (zone?.hasPointerCapture?.(event.pointerId)) {
+        zone.releasePointerCapture(event.pointerId)
+      }
+
+      const threshold = 96
+      const shouldClose = this.sheetDragY > threshold
+
+      this.sheetDragging = false
+      this.sheetDragPointerId = null
+
+      if (shouldClose) {
+        const sheet = this.$refs.sheetEl
+        this.sheetDragY = sheet?.offsetHeight || 480
+        window.setTimeout(() => this.goBack(), 260)
+        return
+      }
+
+      this.sheetDragY = 0
+    },
+
     showNotice(raw) {
       this.notice = friendlyRegisterError(raw)
     },
@@ -343,6 +426,7 @@ export default {
         this.bookQuery = ''
         this.searchResults = []
         this.searched = false
+        this.bookSearchOpen = true
       }
     },
 
@@ -510,6 +594,8 @@ export default {
 
       this.searchError = ''
 
+      this.bookSearchOpen = false
+
     },
 
     onSearchInput() {
@@ -566,9 +652,17 @@ export default {
 
     },
 
+    openBookSearch() {
+      this.bookSearchOpen = true
+      this.$nextTick(() => {
+        this.$refs.bookSearchInput?.focus()
+      })
+    },
+
     async selectBook(book) {
 
       this.selectedBook = book
+      this.bookSearchOpen = false
 
       this.searchResults = []
 
@@ -599,6 +693,8 @@ export default {
       this.searchResults = []
 
       this.searched = false
+
+      this.bookSearchOpen = true
 
       if (this.$route.query.novel_id || this.$route.query.quote_id) {
 
@@ -667,32 +763,55 @@ export default {
 
 <style scoped>
 
-.register-head {
+.register--sheet {
+  position: fixed;
+  top: calc(var(--glt-header-height) + 6px);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 150;
+  width: 100%;
+  max-width: var(--glt-app-width);
+  margin: 0 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--glt-bg);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -16px 48px rgba(61, 52, 41, 0.16);
+  padding: var(--glt-space-2) var(--glt-space-4) calc(var(--glt-space-6) + env(safe-area-inset-bottom, 0px));
+  transition: transform 0.28s var(--glt-ease);
+}
+
+.register--sheet.is-sheet-dragging {
+  transition: none;
+}
+
+.sheet-drag-zone {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--glt-space-3);
-  margin-bottom: var(--glt-space-4);
+  margin: 0 calc(-1 * var(--glt-space-4)) var(--glt-space-3);
+  padding: 6px var(--glt-space-4) var(--glt-space-2);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
-.register-head .glt-title {
-  margin: 0;
+.sheet-drag-zone:active {
+  cursor: grabbing;
 }
 
-.back-btn {
-  flex-shrink: 0;
-  border: 1px solid var(--glt-glass-border);
+.sheet-handle {
+  width: 40px;
+  height: 5px;
+  margin: 0 auto 10px;
   border-radius: var(--glt-radius-full);
-  background: var(--glt-surface);
-  color: var(--glt-ink-secondary);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 7px 12px;
+  background: rgba(212, 195, 170, 0.9);
 }
 
-.back-btn:hover {
-  color: var(--glt-accent);
-  border-color: var(--glt-accent-muted);
+.sheet-title {
+  margin: 0;
+  font-size: 1rem;
 }
 
 .form-card {
@@ -740,9 +859,55 @@ export default {
 }
 
 .book-search-field {
-
   position: relative;
+}
 
+.book-search-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: var(--glt-space-2);
+}
+
+.book-search-head label {
+  margin: 0;
+}
+
+.search-keep-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--glt-accent-hover);
+  cursor: pointer;
+}
+
+.search-keep-btn:hover {
+  text-decoration: underline;
+}
+
+.book-search-reopen {
+  margin-bottom: var(--glt-space-3);
+}
+
+.search-reopen {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--glt-glass-border);
+  border-radius: var(--glt-radius-md);
+  background: var(--glt-surface);
+  color: var(--glt-ink-tertiary);
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--glt-duration), color var(--glt-duration);
+}
+
+.search-reopen:hover {
+  color: var(--glt-ink-secondary);
+  border-color: var(--glt-accent-muted);
 }
 
 
