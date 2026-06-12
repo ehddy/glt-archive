@@ -21,13 +21,12 @@
       <span v-if="activeQuery"> · 「{{ activeQuery }}」</span>
     </p>
 
-    <div v-if="initialLoading" class="glt-empty">불러오는 중…</div>
-    <div v-else-if="error" class="glt-empty glt-card">{{ error }}</div>
-    <div v-else-if="!novels.length" class="glt-empty glt-card">
+    <div v-if="error && !initialLoading" class="glt-empty glt-card">{{ error }}</div>
+    <div v-else-if="!initialLoading && !novels.length" class="glt-empty glt-card">
       <p>아직 담긴 책이 없어요.</p>
       <router-link to="/register" class="glt-btn glt-btn-primary">문장 등록하기</router-link>
     </div>
-    <template v-else>
+    <template v-else-if="!initialLoading">
       <ul class="novel-grid">
         <li v-for="novel in novels" :key="novel.id">
           <router-link :to="`/novels/${novel.id}`" class="novel-card glt-card">
@@ -61,6 +60,7 @@
 <script>
 import { api } from '../api'
 import LoadMoreBar from '../components/LoadMoreBar.vue'
+import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'NovelsView',
@@ -94,6 +94,7 @@ export default {
       } else {
         this.initialLoading = true
         this.novels = []
+        startPageLoading()
       }
       this.error = ''
       try {
@@ -113,7 +114,10 @@ export default {
         this.error = e.message
         if (!append) this.novels = []
       } finally {
-        this.initialLoading = false
+        if (!append) {
+          this.initialLoading = false
+          endPageLoading()
+        }
         this.loadingMore = false
       }
     },

@@ -168,7 +168,12 @@
 
 
 
-      <ChatBot v-if="$route.name !== 'register'" />
+      <LoadingOverlay
+        v-if="pageLoading.count > 0"
+        :message="pageLoading.message"
+      />
+
+      <ChatBot v-if="$route.name !== 'register' && pageLoading.count === 0" />
 
     </div>
 
@@ -181,6 +186,8 @@
 <script>
 
 import ChatBot from './components/ChatBot.vue'
+import LoadingOverlay from './components/LoadingOverlay.vue'
+import { pageLoading } from './utils/pageLoading'
 import AiSearchView from './views/AiSearchView.vue'
 import HomeView from './views/HomeView.vue'
 import NovelDetailView from './views/NovelDetailView.vue'
@@ -209,12 +216,13 @@ export default {
 
   name: 'App',
 
-  components: { ChatBot },
+  components: { ChatBot, LoadingOverlay },
 
   data() {
 
     return {
       COLLECT,
+      pageLoading,
       pageTransition: 'page-fade',
       lastRouteName: null,
       lastRouteFullPath: '/',

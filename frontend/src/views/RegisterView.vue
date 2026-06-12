@@ -19,24 +19,6 @@
 
     <form class="form-card glt-card" @submit.prevent="submit">
 
-      <div class="glt-field">
-
-        <label>문장 *</label>
-
-        <textarea
-
-          v-model="form.text"
-
-          required
-
-          placeholder="문장"
-
-          @input="clearNotice"
-
-        />
-
-      </div>
-
       <div class="glt-field source-mode-field">
         <label>출처</label>
         <div class="mode-tabs" role="tablist">
@@ -204,34 +186,29 @@
             </p>
           </div>
         </div>
-
-        <div class="submit-block" :class="{ 'submit-block--inline': prefilledFromContext }">
-          <button
-            class="glt-btn glt-btn-primary submit-btn"
-            type="submit"
-            :disabled="submitting || !canSubmit"
-          >
-            {{ submitting ? '등록 중…' : '등록' }}
-          </button>
-        </div>
       </div>
 
-      <div
-        v-if="sourceMode !== 'aladin' || !selectedBook"
-        class="submit-block submit-block--standalone"
-      >
+      <div class="glt-field">
+        <label>문장 *</label>
+        <textarea
+          v-model="form.text"
+          required
+          placeholder="문장"
+          @input="clearNotice"
+        />
+      </div>
+
+      <div class="submit-block submit-block--standalone">
         <button
           class="glt-btn glt-btn-primary submit-btn"
           type="submit"
           :disabled="submitting || !canSubmit"
         >
-          {{ submitting ? '등록 중…' : '등록' }}
+          등록
         </button>
       </div>
 
-      <div v-if="notice" class="register-notice" role="status">
-        <p class="register-notice-text">{{ notice }}</p>
-      </div>
+      <p v-if="notice" class="register-notice" role="status">{{ notice }}</p>
 
     </form>
 
@@ -250,6 +227,7 @@ import {
   pickAladinBookMatch,
   routeAfterQuoteCreated,
 } from '../utils/registerBook'
+import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
 
@@ -431,59 +409,59 @@ export default {
     },
 
     async applyPrefill() {
-
-      const { novel_id: novelId, quote_id: quoteId, text } = this.$route.query
-      const stateText = history.state?.prefillText
-      const stateBookQ = history.state?.prefillBookQuery
-      const stateSourceTitle = history.state?.prefillSourceTitle
-      const stateSourceMode = history.state?.sourceMode
-      const stateCustomSource = history.state?.prefillCustomSource
-
-      if (stateText && typeof stateText === 'string') {
-        this.form.text = stateText
-      } else if (text && typeof text === 'string') {
-        this.form.text = text
-      }
-
-      if (history.state?.fromAiSearch && stateBookQ && typeof stateBookQ === 'string') {
-        this.sourceMode = 'aladin'
-        const matched = await this.prefillFromAladinQuery(
-          stateBookQ,
-          stateSourceTitle,
-          history.state?.prefillAuthor || stateCustomSource?.author || '',
-        )
-        if (!matched && stateCustomSource) {
-          this.sourceMode = 'custom'
-          this.customSource.title = stateCustomSource.title || ''
-          this.customSource.author_name = stateCustomSource.author || ''
-        }
-        return
-      }
-
-      if (stateSourceMode === 'custom' || stateCustomSource) {
-        this.sourceMode = 'custom'
-        if (stateCustomSource) {
-          this.customSource.title = stateCustomSource.title || ''
-          this.customSource.author_name = stateCustomSource.author || ''
-        }
-        return
-      }
-
-      if (stateBookQ && typeof stateBookQ === 'string') {
-        this.sourceMode = 'aladin'
-        await this.prefillFromAladinQuery(
-          stateBookQ,
-          stateSourceTitle,
-          history.state?.prefillAuthor || '',
-        )
-        return
-      }
-
-      if (!novelId && !quoteId) return
-
-      this.sourceMode = 'aladin'
+      startPageLoading()
 
       try {
+        const { novel_id: novelId, quote_id: quoteId, text } = this.$route.query
+        const stateText = history.state?.prefillText
+        const stateBookQ = history.state?.prefillBookQuery
+        const stateSourceTitle = history.state?.prefillSourceTitle
+        const stateSourceMode = history.state?.sourceMode
+        const stateCustomSource = history.state?.prefillCustomSource
+
+        if (stateText && typeof stateText === 'string') {
+          this.form.text = stateText
+        } else if (text && typeof text === 'string') {
+          this.form.text = text
+        }
+
+        if (history.state?.fromAiSearch && stateBookQ && typeof stateBookQ === 'string') {
+          this.sourceMode = 'aladin'
+          const matched = await this.prefillFromAladinQuery(
+            stateBookQ,
+            stateSourceTitle,
+            history.state?.prefillAuthor || stateCustomSource?.author || '',
+          )
+          if (!matched && stateCustomSource) {
+            this.sourceMode = 'custom'
+            this.customSource.title = stateCustomSource.title || ''
+            this.customSource.author_name = stateCustomSource.author || ''
+          }
+          return
+        }
+
+        if (stateSourceMode === 'custom' || stateCustomSource) {
+          this.sourceMode = 'custom'
+          if (stateCustomSource) {
+            this.customSource.title = stateCustomSource.title || ''
+            this.customSource.author_name = stateCustomSource.author || ''
+          }
+          return
+        }
+
+        if (stateBookQ && typeof stateBookQ === 'string') {
+          this.sourceMode = 'aladin'
+          await this.prefillFromAladinQuery(
+            stateBookQ,
+            stateSourceTitle,
+            history.state?.prefillAuthor || '',
+          )
+          return
+        }
+
+        if (!novelId && !quoteId) return
+
+        this.sourceMode = 'aladin'
 
         const stateBook = history.state?.prefillBook
 
@@ -491,35 +469,21 @@ export default {
           stateBook?.novel_id
           && (!novelId || String(stateBook.novel_id) === String(novelId))
         ) {
-
           await this.setSelectedFromNovel({
-
             id: stateBook.novel_id,
-
             title: stateBook.title,
-
             author: { name: stateBook.author },
-
             aladin_item_id: stateBook.item_id,
-
             cover_url: stateBook.cover_url,
-
             publisher: stateBook.publisher,
-
             pub_date: stateBook.pub_date,
-
             description: stateBook.description,
-
           })
-
           return
-
         }
 
         if (quoteId) {
-
           const quote = await api.getQuote(quoteId)
-
           if (quote.novel) {
             await this.setSelectedFromNovel(quote.novel)
           } else if (quote.source?.title) {
@@ -527,9 +491,7 @@ export default {
             this.customSource.title = quote.source.title
             this.customSource.author_name = quote.source.author?.name || ''
           }
-
           return
-
         }
 
         if (novelId) {
@@ -538,13 +500,11 @@ export default {
             await this.setSelectedFromNovel(novel)
           }
         }
-
       } catch (e) {
-
         this.searchError = e.message
-
+      } finally {
+        endPageLoading()
       }
-
     },
 
     async prefillFromAladinQuery(bookQ, sourceTitle = '', author = '') {
@@ -737,17 +697,13 @@ export default {
     },
 
     async submit() {
-
       if (!this.canSubmit) return
 
-
-
       this.submitting = true
-
+      startPageLoading()
       this.clearNotice()
 
       try {
-
         const payload = { text: this.form.text.trim() }
 
         if (this.sourceMode === 'aladin') {
@@ -772,17 +728,12 @@ export default {
 
         const quote = await api.createQuote(payload)
         this.$router.push(routeAfterQuoteCreated(quote))
-
       } catch (e) {
-
         this.showNotice(e.message)
-
       } finally {
-
         this.submitting = false
-
+        endPageLoading()
       }
-
     },
 
   },
@@ -1235,12 +1186,6 @@ export default {
   border-color: var(--glt-accent-muted);
 }
 
-.book-panel--prefilled .submit-block--inline {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--glt-line);
-}
-
 .submit-block {
   margin-top: var(--glt-space-2);
   padding-top: var(--glt-space-4);
@@ -1270,19 +1215,11 @@ export default {
 }
 
 .register-notice {
-  margin-top: var(--glt-space-4);
-  padding: 14px 16px;
-  border-radius: var(--glt-radius-md);
-  background: var(--glt-bg-subtle);
-  border: 1px solid var(--glt-glass-border);
-}
-
-.register-notice-text {
-  margin: 0;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  color: var(--glt-ink-secondary);
+  margin: var(--glt-space-3) 0 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
   text-align: center;
+  color: var(--glt-ink-tertiary);
   word-break: keep-all;
 }
 

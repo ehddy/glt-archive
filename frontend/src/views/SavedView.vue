@@ -2,12 +2,11 @@
   <section class="saved glt-container">
     <h1 class="glt-title">{{ COLLECT.pageTitle }}</h1>
 
-    <div v-if="loading" class="glt-empty">불러오는 중…</div>
-    <div v-else-if="error" class="glt-empty">{{ error }}</div>
-    <div v-else-if="!quotes.length" class="glt-empty glt-card">{{ COLLECT.empty }}</div>
+    <div v-if="error && !loading" class="glt-empty">{{ error }}</div>
+    <div v-else-if="!loading && !quotes.length" class="glt-empty glt-card">{{ COLLECT.empty }}</div>
 
     <SavedQuoteList
-      v-else
+      v-else-if="!loading"
       :quotes="quotes"
       @remove="removeBookmark"
     />
@@ -18,6 +17,7 @@
 import { api } from '../api'
 import SavedQuoteList from '../components/SavedQuoteList.vue'
 import { COLLECT } from '../utils/collectLabels'
+import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'SavedView',
@@ -36,6 +36,7 @@ export default {
   methods: {
     async load() {
       this.loading = true
+      startPageLoading()
       this.error = ''
       try {
         this.quotes = await api.listBookmarks()
@@ -43,6 +44,7 @@ export default {
         this.error = e.message
       } finally {
         this.loading = false
+        endPageLoading()
       }
     },
     async removeBookmark(quoteId) {

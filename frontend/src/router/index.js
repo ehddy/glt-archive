@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { isPageLoading } from '../utils/pageLoading'
 import AiSearchView from '../views/AiSearchView.vue'
 import HomeView from '../views/HomeView.vue'
 import NovelDetailView from '../views/NovelDetailView.vue'
@@ -20,6 +21,14 @@ const router = createRouter({
     { path: '/quotes/:id', name: 'quote-detail', component: QuoteDetailView },
     { path: '/register', name: 'register', component: RegisterView },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  if (isPageLoading() && to.fullPath !== from.fullPath) {
+    next(false)
+    return
+  }
+  next()
 })
 
 export default router

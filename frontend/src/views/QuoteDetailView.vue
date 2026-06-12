@@ -1,7 +1,6 @@
 <template>
-  <section v-if="loading" class="glt-empty">불러오는 중…</section>
-  <section v-else-if="error" class="glt-empty">{{ error }}</section>
-  <section v-else-if="quote" class="detail glt-container">
+  <section v-if="error && !loading" class="glt-empty">{{ error }}</section>
+  <section v-else-if="quote && !loading" class="detail glt-container">
     <router-link to="/" class="back-link">← 목록</router-link>
 
     <header class="detail-header">
@@ -75,6 +74,7 @@ import BookNode from '../components/BookNode.vue'
 import { COLLECT } from '../utils/collectLabels'
 import { quoteAuthorName, quoteCoverUrl, quoteNovelId, quoteSourceTitle } from '../utils/quoteDisplay'
 import { registerRouteForNovel, registerRouteForQuote } from '../utils/registerBook'
+import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'QuoteDetailView',
@@ -127,6 +127,7 @@ export default {
   methods: {
     async loadQuote() {
       this.loading = true
+      startPageLoading()
       this.error = ''
       this.collectMessage = ''
       try {
@@ -141,6 +142,7 @@ export default {
         this.error = e.message
       } finally {
         this.loading = false
+        endPageLoading()
       }
     },
     async toggleBookmark() {

@@ -20,7 +20,7 @@
             class="search-submit"
             :disabled="loading || !query.trim()"
           >
-            {{ loading ? '검색 중…' : '검색' }}
+            검색
           </button>
         </div>
         <button
@@ -36,12 +36,7 @@
 
     <p v-if="error" class="error-msg">{{ error }}</p>
 
-    <div v-if="loading" class="state-panel">
-      <span class="state-spinner" aria-hidden="true" />
-      AI가 문장을 찾는 중…
-    </div>
-
-    <template v-else-if="result">
+    <template v-if="result && !loading">
       <header class="news-head">
         <h2 class="news-summary">{{ result.summary }}</h2>
         <p class="news-meta">
@@ -90,7 +85,7 @@
       </ul>
     </template>
 
-    <div v-else-if="searched" class="state-panel">
+    <div v-else-if="searched && !loading" class="state-panel">
       결과가 없습니다.
     </div>
   </section>
@@ -100,6 +95,7 @@
 import { api } from '../api'
 import { loadAiSearchState, saveAiSearchState } from '../utils/aiSearchState'
 import { registerRouteForAiArticle } from '../utils/registerBook'
+import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'AiSearchView',
@@ -140,6 +136,7 @@ export default {
       if (!q) return
 
       this.loading = true
+      startPageLoading('AI가 문장을 찾는 중')
       this.error = ''
       this.result = null
       this.searched = true
@@ -155,6 +152,7 @@ export default {
         this.error = e.message
       } finally {
         this.loading = false
+        endPageLoading()
       }
     },
     registerArticle(article) {

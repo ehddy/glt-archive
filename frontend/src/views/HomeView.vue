@@ -21,18 +21,13 @@
       </div>
     </header>
 
-    <div v-if="loading && !searched" class="glt-empty">
-      <span class="loading-orbit" />
-      불러오는 중…
-    </div>
-
-    <div v-else-if="error && !searched" class="error-panel glt-card">
+    <div v-if="error && !loading" class="error-panel glt-card">
       <p class="error-title">불러오기 실패</p>
       <p class="error-desc">{{ error }}</p>
       <button class="glt-btn glt-btn-primary" @click="loadHome">다시 시도</button>
     </div>
 
-    <template v-else>
+    <template v-else-if="!loading">
       <SourceSearchResults
         v-if="searched && searchResults.length"
         :results="searchResults"
@@ -65,6 +60,7 @@ import FeaturedBooks from '../components/FeaturedBooks.vue'
 import RecentQuotes from '../components/RecentQuotes.vue'
 import SourceSearchResults from '../components/SourceSearchResults.vue'
 import { registerRouteForSearchQuery } from '../utils/registerBook'
+import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'HomeView',
@@ -93,6 +89,7 @@ export default {
   methods: {
     async loadHome() {
       this.loading = true
+      startPageLoading()
       this.error = ''
       this.libraryStats = null
       this.featuredBooks = []
@@ -109,6 +106,7 @@ export default {
         this.bookmarkIds = new Set()
       } finally {
         this.loading = false
+        endPageLoading()
       }
     },
     async handleSearch() {
@@ -119,6 +117,7 @@ export default {
         return
       }
       this.loading = true
+      startPageLoading()
       this.error = ''
       this.searched = true
       try {
@@ -128,6 +127,7 @@ export default {
         this.searchResults = []
       } finally {
         this.loading = false
+        endPageLoading()
       }
     },
     clearSearch() {
@@ -231,21 +231,6 @@ export default {
 
 .search-clear:hover {
   color: var(--glt-accent-hover);
-}
-
-.loading-orbit {
-  display: block;
-  width: 28px;
-  height: 28px;
-  margin: 0 auto var(--glt-space-4);
-  border: 2px solid var(--glt-glass-border);
-  border-top-color: var(--glt-accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .error-panel {

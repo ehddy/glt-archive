@@ -1,7 +1,6 @@
 <template>
-  <section v-if="loading" class="glt-empty glt-container">불러오는 중…</section>
-  <section v-else-if="error" class="glt-empty glt-container glt-card">{{ error }}</section>
-  <section v-else-if="novel" class="novel-detail glt-container">
+  <section v-if="error && !loading" class="glt-empty glt-container glt-card">{{ error }}</section>
+  <section v-else-if="novel && !loading" class="novel-detail glt-container">
     <router-link to="/novels" class="back-link">← 책장</router-link>
 
     <div class="detail-body glt-card">
@@ -74,6 +73,7 @@
 import { api } from '../api'
 import { getAladinPurchaseUrl } from '../utils/aladinLink'
 import { registerRouteForNovel } from '../utils/registerBook'
+import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'NovelDetailView',
@@ -110,6 +110,7 @@ export default {
         return
       }
       this.loading = true
+      startPageLoading()
       this.error = ''
       try {
         this.novel = await api.getNovel(id)
@@ -118,6 +119,7 @@ export default {
         this.novel = null
       } finally {
         this.loading = false
+        endPageLoading()
       }
     },
   },

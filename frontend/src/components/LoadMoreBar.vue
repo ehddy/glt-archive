@@ -7,8 +7,10 @@
       @click="$emit('load-more')"
     >
       <span v-if="loading" class="load-more-spinner" aria-hidden="true" />
-      {{ loading ? '불러오는 중…' : '더 보기' }}
-      <span v-if="!loading" class="load-more-count">{{ shown }} / {{ total }}</span>
+      <template v-if="!loading">
+        더 보기
+        <span class="load-more-count">{{ shown }} / {{ total }}</span>
+      </template>
     </button>
   </div>
 </template>
@@ -42,6 +44,7 @@ export default {
 .load-more-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   min-width: 9.5rem;
   padding: 10px 18px;

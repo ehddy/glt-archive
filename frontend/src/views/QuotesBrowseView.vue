@@ -22,20 +22,15 @@
       </p>
     </div>
 
-    <div v-if="initialLoading" class="state-panel">
-      <span class="state-spinner" aria-hidden="true" />
-      불러오는 중…
-    </div>
+    <div v-if="error && !initialLoading" class="state-panel state-panel--error">{{ error }}</div>
 
-    <div v-else-if="error" class="state-panel state-panel--error">{{ error }}</div>
-
-    <div v-else-if="!quotes.length" class="state-panel state-panel--empty">
+    <div v-else-if="!initialLoading && !quotes.length" class="state-panel state-panel--empty">
       <p class="state-title">아직 문장이 없습니다</p>
       <p class="state-desc">첫 문장을 등록해 보세요.</p>
       <router-link :to="registerRoute" class="glt-btn glt-btn-primary">문장 등록</router-link>
     </div>
 
-    <template v-else>
+    <template v-else-if="!initialLoading">
       <div class="quote-feed">
         <QuoteBrowseItem
           v-for="quote in quotes"
@@ -60,6 +55,7 @@ import { api } from '../api'
 import LoadMoreBar from '../components/LoadMoreBar.vue'
 import QuoteBrowseItem from '../components/QuoteBrowseItem.vue'
 import { registerRouteForSearchQuery } from '../utils/registerBook'
+import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'QuotesBrowseView',
@@ -98,6 +94,7 @@ export default {
       } else {
         this.initialLoading = true
         this.quotes = []
+        startPageLoading()
       }
       this.error = ''
       try {
@@ -117,7 +114,10 @@ export default {
         this.error = e.message
         if (!append) this.quotes = []
       } finally {
-        this.initialLoading = false
+        if (!append) {
+          this.initialLoading = false
+          endPageLoading()
+        }
         this.loadingMore = false
       }
     },
