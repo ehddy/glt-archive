@@ -60,6 +60,16 @@ import RecentQuotes from '../components/RecentQuotes.vue'
 import SourceSearchResults from '../components/SourceSearchResults.vue'
 import { requireLogin } from '../utils/auth'
 import { registerRouteForSearchQuery } from '../utils/registerBook'
+import {
+  clearHomeSearchState,
+  loadHomeSearchState,
+  saveHomeSearchState,
+} from '../utils/homeSearchState'
+import {
+  applyLikePatchesToQuotes,
+  applyLikePatchesToSearchResults,
+  mergeLikedIds,
+} from '../utils/likeSync'
 import { patchQuoteLikeCount, toggleLike as toggleLikeRequest } from '../utils/likeToggle'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
@@ -87,7 +97,28 @@ export default {
   mounted() {
     this.loadHome()
   },
+  beforeUnmount() {
+    saveHomeSearchState({
+      query: this.query,
+      searchResults: this.searchResults,
+      searched: this.searched,
+    })
+  },
   methods: {
+    applyLikeState() {
+      this.recentQuotes = applyLikePatchesToQuotes(this.recentQuotes)
+      this.searchResults = applyLikePatchesToSearchResults(this.searchResults)
+      this.likedIds = mergeLikedIds(this.likedIds)
+    },
+    restoreSearchState() {
+      const saved = loadHomeSearchState()
+      if (!saved?.searched) return
+
+      this.query = saved.query || ''
+      this.searched = true
+      this.searchResults = Array.isArray(saved.searchResults) ? saved.searchResults : []
+      this.applyLikeState()
+    },
     async loadHome() {
       this.loading = true
       startPageLoading()
@@ -102,6 +133,8 @@ export default {
         this.featuredBooks = Array.isArray(home.featured_books) ? home.featured_books : []
         this.recentQuotes = Array.isArray(home.recent_quotes) ? home.recent_quotes : []
         this.likedIds = new Set(home.liked_ids || [])
+        this.applyLikeState()
+        this.restoreSearchState()
       } catch (e) {
         this.error = e.message || '잠시 문제가 생겼어요.'
         this.likedIds = new Set()
@@ -135,6 +168,7 @@ export default {
       this.query = ''
       this.searchResults = []
       this.searched = false
+      clearHomeSearchState()
     },
     async toggleLike(quoteId) {
       if (!requireLogin(this.$router, this.$route.fullPath)) return
@@ -142,6 +176,7 @@ export default {
         const { likedIds, likeCount } = await toggleLikeRequest(api, this.likedIds, quoteId)
         this.likedIds = likedIds
         this.searchResults = patchQuoteLikeCount(this.searchResults, quoteId, likeCount, { nested: true })
+        this.recentQuotes = patchQuoteLikeCount(this.recentQuotes, quoteId, likeCount)
       } catch (e) {
         this.error = e.message
       }

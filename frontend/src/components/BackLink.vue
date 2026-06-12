@@ -1,5 +1,23 @@
 <template>
-  <router-link :to="to" class="back-link" :aria-label="label">
+  <button
+    v-if="useHistory"
+    type="button"
+    class="back-link"
+    :aria-label="label"
+    @click="goBack"
+  >
+    <svg class="back-link-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M14.5 6.5L9 12l5.5 5.5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </button>
+  <router-link v-else :to="to" class="back-link" :aria-label="label">
     <svg class="back-link-icon" viewBox="0 0 24 24" aria-hidden="true">
       <path
         d="M14.5 6.5L9 12l5.5 5.5"
@@ -17,8 +35,19 @@
 export default {
   name: 'BackLink',
   props: {
-    to: { type: [String, Object], required: true },
+    to: { type: [String, Object], default: '/' },
     label: { type: String, required: true },
+    useHistory: { type: Boolean, default: false },
+    fallbackTo: { type: [String, Object], default: '/' },
+  },
+  methods: {
+    goBack() {
+      if (window.history.length > 1) {
+        this.$router.back()
+        return
+      }
+      this.$router.push(this.fallbackTo)
+    },
   },
 }
 </script>

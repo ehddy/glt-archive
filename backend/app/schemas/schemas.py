@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from app.auth.password import validate_signup_password
 
 
 class AuthorCreate(BaseModel):
@@ -142,6 +144,12 @@ class RegisterRequest(BaseModel):
     email: str = Field(..., min_length=3, max_length=255)
     password: str = Field(..., min_length=8, max_length=128)
     name: str | None = Field(None, max_length=100)
+
+    @field_validator("password")
+    @classmethod
+    def check_password_strength(cls, value: str) -> str:
+        validate_signup_password(value)
+        return value
 
 
 class LoginRequest(BaseModel):

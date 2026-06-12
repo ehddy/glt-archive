@@ -42,10 +42,22 @@ function normalizeApiError(message, status) {
   return message
 }
 
+function shouldBypassBrowserCache(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase()
+  if (method !== 'GET' && method !== 'HEAD') return false
+  if (!getAccessToken()) return false
+  return (
+    path.startsWith('/api/home')
+    || path.startsWith('/api/likes')
+    || path.startsWith('/api/quotes/search')
+  )
+}
+
 async function requestRaw(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   const token = getAccessToken()
+  const bypassCache = shouldBypassBrowserCache(path, options)
 
   try {
     const response = await fetch(`${API_BASE}${path}`, {
@@ -54,6 +66,7 @@ async function requestRaw(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
+      cache: bypassCache ? 'no-store' : 'default',
       signal: controller.signal,
       ...options,
     })

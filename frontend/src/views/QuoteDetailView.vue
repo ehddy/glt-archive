@@ -1,7 +1,7 @@
 <template>
   <section v-if="error && !loading" class="glt-empty">{{ error }}</section>
   <section v-else-if="quote && !loading" class="detail glt-container">
-    <BackLink to="/" label="뒤로" />
+    <BackLink use-history fallback-to="/" label="뒤로" />
 
     <header class="detail-header">
       <h1 class="glt-title">한 줄</h1>

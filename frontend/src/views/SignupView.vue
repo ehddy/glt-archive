@@ -32,7 +32,20 @@
           type="password"
           autocomplete="new-password"
           class="field-input"
-          placeholder="8자 이상"
+          placeholder="영문·특수문자 포함 8자 이상"
+          minlength="8"
+          required
+        />
+      </label>
+
+      <label class="field">
+        <span class="field-label">비밀번호 확인</span>
+        <input
+          v-model="passwordConfirm"
+          type="password"
+          autocomplete="new-password"
+          class="field-input"
+          placeholder="비밀번호를 다시 입력해 주세요"
           minlength="8"
           required
         />
@@ -56,6 +69,7 @@
 import { api } from '../api'
 import AuthSheet from '../components/AuthSheet.vue'
 import { applyAuthResponse } from '../utils/auth'
+import { getPasswordValidationError } from '../utils/passwordValidation'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
@@ -66,6 +80,7 @@ export default {
       name: '',
       email: '',
       password: '',
+      passwordConfirm: '',
       error: '',
       submitting: false,
     }
@@ -84,8 +99,13 @@ export default {
   methods: {
     async submit() {
       this.error = ''
-      if (this.password.length < 8) {
-        this.error = '비밀번호는 8자 이상이어야 해요.'
+      const passwordError = getPasswordValidationError(this.password)
+      if (passwordError) {
+        this.error = passwordError
+        return
+      }
+      if (this.password !== this.passwordConfirm) {
+        this.error = '비밀번호가 일치하지 않아요.'
         return
       }
       this.submitting = true

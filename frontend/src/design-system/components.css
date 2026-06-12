@@ -6,9 +6,13 @@
   width: 36px;
   height: 36px;
   margin: 0 0 var(--glt-space-2) -6px;
+  padding: 0;
+  border: none;
   border-radius: 10px;
+  background: transparent;
   color: var(--glt-ink-secondary);
   text-decoration: none;
+  cursor: pointer;
   transition: background var(--glt-duration), color var(--glt-duration);
 }
 

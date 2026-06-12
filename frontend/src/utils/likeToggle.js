@@ -1,3 +1,5 @@
+import { setLikePatch } from './likeSync'
+
 export async function toggleLike(api, likedIds, quoteId) {
   const wasLiked = likedIds.has(quoteId)
   const actionRes = wasLiked
@@ -8,11 +10,15 @@ export async function toggleLike(api, likedIds, quoteId) {
   if (actionRes.liked) nextLikedIds.add(quoteId)
   else nextLikedIds.delete(quoteId)
 
+  const likeCount = Number(actionRes.like_count) || 0
+  const liked = !!actionRes.liked
+  setLikePatch(quoteId, { likeCount, liked })
+
   return {
     likedIds: nextLikedIds,
     quoteId,
-    likeCount: Number(actionRes.like_count) || 0,
-    liked: !!actionRes.liked,
+    likeCount,
+    liked,
   }
 }
 
