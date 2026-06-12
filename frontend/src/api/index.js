@@ -4,9 +4,9 @@ import { dbRequestQueue } from './requestQueue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
-const REQUEST_TIMEOUT_MS = 8000
-const CHAT_TIMEOUT_MS = 60000
-const AI_SEARCH_TIMEOUT_MS = 90000
+const REQUEST_TIMEOUT_MS = 30000
+const CHAT_TIMEOUT_MS = 120000
+const AI_SEARCH_TIMEOUT_MS = 120000
 
 function shouldUseQueue(path, options = {}) {
   if (path.includes('/chat') || path.includes('/ai-search')) return false
@@ -86,19 +86,10 @@ function request(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
 }
 
 export const api = {
-  getLibrary() {
-    return request('/api/library')
-  },
-  getLibraryStats() {
-    return request('/api/library/stats')
-  },
   getHome({ featuredLimit = 20, quoteLimit = 12 } = {}) {
     return request(
       `/api/home?featured_limit=${featuredLimit}&quote_limit=${quoteLimit}`,
     )
-  },
-  getFeaturedBooks(limit = 20) {
-    return request(`/api/library/featured?limit=${limit}`)
   },
   getBookmarkIds() {
     return request('/api/bookmarks/ids')
@@ -130,17 +121,11 @@ export const api = {
     params.set('limit', String(limit))
     return request(`/api/quotes/browse?${params}`)
   },
-  listQuotes(skip = 0, limit = 100) {
-    return request(`/api/quotes?skip=${skip}&limit=${limit}`)
-  },
   searchQuotes(q, limit = 20) {
     return request(`/api/quotes/search?q=${encodeURIComponent(q)}&limit=${limit}`)
   },
   getQuote(id) {
     return request(`/api/quotes/${id}`)
-  },
-  getVersions(id) {
-    return request(`/api/quotes/${id}/versions`)
   },
   createQuote(data) {
     return request('/api/quotes', {
@@ -148,23 +133,11 @@ export const api = {
       body: JSON.stringify(data),
     })
   },
-  updateQuote(id, data) {
-    return request(`/api/quotes/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    })
-  },
-  listAuthors() {
-    return request('/api/authors')
-  },
-  searchAladinBooks(q, limit = 10) {
+  searchAladinBooks(q, limit = 20) {
     return request(`/api/aladin/search?q=${encodeURIComponent(q)}&limit=${limit}`)
   },
   getAladinBook(itemId) {
     return request(`/api/aladin/books/${itemId}`)
-  },
-  importAladinBook(itemId) {
-    return request(`/api/aladin/books/${itemId}`, { method: 'POST' })
   },
   chat(message, history = []) {
     return request('/api/chat', {

@@ -30,8 +30,9 @@ def list_bookmark_ids(
     client_id: str = Depends(_client_id),
     db: Session = Depends(get_db),
 ):
-    quotes = bookmark_service.list_bookmarks(db, client_id)
-    return BookmarkIdsOut(quote_ids=[q.id for q in quotes])
+    return BookmarkIdsOut(
+        quote_ids=bookmark_service.list_bookmark_quote_ids(db, client_id)
+    )
 
 
 @router.post("/{quote_id}", response_model=QuoteOut, status_code=201)

@@ -16,12 +16,12 @@
       <button class="glt-btn glt-btn-primary" @click="applySearch">검색</button>
     </div>
 
-    <p v-if="!loading && total !== null" class="result-count">
+    <p v-if="!initialLoading && total !== null" class="result-count">
       {{ total }}권
       <span v-if="activeQuery"> · 「{{ activeQuery }}」</span>
     </p>
 
-    <div v-if="loading" class="glt-empty">불러오는 중…</div>
+    <div v-if="initialLoading" class="glt-empty">불러오는 중…</div>
     <div v-else-if="error" class="glt-empty glt-card">{{ error }}</div>
     <div v-else-if="!novels.length" class="glt-empty glt-card">
       <p>아직 담긴 책이 없어요.</p>
@@ -47,11 +47,12 @@
         </li>
       </ul>
 
-      <PaginationBar
-        :page="page"
+      <LoadMoreBar
+        :shown="novels.length"
         :total="total"
         :page-size="pageSize"
-        @update:page="goToPage"
+        :loading="loadingMore"
+        @load-more="loadMore"
       />
     </template>
   </section>
@@ -59,20 +60,20 @@
 
 <script>
 import { api } from '../api'
-import PaginationBar from '../components/PaginationBar.vue'
+import LoadMoreBar from '../components/LoadMoreBar.vue'
 
 export default {
   name: 'NovelsView',
-  components: { PaginationBar },
+  components: { LoadMoreBar },
   data() {
     return {
       novels: [],
       total: null,
       query: '',
       activeQuery: '',
-      page: 1,
-      pageSize: 24,
-      loading: true,
+      pageSize: 20,
+      initialLoading: true,
+      loadingMore: false,
       error: '',
     }
   },
@@ -82,50 +83,54 @@ export default {
       handler(query) {
         this.query = query.q || ''
         this.activeQuery = query.q || ''
-        this.page = Math.max(1, Number(query.page) || 1)
         this.loadNovels()
       },
     },
   },
   methods: {
-    async loadNovels() {
-      this.loading = true
+    async loadNovels({ append = false } = {}) {
+      if (append) {
+        this.loadingMore = true
+      } else {
+        this.initialLoading = true
+        this.novels = []
+      }
       this.error = ''
       try {
-        const skip = (this.page - 1) * this.pageSize
+        const skip = append ? this.novels.length : 0
         const res = await api.browseNovels({
           q: this.activeQuery || undefined,
           skip,
           limit: this.pageSize,
         })
-        this.novels = res.items
         this.total = res.total
-        if (this.page > 1 && !res.items.length) {
-          this.goToPage(1)
+        if (append) {
+          this.novels = [...this.novels, ...res.items]
+        } else {
+          this.novels = res.items
         }
       } catch (e) {
         this.error = e.message
-        this.novels = []
+        if (!append) this.novels = []
       } finally {
-        this.loading = false
+        this.initialLoading = false
+        this.loadingMore = false
       }
+    },
+    loadMore() {
+      if (this.loadingMore || this.novels.length >= this.total) return
+      this.loadNovels({ append: true })
     },
     applySearch() {
       const q = this.query.trim()
       const next = { ...this.$route.query }
       if (q) next.q = q
       else delete next.q
-      delete next.page
       this.$router.push({ path: '/novels', query: next })
     },
     clearSearch() {
       this.query = ''
       this.$router.push({ path: '/novels' })
-    },
-    goToPage(page) {
-      const next = { ...this.$route.query, page: String(page) }
-      if (page <= 1) delete next.page
-      this.$router.push({ path: '/novels', query: next })
     },
   },
 }

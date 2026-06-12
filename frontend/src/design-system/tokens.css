@@ -75,16 +75,19 @@
   --glt-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --glt-duration: 0.28s;
 
-  /* Layout */
-  --glt-app-width: 430px;
+  /* Layout — iPhone 17 baseline (402 × 874 CSS px, @3x) */
+  --glt-app-width: 402px;
+  --glt-app-height: 874px;
   --glt-header-height: 56px;
   --glt-bottom-nav-height: 62px;
   --glt-container: 100%;
   --glt-book-width: 152px;
   --glt-book-min-height: 118px;
   --glt-hub-size: 88px;
-  --glt-spine-width: 84px;
+  --glt-spine-width: 96px;
   --glt-spine-height: 168px;
+  --glt-cover-width: 108px;
+  --glt-cover-height: 148px;
   --glt-bubble-width: 236px;
   --glt-bubble-shelf-width: 220px;
   --glt-shelf-slot-width: 248px;

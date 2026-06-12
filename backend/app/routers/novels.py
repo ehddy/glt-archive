@@ -5,7 +5,6 @@ from app.config import settings
 from app.database import get_db
 from app.schemas.schemas import (
     HomeOut,
-    LibraryOut,
     LibraryStatsOut,
     NovelDetailOut,
     NovelWithQuotesOut,
@@ -15,7 +14,6 @@ from app.services.home_service import get_home
 from app.services.novel_service import (
     count_novels,
     get_featured_books,
-    get_library,
     get_library_stats,
     get_novel,
     list_novels,
@@ -36,13 +34,6 @@ def _optional_client_id(
 
 
 
-
-
-@router.get("/library", response_model=LibraryOut)
-
-def library(db: Session = Depends(get_db)):
-
-    return get_library(db)
 
 
 @router.get("/library/stats", response_model=LibraryStatsOut)

@@ -6,13 +6,14 @@
 
     <header class="detail-header">
       <h1 class="glt-title">문장</h1>
-    </header>
-
-    <div v-if="hasLinkedNovel" class="add-quote-bar glt-card">
-      <router-link :to="registerRoute" class="glt-btn glt-btn-primary add-quote-btn">
+      <router-link
+        v-if="hasLinkedNovel"
+        :to="registerRoute"
+        class="add-quote-link"
+      >
         문장 추가
       </router-link>
-    </div>
+    </header>
 
     <div class="detail-graph glt-card">
       <div class="detail-source">
@@ -20,7 +21,7 @@
           v-if="novelTitle"
           :title="novelTitle"
           :author="authorName"
-          :quote-count="1"
+          :cover-url="coverUrl"
           :color-index="bookColorIndex"
         />
         <div v-else-if="authorName" class="detail-source-fallback">
@@ -65,7 +66,7 @@
 import { api } from '../api'
 import BookNode from '../components/BookNode.vue'
 import { COLLECT } from '../utils/collectLabels'
-import { quoteAuthorName, quoteNovelId, quoteSourceTitle } from '../utils/quoteDisplay'
+import { quoteAuthorName, quoteCoverUrl, quoteNovelId, quoteSourceTitle } from '../utils/quoteDisplay'
 import { registerRouteForNovel, registerRouteForQuote } from '../utils/registerBook'
 
 export default {
@@ -88,6 +89,9 @@ export default {
     },
     novelTitle() {
       return quoteSourceTitle(this.quote)
+    },
+    coverUrl() {
+      return quoteCoverUrl(this.quote) || ''
     },
     novelLinkId() {
       return quoteNovelId(this.quote)
@@ -162,23 +166,31 @@ export default {
 }
 
 .detail-header {
-  margin-bottom: var(--glt-space-4);
-}
-
-.detail-header .glt-title {
-  margin-top: 0;
-}
-
-.add-quote-bar {
   display: flex;
-  justify-content: flex-end;
-  padding: 12px 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: var(--glt-space-3);
 }
 
-.add-quote-btn {
-  font-size: 0.82rem;
-  padding: 8px 14px;
+.detail-header .glt-title {
+  margin: 0;
+}
+
+.add-quote-link {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: var(--glt-radius-full);
+  background: var(--glt-accent);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(196, 105, 58, 0.22);
+}
+
+.add-quote-link:hover {
+  background: var(--glt-accent-hover);
 }
 
 .detail-graph {
@@ -192,6 +204,7 @@ export default {
 
 .detail-source {
   display: flex;
+  flex-direction: column;
   align-items: center;
   flex-shrink: 0;
 }
@@ -248,7 +261,10 @@ export default {
   margin: 0 0 4px;
   font-size: 1rem;
   font-weight: 700;
+  line-height: 1.45;
   color: var(--glt-ink);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .readonly-link {

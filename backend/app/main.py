@@ -186,7 +186,8 @@ def health():
         "database": database_kind(),
         "api_version": 2,
         "features": {
-            "library_book_detail": True,
+            "home_api": True,
+            "aladin_search": True,
         },
     }
 

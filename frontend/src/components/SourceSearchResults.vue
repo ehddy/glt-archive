@@ -5,54 +5,43 @@
     </header>
 
     <ul class="source-list">
-      <li v-for="item in results" :key="item.quote.id" class="source-node">
-        <div class="node-quote glt-card">
-          <p class="quote-text">{{ item.quote.text }}</p>
-          <div class="quote-actions">
-            <router-link :to="`/quotes/${item.quote.id}`" class="glt-btn glt-btn-ghost quote-link">
-              상세
-            </router-link>
-            <button
-              type="button"
-              class="bookmark-btn"
-              :class="{ 'is-saved': bookmarkIds.has(item.quote.id) }"
-              @click="$emit('toggle-bookmark', item.quote.id)"
-            >
-              {{ bookmarkIds.has(item.quote.id) ? COLLECT.done : COLLECT.action }}
-            </button>
-          </div>
-        </div>
+      <li v-for="item in results" :key="item.quote.id" class="result-card glt-card">
+        <router-link :to="`/quotes/${item.quote.id}`" class="result-quote-link">
+          <blockquote class="result-quote">{{ item.quote.text }}</blockquote>
+        </router-link>
 
-        <div class="node-connector" aria-hidden="true">
-          <span class="connector-line" />
-          <span class="connector-dot" />
-        </div>
-
-        <router-link
-          v-if="sourceNovelId(item)"
-          :to="`/novels/${sourceNovelId(item)}`"
-          class="node-source glt-card"
+        <component
+          :is="sourceNovelId(item) ? 'router-link' : 'div'"
+          v-bind="sourceNovelId(item) ? { to: `/novels/${sourceNovelId(item)}` } : {}"
+          class="result-source"
+          :class="{ 'result-source--static': !sourceNovelId(item) }"
         >
           <img
             v-if="sourceCover(item)"
             :src="sourceCover(item)"
             :alt="sourceTitle(item)"
-            class="source-cover"
+            class="result-cover"
           />
-          <div v-else class="source-cover source-cover--empty">📖</div>
-          <div class="source-meta">
-            <span class="source-label">출처</span>
-            <strong class="source-title">{{ sourceTitle(item) }}</strong>
-            <span v-if="sourceAuthor(item)" class="source-author">{{ sourceAuthor(item) }}</span>
+          <div v-else class="result-cover result-cover--empty" aria-hidden="true">📖</div>
+          <div class="result-source-meta">
+            <span class="result-source-label">출처</span>
+            <span class="result-source-title">{{ sourceTitle(item) }}</span>
+            <span v-if="sourceAuthor(item)" class="result-source-author">{{ sourceAuthor(item) }}</span>
           </div>
-        </router-link>
-        <div v-else class="node-source node-source--static glt-card">
-          <div class="source-cover source-cover--empty">📖</div>
-          <div class="source-meta">
-            <span class="source-label">출처</span>
-            <strong class="source-title">{{ sourceTitle(item) }}</strong>
-            <span v-if="sourceAuthor(item)" class="source-author">{{ sourceAuthor(item) }}</span>
-          </div>
+        </component>
+
+        <div class="result-actions">
+          <router-link :to="`/quotes/${item.quote.id}`" class="glt-btn glt-btn-ghost result-detail">
+            상세
+          </router-link>
+          <button
+            type="button"
+            class="result-bookmark"
+            :class="{ 'is-saved': bookmarkIds.has(item.quote.id) }"
+            @click="$emit('toggle-bookmark', item.quote.id)"
+          >
+            {{ bookmarkIds.has(item.quote.id) ? COLLECT.done : COLLECT.action }}
+          </button>
         </div>
       </li>
     </ul>
@@ -117,44 +106,111 @@ export default {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--glt-space-4);
+  gap: var(--glt-space-3);
 }
 
-.source-node {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto auto;
-  gap: var(--glt-space-2);
-  align-items: stretch;
+.result-card {
+  padding: var(--glt-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--glt-space-3);
 }
 
-.node-quote {
-  padding: var(--glt-space-3);
-  min-width: 0;
+.result-quote-link {
+  text-decoration: none;
+  color: inherit;
 }
 
-.quote-text {
-  margin: 0 0 var(--glt-space-2);
-  font-family: var(--glt-font-sans);
-  font-size: 0.86rem;
+.result-quote {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-family: var(--glt-font-serif);
+  font-size: 0.94rem;
   font-weight: 400;
-  line-height: 1.6;
+  line-height: 1.72;
+  letter-spacing: -0.01em;
   color: var(--glt-ink);
   word-break: keep-all;
 }
 
-.quote-actions {
+.result-source {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: var(--glt-radius-md);
+  background: var(--glt-bg-subtle);
+  border: 1px solid rgba(212, 195, 170, 0.35);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--glt-duration), box-shadow var(--glt-duration);
+}
+
+.result-source:not(.result-source--static):hover {
+  border-color: var(--glt-accent-muted);
+  box-shadow: var(--glt-shadow-sm);
+}
+
+.result-source--static {
+  cursor: default;
+}
+
+.result-cover {
+  width: 40px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.result-cover--empty {
+  display: grid;
+  place-items: center;
+  background: var(--glt-surface);
+  font-size: 1rem;
+}
+
+.result-source-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.result-source-label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--glt-accent);
+  letter-spacing: 0.04em;
+}
+
+.result-source-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--glt-ink);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.result-source-author {
+  font-size: 0.72rem;
+  color: var(--glt-ink-tertiary);
+}
+
+.result-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.quote-link {
+.result-detail {
   font-size: 0.78rem;
   padding: 6px 12px;
 }
 
-.bookmark-btn {
+.result-bookmark {
   border: 1px solid var(--glt-glass-border);
   border-radius: var(--glt-radius-full);
   background: var(--glt-surface);
@@ -163,109 +219,20 @@ export default {
   font-weight: 600;
   padding: 6px 12px;
   cursor: pointer;
+  transition:
+    color var(--glt-duration),
+    border-color var(--glt-duration),
+    background var(--glt-duration);
 }
 
-.bookmark-btn.is-saved {
+.result-bookmark.is-saved {
   background: var(--glt-accent-soft);
   border-color: var(--glt-accent-muted);
   color: var(--glt-accent-hover);
 }
 
-.node-connector {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-  height: 16px;
-  padding: 0 var(--glt-space-2);
-}
-
-.connector-line {
-  flex: 1;
-  height: 2px;
-  width: auto;
-  background: linear-gradient(90deg, var(--glt-line), var(--glt-accent-muted));
-  border-radius: 1px;
-}
-
-.connector-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--glt-accent);
-  margin-top: 0;
-  margin-left: 4px;
-  flex-shrink: 0;
-}
-
-.node-source {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 10px;
-  text-align: left;
-  cursor: pointer;
-  border: 1px solid var(--glt-glass-border);
-  background: var(--glt-surface);
-  border-radius: var(--glt-radius-md);
-  transition: box-shadow 0.2s var(--glt-ease);
-  text-decoration: none;
-  color: inherit;
-}
-
-.node-source:hover {
-  box-shadow: var(--glt-shadow-md);
-}
-
-.node-source--static {
-  cursor: default;
-}
-
-.source-cover {
-  width: 44px;
-  height: 62px;
-  object-fit: cover;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-.source-cover--empty {
-  display: grid;
-  place-items: center;
-  background: var(--glt-bg-subtle);
-  font-size: 1.1rem;
-}
-
-.source-meta {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.source-label {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--glt-accent);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.source-title {
-  font-size: 0.76rem;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--glt-ink);
-  word-break: keep-all;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.source-author {
-  font-size: 0.7rem;
-  color: var(--glt-ink-tertiary);
+.result-bookmark:hover {
+  color: var(--glt-accent-hover);
+  border-color: var(--glt-accent-muted);
 }
 </style>

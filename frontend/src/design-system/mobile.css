@@ -1,5 +1,6 @@
-/* Unified mobile web app layout (all screen sizes) */
+/* Unified mobile web app layout — iPhone 17 (402 × 874) baseline */
 :root {
+  --glt-safe-top: env(safe-area-inset-top, 0px);
   --glt-safe-bottom: env(safe-area-inset-bottom, 0px);
   --glt-page-bottom: calc(var(--glt-bottom-nav-height) + var(--glt-safe-bottom) + 16px);
 }

@@ -49,7 +49,7 @@ def _parse_js_response(text: str) -> dict[str, Any]:
 
 async def _fetch_aladin(url: str, params: dict[str, Any]) -> dict[str, Any]:
     try:
-        async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=45.0, follow_redirects=True) as client:
             response = await client.get(url, params=params)
             response.raise_for_status()
             return _parse_js_response(response.text)

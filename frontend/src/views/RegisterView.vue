@@ -84,6 +84,7 @@
             type="search"
             placeholder="작가 이름이나 도서명을 검색하세요"
             @input="onSearchInput"
+            @keyup.enter="onSearchEnter"
             @focus="bookSearchOpen = true"
           />
 
@@ -129,7 +130,7 @@
 
                 <strong>{{ book.title }}</strong>
 
-                <span>{{ book.author }}</span>
+                <span>{{ formatBookAuthor(book.author) }}</span>
 
                 <span v-if="book.publisher" class="result-publisher">{{ book.publisher }}</span>
 
@@ -286,6 +287,7 @@ export default {
       },
 
       searchTimer: null,
+      searchRequestId: 0,
 
       form: {
 
@@ -514,27 +516,10 @@ export default {
         }
 
         if (novelId) {
-
-          const library = await api.getLibrary()
-
-          const book = library.books.find((b) => String(b.id) === String(novelId))
-
-          if (book) {
-
-            const novel = book.quotes?.[0]?.novel || {
-
-              id: book.id,
-
-              title: book.title,
-
-              author: book.author,
-
-            }
-
+          const novel = await api.getNovel(novelId)
+          if (novel) {
             await this.setSelectedFromNovel(novel)
-
           }
-
         }
 
       } catch (e) {
@@ -598,58 +583,73 @@ export default {
 
     },
 
+    formatBookAuthor(author) {
+      if (!author) return ''
+      const names = String(author).split(',').map((n) => n.trim()).filter(Boolean)
+      if (!names.length) return ''
+      const first = names[0].split('(')[0].trim()
+      if (names.length === 1) {
+        return first.length > 36 ? `${first.slice(0, 36)}…` : first
+      }
+      return `${first} 외 ${names.length - 1}명`
+    },
+
     onSearchInput() {
-
       clearTimeout(this.searchTimer)
-
       this.searchError = ''
 
-      if (!this.bookQuery.trim()) {
-
+      const q = this.bookQuery.trim()
+      if (!q) {
+        this.searchRequestId += 1
         this.searchResults = []
-
         this.searched = false
-
+        this.searching = false
         return
-
       }
 
+      this.searchResults = []
+      this.searched = false
       this.searchTimer = setTimeout(this.searchBooks, 400)
+    },
 
+    onSearchEnter() {
+      clearTimeout(this.searchTimer)
+      this.searchError = ''
+      const q = this.bookQuery.trim()
+      if (!q) {
+        this.searchRequestId += 1
+        this.searchResults = []
+        this.searched = false
+        this.searching = false
+        return
+      }
+      this.searchBooks()
     },
 
     async searchBooks() {
-
       const q = this.bookQuery.trim()
-
       if (!q) return
 
-
-
+      const requestId = ++this.searchRequestId
       this.searching = true
-
       this.searchError = ''
 
       try {
-
-        this.searchResults = await api.searchAladinBooks(q)
-
+        const results = await api.searchAladinBooks(q)
+        if (requestId !== this.searchRequestId) return
+        if (q !== this.bookQuery.trim()) return
+        this.searchResults = results
         this.searched = true
-
       } catch (e) {
-
+        if (requestId !== this.searchRequestId) return
         this.searchResults = []
-
         this.searched = true
-
         this.searchError = e.message
-
       } finally {
-
-        this.searching = false
-
+        if (requestId === this.searchRequestId) {
+          this.searching = false
+        }
       }
-
     },
 
     openBookSearch() {
@@ -1053,23 +1053,22 @@ export default {
 
 
 .result-text strong {
-
   font-size: 0.92rem;
-
   color: var(--glt-ink);
-
   line-height: 1.4;
-
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-
-
 .result-text span {
-
   font-size: 0.82rem;
-
   color: var(--glt-ink-secondary);
-
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 

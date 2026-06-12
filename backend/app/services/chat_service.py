@@ -4,8 +4,9 @@ import re
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
+from app.cache import read_cache
 from app.config import settings
-from app.models.models import Novel
+from app.models.models import Novel, Quote
 from app.schemas.schemas import BookRecommendation, ChatMessage, ChatResponse
 
 SYSTEM_PROMPT = """당신은 한국 문학 추천 어시스턴트입니다.
@@ -34,26 +35,53 @@ SYSTEM_PROMPT = """당신은 한국 문학 추천 어시스턴트입니다.
 }"""
 
 
-def _build_catalog(db: Session) -> list[dict]:
+def _query_catalog(db: Session) -> list[dict]:
     novels = (
         db.query(Novel)
-        .options(
-            joinedload(Novel.author),
-            joinedload(Novel.quotes),
-        )
+        .options(joinedload(Novel.author))
         .order_by(Novel.title)
         .all()
     )
-    catalog = []
-    for novel in novels:
-        quotes = [q.text for q in novel.quotes[:2]]
-        catalog.append({
+    if not novels:
+        return []
+
+    novel_ids = [novel.id for novel in novels]
+    quote_rows = (
+        db.query(Quote.novel_id, Quote.text)
+        .filter(Quote.novel_id.in_(novel_ids))
+        .order_by(Quote.novel_id, Quote.updated_at.desc())
+        .all()
+    )
+    samples: dict[int, list[str]] = {nid: [] for nid in novel_ids}
+    for novel_id, text in quote_rows:
+        bucket = samples.get(novel_id)
+        if bucket is not None and len(bucket) < 2:
+            bucket.append(text)
+
+    return [
+        {
             "novel_id": novel.id,
             "title": novel.title,
             "author": novel.author.name if novel.author else "",
-            "sample_quotes": quotes,
-        })
-    return catalog
+            "sample_quotes": samples.get(novel.id, []),
+        }
+        for novel in novels
+    ]
+
+
+def _build_catalog(db: Session) -> list[dict]:
+    ttl = float(settings.cache_ttl_seconds)
+
+    def load() -> list[dict]:
+        return _query_catalog(db)
+
+    cached = read_cache.get_or_set(
+        "chat:catalog",
+        load,
+        ttl=max(ttl, 120.0),
+        enabled=settings.cache_enabled,
+    )
+    return list(cached)
 
 
 def _catalog_text(catalog: list[dict]) -> str:

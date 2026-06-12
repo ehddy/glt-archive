@@ -16,13 +16,13 @@
         <button v-if="query" class="glt-btn glt-btn-ghost" @click="clearSearch">지우기</button>
         <button class="glt-btn glt-btn-primary" @click="applySearch">검색</button>
       </div>
-      <p v-if="!loading && total !== null" class="result-count">
+      <p v-if="!initialLoading && total !== null" class="result-count">
         <span class="result-count-num">{{ total }}</span>문장
         <span v-if="activeQuery" class="result-query">{{ activeQuery }}</span>
       </p>
     </div>
 
-    <div v-if="loading" class="state-panel">
+    <div v-if="initialLoading" class="state-panel">
       <span class="state-spinner" aria-hidden="true" />
       불러오는 중…
     </div>
@@ -44,11 +44,12 @@
         />
       </div>
 
-      <PaginationBar
-        :page="page"
+      <LoadMoreBar
+        :shown="quotes.length"
         :total="total"
         :page-size="pageSize"
-        @update:page="goToPage"
+        :loading="loadingMore"
+        @load-more="loadMore"
       />
     </template>
   </section>
@@ -56,22 +57,22 @@
 
 <script>
 import { api } from '../api'
-import PaginationBar from '../components/PaginationBar.vue'
+import LoadMoreBar from '../components/LoadMoreBar.vue'
 import QuoteBrowseItem from '../components/QuoteBrowseItem.vue'
 import { registerRouteForSearchQuery } from '../utils/registerBook'
 
 export default {
   name: 'QuotesBrowseView',
-  components: { PaginationBar, QuoteBrowseItem },
+  components: { LoadMoreBar, QuoteBrowseItem },
   data() {
     return {
       quotes: [],
       total: null,
       query: '',
       activeQuery: '',
-      page: 1,
       pageSize: 20,
-      loading: true,
+      initialLoading: true,
+      loadingMore: false,
       error: '',
     }
   },
@@ -86,50 +87,54 @@ export default {
       handler(query) {
         this.query = query.q || ''
         this.activeQuery = query.q || ''
-        this.page = Math.max(1, Number(query.page) || 1)
         this.loadQuotes()
       },
     },
   },
   methods: {
-    async loadQuotes() {
-      this.loading = true
+    async loadQuotes({ append = false } = {}) {
+      if (append) {
+        this.loadingMore = true
+      } else {
+        this.initialLoading = true
+        this.quotes = []
+      }
       this.error = ''
       try {
-        const skip = (this.page - 1) * this.pageSize
+        const skip = append ? this.quotes.length : 0
         const res = await api.browseQuotes({
           q: this.activeQuery || undefined,
           skip,
           limit: this.pageSize,
         })
-        this.quotes = res.items
         this.total = res.total
-        if (this.page > 1 && !res.items.length) {
-          this.goToPage(1)
+        if (append) {
+          this.quotes = [...this.quotes, ...res.items]
+        } else {
+          this.quotes = res.items
         }
       } catch (e) {
         this.error = e.message
-        this.quotes = []
+        if (!append) this.quotes = []
       } finally {
-        this.loading = false
+        this.initialLoading = false
+        this.loadingMore = false
       }
+    },
+    loadMore() {
+      if (this.loadingMore || this.quotes.length >= this.total) return
+      this.loadQuotes({ append: true })
     },
     applySearch() {
       const q = this.query.trim()
       const next = { ...this.$route.query }
       if (q) next.q = q
       else delete next.q
-      delete next.page
       this.$router.push({ path: '/quotes', query: next })
     },
     clearSearch() {
       this.query = ''
       this.$router.push({ path: '/quotes' })
-    },
-    goToPage(page) {
-      const next = { ...this.$route.query, page: String(page) }
-      if (page <= 1) delete next.page
-      this.$router.push({ path: '/quotes', query: next })
     },
   },
 }

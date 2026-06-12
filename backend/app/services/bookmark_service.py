@@ -4,6 +4,16 @@ from app.cache import invalidate_read_cache
 from app.models.models import Bookmark, Novel, Quote, Source
 
 
+def list_bookmark_quote_ids(db: Session, client_id: str) -> list[int]:
+    rows = (
+        db.query(Bookmark.quote_id)
+        .filter(Bookmark.client_id == client_id)
+        .order_by(Bookmark.created_at.desc())
+        .all()
+    )
+    return [row[0] for row in rows]
+
+
 def list_bookmarks(db: Session, client_id: str) -> list[Quote]:
     rows = (
         db.query(Bookmark)
@@ -28,15 +38,6 @@ def list_bookmarks(db: Session, client_id: str) -> list[Quote]:
     )
     by_id = {q.id: q for q in quotes}
     return [by_id[qid] for qid in quote_ids if qid in by_id]
-
-
-def is_bookmarked(db: Session, client_id: str, quote_id: int) -> bool:
-    return (
-        db.query(Bookmark)
-        .filter(Bookmark.client_id == client_id, Bookmark.quote_id == quote_id)
-        .first()
-        is not None
-    )
 
 
 def add_bookmark(db: Session, client_id: str, quote_id: int) -> Bookmark:

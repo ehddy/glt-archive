@@ -29,7 +29,7 @@ def _engine_kwargs(url: str) -> dict:
             # Session pooler has a low connection cap; keep the pool small.
             kwargs["pool_size"] = 1
             kwargs["max_overflow"] = 2
-            kwargs["pool_timeout"] = 30
+            kwargs["pool_timeout"] = 60
             kwargs["pool_recycle"] = 300
         else:
             kwargs["pool_size"] = 5
@@ -50,7 +50,7 @@ def get_db():
     use_semaphore = database_kind() == "supabase"
     acquired = False
     if use_semaphore:
-        acquired = _db_semaphore.acquire(timeout=30)
+        acquired = _db_semaphore.acquire(timeout=60)
         if not acquired:
             raise RuntimeError(
                 "데이터베이스 연결이 바쁩니다. 잠시 후 다시 시도해 주세요."

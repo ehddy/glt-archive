@@ -20,9 +20,7 @@ def _build_home(
     recent = quote_service.list_quotes(db, skip=0, limit=quote_limit)
     bookmark_ids: list[int] = []
     if client_id:
-        bookmark_ids = [
-            quote.id for quote in bookmark_service.list_bookmarks(db, client_id)
-        ]
+        bookmark_ids = bookmark_service.list_bookmark_quote_ids(db, client_id)
 
     return HomeOut(
         stats=LibraryStatsOut.model_validate(stats),

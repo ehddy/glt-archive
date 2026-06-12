@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/aladin", tags=["aladin"])
 @router.get("/search", response_model=list[AladinBookSearchItem])
 async def search(
     q: str = Query(..., min_length=1, max_length=100),
-    limit: int = Query(10, ge=1, le=30),
+    limit: int = Query(20, ge=1, le=30),
 ):
     results = await search_books(q, max_results=limit)
     return [AladinBookSearchItem.model_validate(item) for item in results]

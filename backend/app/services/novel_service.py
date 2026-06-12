@@ -4,7 +4,7 @@ from sqlalchemy import func, or_, text
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.models import Author, Novel, Quote, Source
-from app.schemas.schemas import LibraryOut, NovelSummaryOut, NovelWithQuotesOut
+from app.schemas.schemas import NovelSummaryOut, NovelWithQuotesOut
 from app.services.aladin_service import lookup_book, parse_author_name
 from app.services.author_service import get_or_create_author
 from app.services.quote_serializer import serialize_quote
@@ -14,57 +14,6 @@ from app.config import settings
 
 def _quote_out(quote: Quote):
     return serialize_quote(quote)
-
-
-def get_library(db: Session) -> LibraryOut:
-    novels = (
-        db.query(Novel)
-        .options(
-            joinedload(Novel.author),
-            joinedload(Novel.quotes).joinedload(Quote.source).joinedload(Source.author),
-            joinedload(Novel.quotes).joinedload(Quote.author),
-        )
-        .order_by(Novel.title)
-        .all()
-    )
-
-    books = []
-    for novel in novels:
-        quotes = sorted(novel.quotes, key=lambda q: q.updated_at, reverse=True)
-        books.append(
-            NovelWithQuotesOut(
-                id=novel.id,
-                title=novel.title,
-                author=novel.author,
-                quote_count=len(quotes),
-                quotes=[_quote_out(q) for q in quotes],
-                cover_url=novel.cover_url,
-                publisher=novel.publisher,
-                pub_date=novel.pub_date,
-                aladin_item_id=novel.aladin_item_id,
-            )
-        )
-
-    unlinked_rows = (
-        db.query(Quote)
-        .options(
-            joinedload(Quote.source).joinedload(Source.author),
-            joinedload(Quote.author),
-        )
-        .filter(Quote.novel_id.is_(None))
-        .order_by(Quote.updated_at.desc())
-        .all()
-    )
-    unlinked = [_quote_out(q) for q in unlinked_rows]
-
-    total_quotes = sum(b.quote_count for b in books) + len(unlinked)
-
-    return LibraryOut(
-        books=books,
-        unlinked=unlinked,
-        total_quotes=total_quotes,
-        total_books=len(books),
-    )
 
 
 def query_library_stats(db: Session) -> dict[str, int]:
@@ -142,10 +91,20 @@ def get_featured_books(db: Session, limit: int = 20) -> list[NovelWithQuotesOut]
     return [NovelWithQuotesOut.model_validate(item) for item in payload]
 
 
-def _novels_filter_query(db: Session, q: str | None = None):
-    query = db.query(Novel).options(
-        joinedload(Novel.author),
-        joinedload(Novel.quotes),
+def _novels_browse_query(db: Session, q: str | None = None):
+    quote_counts = (
+        db.query(
+            Quote.novel_id,
+            func.count(Quote.id).label("quote_count"),
+        )
+        .filter(Quote.novel_id.isnot(None))
+        .group_by(Quote.novel_id)
+        .subquery()
+    )
+    query = (
+        db.query(Novel, quote_counts.c.quote_count)
+        .options(joinedload(Novel.author))
+        .outerjoin(quote_counts, Novel.id == quote_counts.c.novel_id)
     )
     if q and q.strip():
         pattern = f"%{q.strip()}%"
@@ -174,8 +133,8 @@ def list_novels(
     limit: int = 24,
     q: str | None = None,
 ) -> list[NovelSummaryOut]:
-    novels = (
-        _novels_filter_query(db, q=q)
+    rows = (
+        _novels_browse_query(db, q=q)
         .order_by(Novel.title)
         .offset(skip)
         .limit(limit)
@@ -186,10 +145,10 @@ def list_novels(
             id=novel.id,
             title=novel.title,
             author=novel.author,
-            quote_count=len(novel.quotes or []),
+            quote_count=int(count or 0),
             cover_url=novel.cover_url,
         )
-        for novel in novels
+        for novel, count in rows
     ]
 
 
@@ -247,18 +206,6 @@ def novel_to_detail_out(novel: Novel) -> dict:
         "quotes": [_quote_out(q) for q in quotes],
         "detail": detail,
     }
-
-
-async def get_novel_detail(db: Session, novel_id: int, refresh: bool = False) -> Novel | None:
-    novel = get_novel(db, novel_id)
-    if not novel:
-        return None
-    if refresh and novel.aladin_item_id:
-        detail = await lookup_book(novel.aladin_item_id)
-        apply_aladin_detail(novel, detail)
-        db.commit()
-        db.refresh(novel)
-    return novel
 
 
 def apply_aladin_detail(novel: Novel, detail: dict) -> None:

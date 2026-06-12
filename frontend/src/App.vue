@@ -613,7 +613,7 @@ export default {
 
 
 
-@media (min-width: 480px) {
+@media (min-width: 403px) {
 
   .app-frame {
 
