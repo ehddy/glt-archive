@@ -1,22 +1,23 @@
 <template>
   <section class="home glt-container">
     <header class="home-hero">
-      <h1 class="glt-title">이 말, 어디서 왔을까?</h1>
-      <p class="hero-lead">구절을 검색하거나, 아래 작품·구절을 눌러 출처를 확인하세요.</p>
+      <h1 class="glt-title">우리가 알던 문장, 어디서 왔을까요?</h1>
+      <p class="hero-lead">괴테는 모든 것을 말했다고 합니다. 기억 속 문장의 출처를 찾아보세요.</p>
 
-      <div class="glt-search search-hero">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
-          <circle cx="11" cy="11" r="7" />
-          <path d="M20 20l-3-3" />
-        </svg>
-        <input
-          v-model="query"
-          type="search"
-          placeholder="구절이나 작품명"
-          @keyup.enter="handleSearch"
-        />
-        <button v-if="query" class="glt-btn glt-btn-ghost search-clear" @click="clearSearch">초기화</button>
-        <button class="glt-btn glt-btn-primary" @click="handleSearch">검색</button>
+      <div class="search-hero">
+        <div class="search-row">
+          <input
+            v-model="query"
+            type="search"
+            class="search-input"
+            placeholder="문장이나 도서명"
+            @keyup.enter="handleSearch"
+          />
+          <button type="button" class="search-submit" @click="handleSearch">검색</button>
+        </div>
+        <button v-if="query" type="button" class="search-clear" @click="clearSearch">
+          입력 지우기
+        </button>
       </div>
     </header>
 
@@ -43,9 +44,9 @@
 
       <div v-else-if="searched" class="empty-search glt-card">
         <p class="empty-title">검색 결과가 없습니다.</p>
-        <p class="empty-hint">이 구절이 아직 등록되지 않았을 수 있어요.</p>
+        <p class="empty-hint">이 문장이 아직 등록되지 않았을 수 있어요.</p>
         <router-link :to="registerRoute" class="glt-btn glt-btn-primary">
-          이 구절 등록하기
+          이 문장 등록하기
         </router-link>
       </div>
 
@@ -184,17 +185,82 @@ export default {
 
 <style scoped>
 .home-hero {
-  margin-bottom: var(--glt-space-4);
+  margin-bottom: var(--glt-space-5);
 }
 
 .hero-lead {
-  margin: var(--glt-space-2) 0 var(--glt-space-4);
-  font-size: 0.9rem;
+  margin: var(--glt-space-2) 0 var(--glt-space-5);
+  font-size: 0.86rem;
+  line-height: 1.65;
   color: var(--glt-ink-secondary);
 }
 
 .search-hero {
   width: 100%;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 5px 5px 14px;
+  background: var(--glt-surface);
+  border: 1px solid rgba(212, 195, 170, 0.5);
+  border-radius: var(--glt-radius-full);
+  box-shadow: 0 2px 10px rgba(61, 52, 41, 0.04);
+}
+
+.search-row:focus-within {
+  border-color: var(--glt-accent-muted);
+  box-shadow: 0 0 0 3px var(--glt-accent-soft);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.92rem;
+  color: var(--glt-ink);
+  padding: 9px 0;
+}
+
+.search-input::placeholder {
+  color: var(--glt-ink-tertiary);
+}
+
+.search-submit {
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--glt-radius-full);
+  background: var(--glt-accent);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(196, 105, 58, 0.25);
+  transition: background var(--glt-duration);
+}
+
+.search-submit:hover {
+  background: var(--glt-accent-hover);
+}
+
+.search-clear {
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--glt-ink-tertiary);
+  cursor: pointer;
+}
+
+.search-clear:hover {
+  color: var(--glt-accent-hover);
 }
 
 .flash-banner {
@@ -205,16 +271,6 @@ export default {
   border: 1px solid rgba(76, 140, 74, 0.25);
   color: #2f6b2e;
   font-size: 0.88rem;
-}
-
-.search-icon {
-  color: var(--glt-ink-tertiary);
-  flex-shrink: 0;
-}
-
-.search-clear {
-  padding: 8px 12px;
-  font-size: 0.8rem;
 }
 
 .loading-orbit {

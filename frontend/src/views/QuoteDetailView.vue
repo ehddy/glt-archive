@@ -5,12 +5,12 @@
     <router-link to="/" class="back-link">← 목록</router-link>
 
     <header class="detail-header">
-      <h1 class="glt-title">구절</h1>
+      <h1 class="glt-title">문장</h1>
     </header>
 
-    <div v-if="quote.novel" class="add-quote-bar glt-card">
+    <div v-if="hasLinkedNovel" class="add-quote-bar glt-card">
       <router-link :to="registerRoute" class="glt-btn glt-btn-primary add-quote-btn">
-        구절 추가
+        문장 추가
       </router-link>
     </div>
 
@@ -36,8 +36,8 @@
     <section class="collect-section glt-card">
       <div v-if="novelTitle || authorName" class="book-readonly glt-card-raised">
         <router-link
-          v-if="quote.novel?.id && novelTitle"
-          :to="`/novels/${quote.novel.id}`"
+          v-if="novelLinkId && novelTitle"
+          :to="`/novels/${novelLinkId}`"
           class="readonly-title readonly-link"
         >
           {{ novelTitle }}
@@ -65,6 +65,7 @@
 import { api } from '../api'
 import BookNode from '../components/BookNode.vue'
 import { COLLECT } from '../utils/collectLabels'
+import { quoteAuthorName, quoteNovelId, quoteSourceTitle } from '../utils/quoteDisplay'
 import { registerRouteForNovel, registerRouteForQuote } from '../utils/registerBook'
 
 export default {
@@ -83,13 +84,19 @@ export default {
   },
   computed: {
     authorName() {
-      return this.quote?.author?.name || this.quote?.novel?.author?.name || ''
+      return quoteAuthorName(this.quote)
     },
     novelTitle() {
-      return this.quote?.novel?.title || ''
+      return quoteSourceTitle(this.quote)
+    },
+    novelLinkId() {
+      return quoteNovelId(this.quote)
+    },
+    hasLinkedNovel() {
+      return !!this.novelLinkId
     },
     bookColorIndex() {
-      return (this.quote?.novel?.id || 0) % 8
+      return (this.novelLinkId || 0) % 8
     },
     registerRoute() {
       if (this.quote?.novel) {

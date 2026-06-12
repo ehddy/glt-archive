@@ -2,59 +2,61 @@
   <section v-if="loading" class="glt-empty glt-container">불러오는 중…</section>
   <section v-else-if="error" class="glt-empty glt-container glt-card">{{ error }}</section>
   <section v-else-if="novel" class="novel-detail glt-container">
-    <router-link to="/novels" class="back-link">← 전체 작품</router-link>
+    <router-link to="/novels" class="back-link">← 책장</router-link>
 
     <div class="detail-body glt-card">
-      <img
-        v-if="novel.cover_url"
-        :src="novel.cover_url"
-        :alt="`${novel.title} 표지`"
-        class="detail-cover"
-      />
-      <div v-else class="detail-cover detail-cover--empty">📖</div>
+      <div class="detail-header">
+        <img
+          v-if="novel.cover_url"
+          :src="novel.cover_url"
+          :alt="`${novel.title} 표지`"
+          class="detail-cover"
+        />
+        <div v-else class="detail-cover detail-cover--empty">📖</div>
 
-      <div class="detail-info">
-        <h1 class="detail-title">{{ novel.title }}</h1>
-        <p v-if="novel.author" class="detail-author">{{ novel.author.name }}</p>
+        <div class="detail-head">
+          <h1 class="detail-title">{{ novel.title }}</h1>
+          <p v-if="novel.author" class="detail-author">{{ novel.author.name }}</p>
 
-        <dl class="meta-list">
-          <template v-if="novel.publisher">
-            <dt>출판사</dt>
-            <dd>{{ novel.publisher }}</dd>
-          </template>
-          <template v-if="novel.pub_date">
-            <dt>출간일</dt>
-            <dd>{{ novel.pub_date }}</dd>
-          </template>
-          <dt>구절</dt>
-          <dd>{{ novel.quote_count }}개</dd>
-        </dl>
-
-        <p v-if="novel.description" class="detail-desc">{{ novel.description }}</p>
-
-        <div class="detail-actions">
-          <router-link :to="registerRoute" class="glt-btn glt-btn-primary">
-            구절 추가
-          </router-link>
-          <a
-            v-if="novel.aladin_link"
-            :href="novel.aladin_link"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="glt-btn glt-btn-ghost"
-          >
-            알라딘
-          </a>
+          <dl class="meta-list">
+            <template v-if="novel.publisher">
+              <dt>출판사</dt>
+              <dd>{{ novel.publisher }}</dd>
+            </template>
+            <template v-if="novel.pub_date">
+              <dt>출간일</dt>
+              <dd>{{ novel.pub_date }}</dd>
+            </template>
+            <dt>문장</dt>
+            <dd>{{ novel.quote_count }}개</dd>
+          </dl>
         </div>
+      </div>
+
+      <p v-if="novel.description" class="detail-desc">{{ novel.description }}</p>
+
+      <div class="detail-actions">
+        <router-link :to="registerRoute" class="glt-btn glt-btn-primary detail-action-btn">
+          문장 추가
+        </router-link>
+        <a
+          v-if="aladinPurchaseUrl"
+          :href="aladinPurchaseUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="glt-btn glt-btn-ghost detail-action-btn"
+        >
+          도서 구매 링크
+        </a>
       </div>
     </div>
 
     <section class="quotes-section">
-      <h2 class="section-title">등록된 구절</h2>
+      <h2 class="section-title">등록된 문장</h2>
 
       <div v-if="!novel.quotes?.length" class="glt-empty glt-card">
-        <p>아직 등록된 구절이 없습니다.</p>
-        <router-link :to="registerRoute" class="glt-btn glt-btn-primary">첫 구절 등록</router-link>
+        <p>아직 등록된 문장이 없습니다.</p>
+        <router-link :to="registerRoute" class="glt-btn glt-btn-primary">첫 문장 등록</router-link>
       </div>
 
       <ul v-else class="quote-list">
@@ -70,6 +72,7 @@
 
 <script>
 import { api } from '../api'
+import { getAladinPurchaseUrl } from '../utils/aladinLink'
 import { registerRouteForNovel } from '../utils/registerBook'
 
 export default {
@@ -85,6 +88,9 @@ export default {
     registerRoute() {
       if (!this.novel) return { path: '/register' }
       return registerRouteForNovel(this.novel)
+    },
+    aladinPurchaseUrl() {
+      return getAladinPurchaseUrl(this.novel)
     },
   },
   watch: {
@@ -132,11 +138,18 @@ export default {
 }
 
 .detail-body {
-  display: grid;
-  grid-template-columns: 120px 1fr;
+  display: flex;
+  flex-direction: column;
   gap: var(--glt-space-4);
   padding: var(--glt-space-5);
   margin-bottom: var(--glt-space-5);
+}
+
+.detail-header {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: var(--glt-space-4);
+  align-items: start;
 }
 
 .detail-cover {
@@ -186,7 +199,9 @@ export default {
 }
 
 .detail-desc {
-  margin: 0 0 var(--glt-space-4);
+  margin: 0;
+  padding-top: var(--glt-space-3);
+  border-top: 1px solid var(--glt-glass-border);
   font-size: 0.86rem;
   line-height: 1.65;
   color: var(--glt-ink-secondary);
@@ -197,9 +212,16 @@ export default {
 }
 
 .detail-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 8px;
+  padding-top: var(--glt-space-3);
+  border-top: 1px solid var(--glt-glass-border);
+}
+
+.detail-action-btn {
+  width: 100%;
+  text-decoration: none;
 }
 
 .quotes-section {
@@ -243,15 +265,14 @@ export default {
 }
 
 @media (max-width: 520px) {
-  .detail-body {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
+  .detail-header {
+    grid-template-columns: 96px 1fr;
+    gap: var(--glt-space-3);
   }
 
-  .meta-list {
-    width: 100%;
-    text-align: left;
+  .detail-cover {
+    width: 96px;
+    height: 138px;
   }
 }
 </style>

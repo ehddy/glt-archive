@@ -5,6 +5,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 const REQUEST_TIMEOUT_MS = 8000
 const CHAT_TIMEOUT_MS = 60000
+const AI_SEARCH_TIMEOUT_MS = 90000
 
 async function request(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   const controller = new AbortController()
@@ -125,5 +126,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ message, history }),
     }, CHAT_TIMEOUT_MS)
+  },
+  aiSearch(q) {
+    return request('/api/ai-search', {
+      method: 'POST',
+      body: JSON.stringify({ q }),
+    }, AI_SEARCH_TIMEOUT_MS)
   },
 }

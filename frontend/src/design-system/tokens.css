@@ -76,7 +76,8 @@
   --glt-duration: 0.28s;
 
   /* Layout */
-  --glt-app-width: 1080px;
+  --glt-app-width: 430px;
+  --glt-bottom-nav-height: 62px;
   --glt-container: 100%;
   --glt-book-width: 152px;
   --glt-book-min-height: 118px;

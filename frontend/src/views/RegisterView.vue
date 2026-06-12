@@ -2,13 +2,16 @@
 
   <section class="register glt-container">
 
-    <h1 class="glt-title">구절 등록</h1>
+    <header class="register-head">
+      <button type="button" class="back-btn" @click="goBack">← 뒤로</button>
+      <h1 class="glt-title">문장 등록</h1>
+    </header>
 
     <form class="form-card glt-card" @submit.prevent="submit">
 
       <div class="glt-field">
 
-        <label>구절 *</label>
+        <label>문장 *</label>
 
         <textarea
 
@@ -16,17 +19,42 @@
 
           required
 
-          placeholder="구절"
+          placeholder="문장"
+
+          @input="clearNotice"
 
         />
 
       </div>
 
+      <div class="glt-field source-mode-field">
+        <label>출처</label>
+        <div class="mode-tabs" role="tablist">
+          <button
+            type="button"
+            class="mode-tab"
+            :class="{ 'is-active': sourceMode === 'aladin' }"
+            @click="setSourceMode('aladin')"
+          >
+            도서
+          </button>
+          <button
+            type="button"
+            class="mode-tab"
+            :class="{ 'is-active': sourceMode === 'custom' }"
+            @click="setSourceMode('custom')"
+          >
+            직접 입력
+          </button>
+        </div>
+      </div>
 
+      <div
+        v-if="sourceMode === 'aladin' && (!prefilledFromContext || !selectedBook)"
+        class="glt-field book-search-field"
+      >
 
-      <div v-if="!prefilledFromContext || !selectedBook" class="glt-field book-search-field">
-
-        <label>작품 검색 *</label>
+        <label>도서 검색</label>
 
         <div class="search-wrap">
 
@@ -36,7 +64,7 @@
 
             type="search"
 
-            placeholder="작품 검색"
+            placeholder="작가 이름이나 도서명을 검색하세요"
 
             @input="onSearchInput"
 
@@ -46,7 +74,7 @@
 
         </div>
 
-        <p v-if="searchError" class="field-error">{{ searchError }}</p>
+        <p v-if="searchHint" class="search-hint">{{ searchHint }}</p>
 
 
 
@@ -99,15 +127,33 @@
 
 
         <p v-else-if="bookQuery.trim() && searched && !searching" class="search-empty">
-          결과 없음
+          검색 결과가 없어요. 다른 키워드로 시도해 보세요.
         </p>
 
       </div>
 
-
+      <div v-if="sourceMode === 'custom'" class="glt-field custom-source-fields">
+        <label for="custom-source-title">출처명 *</label>
+        <input
+          id="custom-source-title"
+          v-model="customSource.title"
+          type="text"
+          placeholder="예: 성경, 연설문, 수필"
+          maxlength="200"
+          @input="clearNotice"
+        />
+        <label for="custom-source-author" class="custom-author-label">작가·화자</label>
+        <input
+          id="custom-source-author"
+          v-model="customSource.author_name"
+          type="text"
+          placeholder="선택 사항"
+          maxlength="100"
+        />
+      </div>
 
       <div
-        v-if="selectedBook"
+        v-if="sourceMode === 'aladin' && selectedBook"
         class="book-panel glt-card-raised"
         :class="{ 'book-panel--prefilled': prefilledFromContext }"
       >
@@ -148,7 +194,10 @@
         </div>
       </div>
 
-      <div v-else class="submit-block submit-block--standalone">
+      <div
+        v-if="sourceMode !== 'aladin' || !selectedBook"
+        class="submit-block submit-block--standalone"
+      >
         <button
           class="glt-btn glt-btn-primary submit-btn"
           type="submit"
@@ -158,7 +207,9 @@
         </button>
       </div>
 
-      <p v-if="message" class="message">{{ message }}</p>
+      <div v-if="notice" class="register-notice" role="status">
+        <p class="register-notice-text">{{ notice }}</p>
+      </div>
 
     </form>
 
@@ -171,6 +222,7 @@
 <script>
 
 import { api } from '../api'
+import { friendlyRegisterError } from '../utils/registerErrors'
 import { novelToSelectedBook } from '../utils/registerBook'
 
 export default {
@@ -189,7 +241,7 @@ export default {
 
       searchError: '',
 
-      message: '',
+      notice: '',
 
       bookQuery: '',
 
@@ -198,6 +250,13 @@ export default {
       selectedBook: null,
 
       prefilledFromContext: false,
+
+      sourceMode: 'aladin',
+
+      customSource: {
+        title: '',
+        author_name: '',
+      },
 
       searchTimer: null,
 
@@ -213,13 +272,20 @@ export default {
 
   computed: {
 
+    searchHint() {
+      return this.searchError ? friendlyRegisterError(this.searchError) : ''
+    },
+
     canSubmit() {
+      const textOk = this.form.text.trim().length >= 2
+      if (!textOk) return false
+
+      if (this.sourceMode === 'custom') {
+        return this.customSource.title.trim().length >= 1
+      }
+
       const book = this.selectedBook
-      return (
-        this.form.text.trim().length >= 2
-        && !!book
-        && !!(book.novel_id || book.item_id)
-      )
+      return !!book && !!(book.novel_id || book.item_id)
     },
 
   },
@@ -252,15 +318,67 @@ export default {
 
   methods: {
 
+    goBack() {
+      if (window.history.length > 1) {
+        this.$router.back()
+      } else {
+        this.$router.push('/')
+      }
+    },
+
+    showNotice(raw) {
+      this.notice = friendlyRegisterError(raw)
+    },
+
+    clearNotice() {
+      this.notice = ''
+    },
+
+    setSourceMode(mode) {
+      this.sourceMode = mode
+      this.clearNotice()
+      if (mode !== 'aladin') {
+        this.selectedBook = null
+        this.prefilledFromContext = false
+        this.bookQuery = ''
+        this.searchResults = []
+        this.searched = false
+      }
+    },
+
     async applyPrefill() {
 
       const { novel_id: novelId, quote_id: quoteId, text } = this.$route.query
+      const stateText = history.state?.prefillText
+      const stateBookQ = history.state?.prefillBookQuery
+      const stateSourceTitle = history.state?.prefillSourceTitle
+      const stateSourceMode = history.state?.sourceMode
+      const stateCustomSource = history.state?.prefillCustomSource
 
-      if (text && typeof text === 'string') {
+      if (stateText && typeof stateText === 'string') {
+        this.form.text = stateText
+      } else if (text && typeof text === 'string') {
         this.form.text = text
       }
 
+      if (stateSourceMode === 'custom' || stateCustomSource) {
+        this.sourceMode = 'custom'
+        if (stateCustomSource) {
+          this.customSource.title = stateCustomSource.title || ''
+          this.customSource.author_name = stateCustomSource.author || ''
+        }
+        return
+      }
+
+      if (stateBookQ && typeof stateBookQ === 'string') {
+        this.sourceMode = 'aladin'
+        await this.prefillFromAladinQuery(stateBookQ, stateSourceTitle)
+        return
+      }
+
       if (!novelId && !quoteId) return
+
+      this.sourceMode = 'aladin'
 
       try {
 
@@ -300,9 +418,11 @@ export default {
           const quote = await api.getQuote(quoteId)
 
           if (quote.novel) {
-
             await this.setSelectedFromNovel(quote.novel)
-
+          } else if (quote.source?.title) {
+            this.sourceMode = 'custom'
+            this.customSource.title = quote.source.title
+            this.customSource.author_name = quote.source.author?.name || ''
           }
 
           return
@@ -339,6 +459,19 @@ export default {
 
       }
 
+    },
+
+    async prefillFromAladinQuery(bookQ, sourceTitle = '') {
+      this.bookQuery = bookQ
+      this.prefilledFromContext = false
+      await this.searchBooks()
+      if (!this.searchResults.length && sourceTitle && sourceTitle !== bookQ) {
+        this.bookQuery = sourceTitle
+        await this.searchBooks()
+      }
+      if (this.searchResults.length === 1) {
+        await this.selectBook(this.searchResults[0])
+      }
     },
 
     async setSelectedFromNovel(novel) {
@@ -483,28 +616,43 @@ export default {
 
       this.submitting = true
 
-      this.message = ''
+      this.clearNotice()
 
       try {
 
         const payload = { text: this.form.text.trim() }
 
-        if (this.selectedBook.novel_id) {
-          payload.novel_id = this.selectedBook.novel_id
-        } else if (this.selectedBook.item_id) {
-          payload.aladin_item_id = this.selectedBook.item_id
-        } else {
-          this.message = '작품을 선택해 주세요.'
-          return
+        if (this.sourceMode === 'aladin') {
+          if (!this.selectedBook) {
+            this.showNotice('어떤 도서에서 나온 문장인지 선택해 주세요.')
+            return
+          }
+          if (this.selectedBook.novel_id) {
+            payload.novel_id = this.selectedBook.novel_id
+          } else if (this.selectedBook.item_id) {
+            payload.aladin_item_id = this.selectedBook.item_id
+          } else {
+            this.showNotice('어떤 도서에서 나온 문장인지 선택해 주세요.')
+            return
+          }
+        } else if (this.sourceMode === 'custom') {
+          payload.custom_source = {
+            title: this.customSource.title.trim(),
+            author_name: this.customSource.author_name.trim() || null,
+          }
         }
 
         await api.createQuote(payload)
 
-        this.$router.push({ path: '/', query: { registered: '1' } })
+        if (history.state?.fromAiSearch) {
+          this.$router.push('/ai-search')
+        } else {
+          this.$router.push({ path: '/', query: { registered: '1' } })
+        }
 
       } catch (e) {
 
-        this.message = e.message
+        this.showNotice(e.message)
 
       } finally {
 
@@ -524,13 +672,77 @@ export default {
 
 <style scoped>
 
+.register-head {
+  display: flex;
+  align-items: center;
+  gap: var(--glt-space-3);
+  margin-bottom: var(--glt-space-4);
+}
+
+.register-head .glt-title {
+  margin: 0;
+}
+
+.back-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--glt-glass-border);
+  border-radius: var(--glt-radius-full);
+  background: var(--glt-surface);
+  color: var(--glt-ink-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 7px 12px;
+}
+
+.back-btn:hover {
+  color: var(--glt-accent);
+  border-color: var(--glt-accent-muted);
+}
+
 .form-card {
 
   padding: var(--glt-space-5);
 
 }
 
+.source-mode-field {
+  margin-top: var(--glt-space-2);
+}
 
+.mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mode-tab {
+  border: 1px solid var(--glt-glass-border);
+  border-radius: var(--glt-radius-full);
+  background: var(--glt-surface);
+  color: var(--glt-ink-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 7px 14px;
+  transition: background var(--glt-duration), border-color var(--glt-duration);
+}
+
+.mode-tab.is-active {
+  background: var(--glt-accent-soft);
+  border-color: var(--glt-accent-muted);
+  color: var(--glt-accent-hover);
+}
+
+.custom-source-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--glt-space-2);
+}
+
+.custom-author-label {
+  margin-top: var(--glt-space-2);
+}
 
 .book-search-field {
 
@@ -711,21 +923,14 @@ export default {
 
 
 .search-empty,
-
-.field-error {
-
+.search-hint {
   margin: 8px 0 0;
-
+  padding: 10px 12px;
+  border-radius: var(--glt-radius-md);
+  background: var(--glt-bg-subtle);
   font-size: 0.84rem;
-
-}
-
-
-
-.field-error {
-
-  color: var(--glt-accent-hover);
-
+  color: var(--glt-ink-secondary);
+  line-height: 1.5;
 }
 
 
@@ -874,14 +1079,21 @@ export default {
   color: var(--glt-accent-hover);
 }
 
-.message {
+.register-notice {
+  margin-top: var(--glt-space-4);
+  padding: 14px 16px;
+  border-radius: var(--glt-radius-md);
+  background: var(--glt-bg-subtle);
+  border: 1px solid var(--glt-glass-border);
+}
 
-  margin-top: var(--glt-space-3);
-
-  color: var(--glt-accent);
-
-  font-size: 0.875rem;
-
+.register-notice-text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--glt-ink-secondary);
+  text-align: center;
+  word-break: keep-all;
 }
 
 

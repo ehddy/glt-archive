@@ -3,14 +3,15 @@ import json
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.models import Author, Novel, Quote
-from app.schemas.schemas import LibraryOut, NovelSummaryOut, NovelWithQuotesOut, QuoteOut
+from app.models.models import Author, Novel, Quote, Source
+from app.schemas.schemas import LibraryOut, NovelSummaryOut, NovelWithQuotesOut
 from app.services.aladin_service import lookup_book, parse_author_name
 from app.services.author_service import get_or_create_author
+from app.services.quote_serializer import serialize_quote
 
 
-def _quote_out(quote: Quote) -> QuoteOut:
-    return QuoteOut.model_validate(quote)
+def _quote_out(quote: Quote):
+    return serialize_quote(quote)
 
 
 def get_library(db: Session) -> LibraryOut:
@@ -18,6 +19,7 @@ def get_library(db: Session) -> LibraryOut:
         db.query(Novel)
         .options(
             joinedload(Novel.author),
+            joinedload(Novel.quotes).joinedload(Quote.source).joinedload(Source.author),
             joinedload(Novel.quotes).joinedload(Quote.author),
         )
         .order_by(Novel.title)
@@ -43,7 +45,10 @@ def get_library(db: Session) -> LibraryOut:
 
     unlinked_rows = (
         db.query(Quote)
-        .options(joinedload(Quote.author))
+        .options(
+            joinedload(Quote.source).joinedload(Source.author),
+            joinedload(Quote.author),
+        )
         .filter(Quote.novel_id.is_(None))
         .order_by(Quote.updated_at.desc())
         .all()
@@ -141,11 +146,20 @@ def get_novel(db: Session, novel_id: int) -> Novel | None:
         db.query(Novel)
         .options(
             joinedload(Novel.author),
+            joinedload(Novel.quotes).joinedload(Quote.source).joinedload(Source.author),
             joinedload(Novel.quotes).joinedload(Quote.author),
         )
         .filter(Novel.id == novel_id)
         .first()
     )
+
+
+def _aladin_purchase_link(novel: Novel) -> str | None:
+    if novel.aladin_link and novel.aladin_link.strip().startswith("http"):
+        return novel.aladin_link.strip()
+    if novel.aladin_item_id:
+        return f"https://www.aladin.co.kr/shop/wproduct.aspx?ItemId={novel.aladin_item_id}"
+    return None
 
 
 def novel_to_detail_out(novel: Novel) -> dict:
@@ -171,7 +185,7 @@ def novel_to_detail_out(novel: Novel) -> dict:
         "price_sales": novel.price_sales,
         "price_standard": novel.price_standard,
         "category_name": novel.category_name,
-        "aladin_link": novel.aladin_link,
+        "aladin_link": _aladin_purchase_link(novel),
         "aladin_item_id": novel.aladin_item_id,
         "quote_count": len(quotes),
         "quotes": [_quote_out(q) for q in quotes],

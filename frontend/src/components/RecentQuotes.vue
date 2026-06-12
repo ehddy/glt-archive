@@ -1,124 +1,72 @@
-<template>
-  <section v-if="quotes.length" class="recent-quotes">
-    <header class="recent-head">
-      <div class="recent-head-left">
-        <h2 class="recent-title">구절 둘러보기</h2>
-        <p class="recent-hint">검색창에 구절이나 작품명을 입력해도 찾을 수 있어요.</p>
-      </div>
-      <router-link to="/quotes" class="recent-more">더 보기</router-link>
-    </header>
-
-    <ul class="recent-list">
-      <li v-for="quote in quotes" :key="quote.id">
-        <router-link :to="`/quotes/${quote.id}`" class="recent-card glt-card">
-          <p class="recent-text">{{ quote.text }}</p>
-          <span class="recent-source">
-            {{ sourceLabel(quote) }}
-          </span>
-        </router-link>
-      </li>
-    </ul>
-  </section>
-</template>
-
-<script>
-export default {
-  name: 'RecentQuotes',
-  props: {
-    quotes: { type: Array, required: true },
-  },
-  methods: {
-    sourceLabel(quote) {
-      const title = quote.novel?.title
-      const author = quote.novel?.author?.name || quote.author?.name
-      if (title && author) return `${title} · ${author}`
-      if (title) return title
-      if (author) return author
-      return '출처 미상'
-    },
-  },
-}
-</script>
-
-<style scoped>
-.recent-quotes {
-  margin-top: var(--glt-space-6);
-}
-
-.recent-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--glt-space-3);
-  margin-bottom: var(--glt-space-3);
-}
-
-.recent-head-left {
-  min-width: 0;
-}
-
-.recent-more {
-  flex-shrink: 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--glt-accent-hover);
-  text-decoration: none;
-  padding-top: 2px;
-}
-
-.recent-more:hover {
-  text-decoration: underline;
-}
-
-.recent-title {
-  margin: 0 0 4px;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--glt-ink-secondary);
-}
-
-.recent-hint {
-  margin: 0;
-  font-size: 0.78rem;
-  color: var(--glt-ink-tertiary);
-}
-
-.recent-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.recent-card {
-  display: block;
-  padding: var(--glt-space-4);
-  text-decoration: none;
-  color: inherit;
-  transition: box-shadow 0.2s var(--glt-ease), transform 0.2s var(--glt-ease);
-}
-
-.recent-card:hover {
-  box-shadow: var(--glt-shadow-md);
-  transform: translateY(-1px);
-}
-
-.recent-text {
-  margin: 0 0 8px;
-  font-size: 0.9rem;
-  line-height: 1.65;
-  color: var(--glt-ink);
-  word-break: keep-all;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.recent-source {
-  font-size: 0.74rem;
-  color: var(--glt-ink-tertiary);
-}
-</style>
+<template>
+  <section v-if="quotes.length" class="recent-quotes">
+    <header class="recent-head">
+      <h2 class="recent-title">명문장 둘러보기</h2>
+      <router-link to="/quotes" class="recent-more">
+        더 보기
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </router-link>
+    </header>
+
+    <div class="recent-feed">
+      <QuoteBrowseItem
+        v-for="quote in quotes"
+        :key="quote.id"
+        :quote="quote"
+        compact
+      />
+    </div>
+  </section>
+</template>
+
+<script>
+import QuoteBrowseItem from './QuoteBrowseItem.vue'
+
+export default {
+  name: 'RecentQuotes',
+  components: { QuoteBrowseItem },
+  props: {
+    quotes: { type: Array, required: true },
+  },
+}
+</script>
+
+<style scoped>
+.recent-quotes {
+  margin-top: var(--glt-space-6);
+}
+
+.recent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--glt-space-3);
+  margin-bottom: var(--glt-space-3);
+}
+
+.recent-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--glt-ink);
+}
+
+.recent-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--glt-ink-tertiary);
+  text-decoration: none;
+  transition: color var(--glt-duration) var(--glt-ease);
+}
+
+.recent-more:hover {
+  color: var(--glt-accent-hover);
+}
+</style>
+

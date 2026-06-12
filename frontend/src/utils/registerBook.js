@@ -22,7 +22,7 @@ export function registerRouteForNovel(novel) {
   return {
     path: '/register',
     query: { novel_id: String(novel.id) },
-    state: { prefillBook: book },
+    state: { prefillBook: book, sourceMode: 'aladin' },
   }
 }
 
@@ -39,5 +39,35 @@ export function registerRouteForSearchQuery(q) {
   return {
     path: '/register',
     query: { text },
+  }
+}
+
+export function registerRouteForAiArticle(article) {
+  const text = (article?.quote || '').trim()
+  const title = (article?.source_title || '').trim()
+  const author = (article?.author || '').trim()
+
+  const baseState = { fromAiSearch: true }
+
+  if (title) {
+    return {
+      path: '/register',
+      state: {
+        ...baseState,
+        prefillText: text,
+        sourceMode: 'custom',
+        prefillCustomSource: { title, author },
+      },
+    }
+  }
+
+  return {
+    path: '/register',
+    state: {
+      ...baseState,
+      prefillText: text,
+      sourceMode: 'custom',
+      prefillCustomSource: { title: '', author },
+    },
   }
 }

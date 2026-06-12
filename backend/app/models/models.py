@@ -14,7 +14,25 @@ class Author(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     novels: Mapped[list["Novel"]] = relationship(back_populates="author")
+    sources: Mapped[list["Source"]] = relationship(back_populates="author")
     quotes: Mapped[list["Quote"]] = relationship(back_populates="author")
+
+
+class Source(Base):
+    __tablename__ = "sources"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(200), index=True)
+    author_id: Mapped[int | None] = mapped_column(ForeignKey("authors.id"), nullable=True)
+    source_type: Mapped[str] = mapped_column(String(20), default="custom", index=True)
+    novel_id: Mapped[int | None] = mapped_column(
+        ForeignKey("novels.id"), nullable=True, unique=True, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    author: Mapped["Author | None"] = relationship(back_populates="sources")
+    novel: Mapped["Novel | None"] = relationship(back_populates="source")
+    quotes: Mapped[list["Quote"]] = relationship(back_populates="source")
 
 
 class Novel(Base):
@@ -39,14 +57,19 @@ class Novel(Base):
 
     author: Mapped["Author"] = relationship(back_populates="novels")
     quotes: Mapped[list["Quote"]] = relationship(back_populates="novel")
+    source: Mapped["Source | None"] = relationship(back_populates="novel", uselist=False)
 
 
 class Quote(Base):
     __tablename__ = "quotes"
+    __table_args__ = (
+        UniqueConstraint("source_id", "text", name="uq_quote_source_text"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     text: Mapped[str] = mapped_column(Text, index=True)
     novel_id: Mapped[int | None] = mapped_column(ForeignKey("novels.id"), nullable=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"), nullable=False, index=True)
     author_id: Mapped[int | None] = mapped_column(ForeignKey("authors.id"), nullable=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
@@ -55,6 +78,7 @@ class Quote(Base):
     )
 
     novel: Mapped["Novel | None"] = relationship(back_populates="quotes")
+    source: Mapped["Source | None"] = relationship(back_populates="quotes")
     author: Mapped["Author | None"] = relationship(back_populates="quotes")
     versions: Mapped[list["QuoteVersion"]] = relationship(
         back_populates="quote", order_by="QuoteVersion.version"

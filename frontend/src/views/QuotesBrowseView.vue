@@ -2,41 +2,48 @@
   <section class="quotes-browse glt-container">
     <header class="page-head">
       <router-link to="/" class="back-link">← 검색</router-link>
-      <h1 class="glt-title">구절 둘러보기</h1>
-      <p class="page-lead">등록된 구절을 모아봅니다. 구절·작품·작가로 검색할 수 있어요.</p>
+      <h1 class="glt-title page-title">명문장</h1>
+      <p class="page-lead">기억 속 문장의 출처를 찾아보세요.</p>
     </header>
 
-    <div class="glt-search browse-search">
-      <input
-        v-model="query"
-        type="search"
-        placeholder="구절, 작품명, 작가명"
-        @keyup.enter="applySearch"
-      />
-      <button v-if="query" class="glt-btn glt-btn-ghost" @click="clearSearch">초기화</button>
-      <button class="glt-btn glt-btn-primary" @click="applySearch">검색</button>
+    <div class="browse-toolbar glt-card">
+      <div class="glt-search browse-search">
+        <input
+          v-model="query"
+          type="search"
+          placeholder="문장, 도서명, 작가명"
+          @keyup.enter="applySearch"
+        />
+        <button v-if="query" class="glt-btn glt-btn-ghost" @click="clearSearch">지우기</button>
+        <button class="glt-btn glt-btn-primary" @click="applySearch">검색</button>
+      </div>
+      <p v-if="!loading && total !== null" class="result-count">
+        <span class="result-count-num">{{ total }}</span>문장
+        <span v-if="activeQuery" class="result-query">{{ activeQuery }}</span>
+      </p>
     </div>
 
-    <p v-if="!loading && total !== null" class="result-count">
-      {{ total }}구절
-      <span v-if="activeQuery"> · 「{{ activeQuery }}」</span>
-    </p>
-
-    <div v-if="loading" class="glt-empty">불러오는 중…</div>
-    <div v-else-if="error" class="glt-empty glt-card">{{ error }}</div>
-    <div v-else-if="!quotes.length" class="glt-empty glt-card">
-      <p>구절이 없습니다.</p>
-      <router-link :to="registerRoute" class="glt-btn glt-btn-primary">구절 등록하기</router-link>
+    <div v-if="loading" class="state-panel">
+      <span class="state-spinner" aria-hidden="true" />
+      불러오는 중…
     </div>
+
+    <div v-else-if="error" class="state-panel state-panel--error">{{ error }}</div>
+
+    <div v-else-if="!quotes.length" class="state-panel state-panel--empty">
+      <p class="state-title">아직 문장이 없습니다</p>
+      <p class="state-desc">첫 문장을 등록해 보세요.</p>
+      <router-link :to="registerRoute" class="glt-btn glt-btn-primary">문장 등록</router-link>
+    </div>
+
     <template v-else>
-      <ul class="quote-list">
-        <li v-for="quote in quotes" :key="quote.id">
-          <router-link :to="`/quotes/${quote.id}`" class="quote-card glt-card">
-            <p class="quote-text">{{ quote.text }}</p>
-            <span class="quote-source">{{ sourceLabel(quote) }}</span>
-          </router-link>
-        </li>
-      </ul>
+      <div class="quote-feed">
+        <QuoteBrowseItem
+          v-for="quote in quotes"
+          :key="quote.id"
+          :quote="quote"
+        />
+      </div>
 
       <PaginationBar
         :page="page"
@@ -51,11 +58,12 @@
 <script>
 import { api } from '../api'
 import PaginationBar from '../components/PaginationBar.vue'
+import QuoteBrowseItem from '../components/QuoteBrowseItem.vue'
 import { registerRouteForSearchQuery } from '../utils/registerBook'
 
 export default {
   name: 'QuotesBrowseView',
-  components: { PaginationBar },
+  components: { PaginationBar, QuoteBrowseItem },
   data() {
     return {
       quotes: [],
@@ -85,14 +93,6 @@ export default {
     },
   },
   methods: {
-    sourceLabel(quote) {
-      const title = quote.novel?.title
-      const author = quote.novel?.author?.name || quote.author?.name
-      if (title && author) return `${title} · ${author}`
-      if (title) return title
-      if (author) return author
-      return '출처 미상'
-    },
     async loadQuotes() {
       this.loading = true
       this.error = ''
@@ -138,12 +138,15 @@ export default {
 
 <style scoped>
 .page-head {
-  margin-bottom: var(--glt-space-4);
+  margin-bottom: var(--glt-space-5);
+}
+
+.page-title {
+  margin-top: var(--glt-space-2);
 }
 
 .back-link {
   display: inline-block;
-  margin-bottom: var(--glt-space-2);
   font-size: 0.82rem;
   color: var(--glt-ink-tertiary);
   text-decoration: none;
@@ -155,53 +158,81 @@ export default {
 
 .page-lead {
   margin: var(--glt-space-2) 0 0;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: var(--glt-ink-secondary);
+  line-height: 1.6;
+}
+
+.browse-toolbar {
+  padding: var(--glt-space-4);
+  margin-bottom: var(--glt-space-5);
 }
 
 .browse-search {
   width: 100%;
-  margin-bottom: var(--glt-space-3);
 }
 
 .result-count {
-  margin: 0 0 var(--glt-space-3);
+  margin: var(--glt-space-3) 0 0;
   font-size: 0.8rem;
   color: var(--glt-ink-tertiary);
 }
 
-.quote-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.result-count-num {
+  font-weight: 600;
+  color: var(--glt-ink-secondary);
 }
 
-.quote-card {
-  display: block;
-  padding: var(--glt-space-4);
-  text-decoration: none;
-  color: inherit;
-  transition: box-shadow 0.2s var(--glt-ease), transform 0.2s var(--glt-ease);
+.result-query::before {
+  content: '·';
+  margin: 0 6px;
+  color: var(--glt-ink-faint);
 }
 
-.quote-card:hover {
-  box-shadow: var(--glt-shadow-md);
-  transform: translateY(-1px);
+.result-query {
+  color: var(--glt-ink-secondary);
 }
 
-.quote-text {
-  margin: 0 0 8px;
-  font-size: 0.9rem;
-  line-height: 1.65;
-  color: var(--glt-ink);
-  word-break: keep-all;
+.quote-feed {
+  margin-bottom: var(--glt-space-2);
 }
 
-.quote-source {
-  font-size: 0.74rem;
+.state-panel {
+  padding: var(--glt-space-10) var(--glt-space-4);
+  text-align: center;
+  font-size: 0.88rem;
   color: var(--glt-ink-tertiary);
+}
+
+.state-panel--error {
+  color: var(--glt-accent-hover);
+}
+
+.state-panel--empty .state-title {
+  margin: 0 0 var(--glt-space-2);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--glt-ink);
+}
+
+.state-panel--empty .state-desc {
+  margin: 0 0 var(--glt-space-4);
+  font-size: 0.86rem;
+  color: var(--glt-ink-secondary);
+}
+
+.state-spinner {
+  display: block;
+  width: 24px;
+  height: 24px;
+  margin: 0 auto var(--glt-space-3);
+  border: 2px solid var(--glt-glass-border);
+  border-top-color: var(--glt-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

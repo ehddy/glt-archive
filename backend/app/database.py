@@ -22,8 +22,14 @@ def _engine_kwargs(url: str) -> dict:
         if "supabase" in url or "sslmode=" not in url:
             connect_args["sslmode"] = "require"
         kwargs["connect_args"] = connect_args
-        kwargs["pool_size"] = 5
-        kwargs["max_overflow"] = 10
+        if "supabase" in url:
+            # Session pooler has a low connection cap; keep the pool small.
+            kwargs["pool_size"] = 2
+            kwargs["max_overflow"] = 2
+            kwargs["pool_timeout"] = 30
+        else:
+            kwargs["pool_size"] = 5
+            kwargs["max_overflow"] = 5
 
     return kwargs
 

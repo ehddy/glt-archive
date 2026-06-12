@@ -11,6 +11,8 @@
 </template>
 
 <script>
+import { quoteAuthorName, quoteSourceTitle } from '../utils/quoteDisplay'
+
 export default {
   name: 'QuoteCard',
   props: {
@@ -21,10 +23,10 @@ export default {
   },
   computed: {
     authorName() {
-      return this.quote.author?.name || this.quote.novel?.author?.name || ''
+      return quoteAuthorName(this.quote)
     },
     novelTitle() {
-      return this.quote.novel?.title || ''
+      return quoteSourceTitle(this.quote)
     },
   },
 }

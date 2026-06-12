@@ -1,8 +1,13 @@
 @import '../design-system/tokens.css';
 @import '../design-system/components.css';
+@import '../design-system/mobile.css';
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -12,6 +17,7 @@ body {
   color: var(--glt-ink);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
 }
 
 a {

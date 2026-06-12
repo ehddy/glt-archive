@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class AuthorCreate(BaseModel):
@@ -61,10 +61,43 @@ class AladinBookDetail(AladinBookSearchItem):
     detail: dict | None = None
 
 
+class CustomSourceInput(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    author_name: str | None = Field(None, max_length=100)
+
+
+class SourceOut(BaseModel):
+    id: int
+    title: str
+    source_type: str
+    author: AuthorOut | None = None
+    cover_url: str | None = None
+    novel_id: int | None = None
+    aladin_item_id: int | None = None
+    created_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
 class QuoteCreate(BaseModel):
     text: str = Field(..., min_length=2)
     novel_id: int | None = None
     aladin_item_id: int | None = None
+    source_id: int | None = None
+    custom_source: CustomSourceInput | None = None
+
+    @model_validator(mode="after")
+    def require_source(self):
+        if not any(
+            (
+                self.aladin_item_id,
+                self.novel_id,
+                self.source_id,
+                self.custom_source,
+            )
+        ):
+            raise ValueError("출처는 필수입니다.")
+        return self
 
 
 class QuoteUpdate(BaseModel):
@@ -87,6 +120,7 @@ class QuoteOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     novel: NovelOut | None = None
+    source: SourceOut | None = None
     author: AuthorOut | None = None
 
     model_config = {"from_attributes": True}
@@ -170,3 +204,21 @@ class BookRecommendation(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     recommendations: list[BookRecommendation] = Field(default_factory=list)
+
+
+class AiSearchRequest(BaseModel):
+    q: str = Field(..., min_length=1, max_length=200)
+
+
+class AiSearchArticle(BaseModel):
+    quote: str
+    source_title: str
+    author: str = ""
+    context: str = ""
+    source_url: str | None = None
+
+
+class AiSearchResponse(BaseModel):
+    query: str
+    summary: str
+    articles: list[AiSearchArticle]

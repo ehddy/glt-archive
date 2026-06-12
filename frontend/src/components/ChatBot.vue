@@ -4,19 +4,47 @@
       class="chat-fab"
       type="button"
       :aria-expanded="open"
-      aria-label="책 추천"
+      aria-label="AI 책 추천"
       @click="toggle"
     >
-      <span v-if="!open">📚</span>
+      <span v-if="!open" class="chat-fab-icon">📚</span>
       <span v-else>✕</span>
     </button>
 
     <div v-if="open" class="chat-panel glt-card">
       <header class="chat-header">
-        <h2 class="chat-title">책 추천</h2>
+        <h2 class="chat-title">AI 책 추천</h2>
+        <p class="chat-desc">
+          기분이나 좋아하는 책을 알려주세요. 등록된 도서와 AI가 아는 책을 함께 추천해 드려요.
+        </p>
       </header>
 
       <div ref="messagesEl" class="chat-messages">
+        <div v-if="showIntro" class="chat-intro">
+          <div class="chat-message chat-message--assistant">
+            <p class="chat-bubble">
+              안녕하세요. 읽고 싶은 분위기나 떠오르는 책을 말씀해 주세요.
+              우리 서비스에 등록된 도서가 있으면 함께 보여 드리고,
+              그밖에 어울리는 책도 AI가 추천해 드려요.
+            </p>
+          </div>
+
+          <div class="chat-suggestions">
+            <p class="suggestions-label">예시를 눌러 바로 물어보기</p>
+            <div class="suggestions-list">
+              <button
+                v-for="example in examples"
+                :key="example"
+                type="button"
+                class="suggestion-chip"
+                :disabled="loading"
+                @click="send(example)"
+              >
+                {{ example }}
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div
           v-for="(msg, i) in messages"
@@ -34,7 +62,8 @@
             >
               <div class="rec-head">
                 <strong>{{ rec.title }}</strong>
-                <span v-if="rec.in_library" class="rec-badge">라이브러리</span>
+                <span v-if="rec.in_library" class="rec-badge rec-badge--library">등록된 도서</span>
+                <span v-else class="rec-badge rec-badge--ai">AI 추천</span>
               </div>
               <p class="rec-author">{{ rec.author }}</p>
               <p class="rec-reason">{{ rec.reason }}</p>
@@ -43,29 +72,38 @@
         </div>
 
         <div v-if="loading" class="chat-message chat-message--assistant">
-          <p class="chat-bubble chat-bubble--loading">…</p>
+          <p class="chat-bubble chat-bubble--loading">추천하고 있어요…</p>
         </div>
       </div>
 
-      <form class="chat-input" @submit.prevent="send">
+      <form class="chat-input" @submit.prevent="send()">
         <input
           v-model="input"
           type="text"
-          placeholder="메시지"
+          placeholder="예: 차분한 밤에 읽을 책"
           :disabled="loading"
         />
         <button class="glt-btn glt-btn-primary" type="submit" :disabled="loading || !input.trim()">
-          전송
+          보내기
         </button>
       </form>
 
-      <p v-if="error" class="chat-error">{{ error }}</p>
+      <p v-if="error" class="chat-error">{{ errorText }}</p>
     </div>
   </div>
 </template>
 
 <script>
 import { api } from '../api'
+import { friendlyRegisterError } from '../utils/registerErrors'
+
+const EXAMPLE_PROMPTS = [
+  '외로운 밤에 읽기 좋은 책 추천해 주세요',
+  '슬플 때 위로가 되는 문장이 있는 작품이요',
+  '《데미안》 같은 성장 소설 찾고 있어요',
+  '짧고 감각적인 문장이 많은 책이요',
+  '한국 소설 중에 잔잔한 분위기의 책이요',
+]
 
 export default {
   name: 'ChatBot',
@@ -76,20 +114,29 @@ export default {
       loading: false,
       error: '',
       messages: [],
+      examples: EXAMPLE_PROMPTS,
     }
+  },
+  computed: {
+    showIntro() {
+      return !this.messages.length && !this.loading
+    },
+    errorText() {
+      return friendlyRegisterError(this.error)
+    },
   },
   methods: {
     toggle() {
       this.open = !this.open
       this.error = ''
     },
-    async send() {
-      const text = this.input.trim()
-      if (!text || this.loading) return
+    async send(text) {
+      const messageText = (typeof text === 'string' ? text : this.input).trim()
+      if (!messageText || this.loading) return
 
       this.input = ''
       this.error = ''
-      this.messages.push({ role: 'user', content: text })
+      this.messages.push({ role: 'user', content: messageText })
       this.loading = true
       this.$nextTick(this.scrollToBottom)
 
@@ -98,7 +145,7 @@ export default {
           .slice(0, -1)
           .map((m) => ({ role: m.role, content: m.content }))
 
-        const res = await api.chat(text, history)
+        const res = await api.chat(messageText, history)
         this.messages.push({
           role: 'assistant',
           content: res.reply,
@@ -122,15 +169,9 @@ export default {
 <style scoped>
 .chatbot {
   position: fixed;
-  right: max(16px, calc((100vw - var(--glt-app-width)) / 2 + 16px));
-  bottom: 20px;
+  right: max(14px, calc((100vw - var(--glt-app-width)) / 2 + 14px));
+  bottom: calc(var(--glt-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
   z-index: 200;
-}
-
-@media (max-width: 999px) {
-  .chatbot {
-    right: 16px;
-  }
 }
 
 .chat-fab {
@@ -150,12 +191,16 @@ export default {
   transform: scale(1.05);
 }
 
+.chat-fab-icon {
+  line-height: 1;
+}
+
 .chat-panel {
   position: absolute;
   right: 0;
   bottom: 64px;
-  width: min(360px, calc(100vw - 32px));
-  height: min(520px, calc(100dvh - 120px));
+  width: min(340px, calc(var(--glt-app-width) - 24px));
+  height: min(460px, calc(100dvh - var(--glt-bottom-nav-height) - env(safe-area-inset-bottom, 0px) - 100px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -174,9 +219,10 @@ export default {
 }
 
 .chat-desc {
-  margin: 4px 0 0;
-  font-size: 0.75rem;
-  color: var(--glt-ink-tertiary);
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--glt-ink-secondary);
 }
 
 .chat-messages {
@@ -188,12 +234,56 @@ export default {
   gap: 12px;
 }
 
-.chat-empty {
-  font-size: 0.82rem;
-  line-height: 1.6;
+.chat-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.chat-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestions-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--glt-ink-tertiary);
-  text-align: center;
-  padding: 24px 8px;
+}
+
+.suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestion-chip {
+  width: 100%;
+  text-align: left;
+  padding: 11px 13px;
+  border: 1px solid var(--glt-glass-border);
+  border-radius: 16px;
+  border-bottom-left-radius: 6px;
+  background: var(--glt-surface);
+  color: var(--glt-ink-secondary);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  cursor: pointer;
+  word-break: keep-all;
+  transition: background var(--glt-duration), border-color var(--glt-duration);
+}
+
+.suggestion-chip:hover:not(:disabled) {
+  background: var(--glt-accent-soft);
+  border-color: var(--glt-accent-muted);
+  color: var(--glt-ink);
+}
+
+.suggestion-chip:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .chat-message {
@@ -269,8 +359,16 @@ export default {
   font-weight: 600;
   padding: 2px 8px;
   border-radius: var(--glt-radius-full);
+}
+
+.rec-badge--library {
   background: var(--glt-accent-soft);
   color: var(--glt-accent-hover);
+}
+
+.rec-badge--ai {
+  background: var(--glt-bg-subtle);
+  color: var(--glt-ink-tertiary);
 }
 
 .rec-author {
@@ -319,7 +417,8 @@ export default {
   margin: 0;
   padding: 0 16px 12px;
   font-size: 0.78rem;
-  color: var(--glt-accent-hover);
-  line-height: 1.4;
+  color: var(--glt-ink-secondary);
+  line-height: 1.5;
+  text-align: center;
 }
 </style>

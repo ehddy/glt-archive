@@ -61,6 +61,12 @@
 
 <script>
 import { COLLECT } from '../utils/collectLabels'
+import {
+  quoteAuthorName,
+  quoteCoverUrl,
+  quoteNovelId,
+  quoteSourceTitle,
+} from '../utils/quoteDisplay'
 
 export default {
   name: 'SourceSearchResults',
@@ -74,17 +80,16 @@ export default {
   },
   methods: {
     sourceTitle(item) {
-      return item.quote.novel?.title || '미분류'
+      return quoteSourceTitle(item.quote) || '미분류'
     },
     sourceAuthor(item) {
-      return item.quote.novel?.author?.name || item.quote.author?.name || ''
+      return quoteAuthorName(item.quote)
     },
     sourceCover(item) {
-      return item.quote.novel?.cover_url || null
+      return quoteCoverUrl(item.quote)
     },
     sourceNovelId(item) {
-      const id = item.quote.novel?.id
-      return typeof id === 'number' ? id : null
+      return quoteNovelId(item.quote)
     },
   },
 }

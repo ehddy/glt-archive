@@ -1,24 +1,28 @@
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.models import Author, Novel, Quote
-from app.schemas.schemas import QuoteOut, QuoteSearchResult
-
-
-def _quote_to_out(quote: Quote) -> QuoteOut:
-    return QuoteOut.model_validate(quote)
+from app.models.models import Author, Novel, Quote, Source
+from app.schemas.schemas import QuoteSearchResult
+from app.services.quote_serializer import serialize_quote
 
 
 def search_quotes(db: Session, query: str, limit: int = 20) -> list[QuoteSearchResult]:
     pattern = f"%{query}%"
     quotes = (
         db.query(Quote)
+        .outerjoin(Source, Quote.source_id == Source.id)
         .outerjoin(Novel, Quote.novel_id == Novel.id)
         .outerjoin(Author, Quote.author_id == Author.id)
-        .options(joinedload(Quote.novel).joinedload(Novel.author), joinedload(Quote.author))
+        .options(
+            joinedload(Quote.source).joinedload(Source.author),
+            joinedload(Quote.source).joinedload(Source.novel).joinedload(Novel.author),
+            joinedload(Quote.novel).joinedload(Novel.author),
+            joinedload(Quote.author),
+        )
         .filter(
             or_(
                 Quote.text.ilike(pattern),
+                Source.title.ilike(pattern),
                 Novel.title.ilike(pattern),
                 Author.name.ilike(pattern),
             )
@@ -28,6 +32,6 @@ def search_quotes(db: Session, query: str, limit: int = 20) -> list[QuoteSearchR
         .all()
     )
     return [
-        QuoteSearchResult(quote=_quote_to_out(q), score=1.0, match_type="text")
+        QuoteSearchResult(quote=serialize_quote(q), score=1.0, match_type="text")
         for q in quotes
     ]

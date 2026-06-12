@@ -9,7 +9,7 @@ from app.models.models import Novel
 from app.schemas.schemas import BookRecommendation, ChatMessage, ChatResponse
 
 SYSTEM_PROMPT = """당신은 한국 문학 추천 어시스턴트입니다.
-사용자가 말하는 책·작가·구절·분위기·감정과 비슷한 느낌의 작품과 작가를 추천합니다.
+사용자가 말하는 책·작가·문장·분위기·감정과 비슷한 느낌의 작품과 작가를 추천합니다.
 
 규칙:
 1. 반드시 한국어로 답합니다.
@@ -65,7 +65,7 @@ def _catalog_text(catalog: list[dict]) -> str:
         lines.append(
             f"- novel_id={item['novel_id']}, "
             f"《{item['title']}》 {item['author']}"
-            + (f" | 구절: {quotes}" if quotes else "")
+            + (f" | 문장: {quotes}" if quotes else "")
         )
     return "\n".join(lines)
 

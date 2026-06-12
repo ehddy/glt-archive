@@ -1,0 +1,64 @@
+/* Unified mobile web app layout (all screen sizes) */
+:root {
+  --glt-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --glt-page-bottom: calc(var(--glt-bottom-nav-height) + var(--glt-safe-bottom) + 16px);
+}
+
+.glt-title {
+  font-size: 1.32rem;
+  margin-top: var(--glt-space-2);
+  line-height: 1.35;
+}
+
+.glt-search {
+  flex-wrap: nowrap;
+  align-items: center;
+  padding: 5px 5px 5px 14px;
+  gap: 8px;
+  border-radius: var(--glt-radius-full);
+}
+
+.glt-search input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  font-size: 0.92rem;
+  padding: 8px 0;
+}
+
+.glt-search .search-icon {
+  display: none;
+}
+
+.glt-search .glt-btn-primary {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 7px 14px;
+  font-size: 0.78rem;
+}
+
+.glt-search .glt-btn-ghost,
+.glt-search .search-clear {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 0.74rem;
+}
+
+.glt-field input,
+.glt-field textarea {
+  font-size: 1rem;
+  padding: 12px 14px;
+}
+
+.glt-quote-lg {
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.quote-feed,
+.recent-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

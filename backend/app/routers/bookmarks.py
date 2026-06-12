@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.schemas import BookmarkIdsOut, QuoteOut
 from app.services import bookmark_service
+from app.services.quote_serializer import serialize_quote
 from app.services.quote_service import get_quote
 
 router = APIRouter(prefix="/api/bookmarks", tags=["bookmarks"])
@@ -21,7 +22,7 @@ def list_bookmarks(
     db: Session = Depends(get_db),
 ):
     quotes = bookmark_service.list_bookmarks(db, client_id)
-    return [QuoteOut.model_validate(q) for q in quotes]
+    return [serialize_quote(q) for q in quotes]
 
 
 @router.get("/ids", response_model=BookmarkIdsOut)
@@ -45,8 +46,8 @@ def add_bookmark(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     quote = get_quote(db, quote_id)
     if not quote:
-        raise HTTPException(status_code=404, detail="구절을 찾을 수 없습니다.")
-    return QuoteOut.model_validate(quote)
+        raise HTTPException(status_code=404, detail="문장을 찾을 수 없습니다.")
+    return serialize_quote(quote)
 
 
 @router.delete("/{quote_id}", status_code=204)
@@ -56,4 +57,4 @@ def remove_bookmark(
     db: Session = Depends(get_db),
 ):
     if not bookmark_service.remove_bookmark(db, client_id, quote_id):
-        raise HTTPException(status_code=404, detail="저장된 구절이 없습니다.")
+        raise HTTPException(status_code=404, detail="담은 문장이 없습니다.")

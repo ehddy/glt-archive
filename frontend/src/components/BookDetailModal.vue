@@ -7,82 +7,84 @@
       <div v-else-if="error" class="modal-state modal-error">{{ error }}</div>
       <template v-else-if="novel">
         <div class="modal-body">
-          <img
-            v-if="novel.cover_url"
-            :src="novel.cover_url"
-            :alt="`${novel.title} 표지`"
-            class="modal-cover"
-          />
-          <div v-else class="modal-cover modal-cover--empty">📖</div>
+          <div class="modal-header">
+            <img
+              v-if="novel.cover_url"
+              :src="novel.cover_url"
+              :alt="`${novel.title} 표지`"
+              class="modal-cover"
+            />
+            <div v-else class="modal-cover modal-cover--empty">📖</div>
 
-          <div class="modal-info">
-            <h2 class="modal-title">{{ novel.title }}</h2>
-            <p v-if="novel.author" class="modal-author">{{ novel.author.name }}</p>
+            <div class="modal-head">
+              <h2 class="modal-title">{{ novel.title }}</h2>
+              <p v-if="novel.author" class="modal-author">{{ novel.author.name }}</p>
 
-            <dl class="meta-list">
-              <template v-if="novel.publisher">
-                <dt>출판사</dt>
-                <dd>{{ novel.publisher }}</dd>
-              </template>
-              <template v-if="novel.pub_date">
-                <dt>출간일</dt>
-                <dd>{{ novel.pub_date }}</dd>
-              </template>
-              <template v-if="novel.isbn13 || novel.isbn">
-                <dt>ISBN</dt>
-                <dd>{{ novel.isbn13 || novel.isbn }}</dd>
-              </template>
-              <template v-if="novel.category_name">
-                <dt>분류</dt>
-                <dd>{{ novel.category_name }}</dd>
-              </template>
-              <template v-if="novel.price_sales">
-                <dt>가격</dt>
-                <dd>{{ novel.price_sales.toLocaleString() }}원</dd>
-              </template>
-              <dt>구절</dt>
-              <dd>{{ novel.quote_count }}개</dd>
-            </dl>
-
-            <p v-if="novel.description" class="modal-desc">{{ novel.description }}</p>
-
-            <section v-if="novel.quotes?.length" class="modal-quotes">
-              <h3 class="modal-quotes-title">등록된 구절</h3>
-              <ul class="quote-list">
-                <li v-for="quote in novel.quotes" :key="quote.id">
-                  <router-link
-                    :to="`/quotes/${quote.id}`"
-                    class="quote-item"
-                    @click="$emit('close')"
-                  >
-                    <p class="quote-item-text">{{ quote.text }}</p>
-                  </router-link>
-                </li>
-              </ul>
-            </section>
-            <p v-else-if="novel.quote_count === 0" class="modal-no-quotes">
-              아직 등록된 구절이 없습니다.
-            </p>
-
-            <div class="modal-actions">
-              <router-link
-                v-if="registerRoute"
-                :to="registerRoute"
-                class="glt-btn glt-btn-primary"
-                @click="$emit('close')"
-              >
-                구절 추가
-              </router-link>
-              <a
-                v-if="novel.aladin_link"
-                :href="novel.aladin_link"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="glt-btn glt-btn-ghost"
-              >
-                알라딘
-              </a>
+              <dl class="meta-list">
+                <template v-if="novel.publisher">
+                  <dt>출판사</dt>
+                  <dd>{{ novel.publisher }}</dd>
+                </template>
+                <template v-if="novel.pub_date">
+                  <dt>출간일</dt>
+                  <dd>{{ novel.pub_date }}</dd>
+                </template>
+                <template v-if="novel.isbn13 || novel.isbn">
+                  <dt>ISBN</dt>
+                  <dd>{{ novel.isbn13 || novel.isbn }}</dd>
+                </template>
+                <template v-if="novel.category_name">
+                  <dt>분류</dt>
+                  <dd>{{ novel.category_name }}</dd>
+                </template>
+                <template v-if="novel.price_sales">
+                  <dt>가격</dt>
+                  <dd>{{ novel.price_sales.toLocaleString() }}원</dd>
+                </template>
+                <dt>문장</dt>
+                <dd>{{ novel.quote_count }}개</dd>
+              </dl>
             </div>
+          </div>
+
+          <p v-if="novel.description" class="modal-desc">{{ novel.description }}</p>
+
+          <section v-if="novel.quotes?.length" class="modal-quotes">
+            <h3 class="modal-quotes-title">등록된 문장</h3>
+            <ul class="quote-list">
+              <li v-for="quote in novel.quotes" :key="quote.id">
+                <router-link
+                  :to="`/quotes/${quote.id}`"
+                  class="quote-item"
+                  @click="$emit('close')"
+                >
+                  <p class="quote-item-text">{{ quote.text }}</p>
+                </router-link>
+              </li>
+            </ul>
+          </section>
+          <p v-else-if="novel.quote_count === 0" class="modal-no-quotes">
+            아직 등록된 문장이 없습니다.
+          </p>
+
+          <div class="modal-actions">
+            <router-link
+              v-if="registerRoute"
+              :to="registerRoute"
+              class="glt-btn glt-btn-primary modal-action-btn"
+              @click="$emit('close')"
+            >
+              문장 추가
+            </router-link>
+            <a
+              v-if="aladinPurchaseUrl"
+              :href="aladinPurchaseUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="glt-btn glt-btn-ghost modal-action-btn"
+            >
+              도서 구매 링크
+            </a>
           </div>
         </div>
       </template>
@@ -92,6 +94,7 @@
 
 <script>
 import { api } from '../api'
+import { getAladinPurchaseUrl } from '../utils/aladinLink'
 import { registerRouteForNovel } from '../utils/registerBook'
 
 export default {
@@ -111,6 +114,9 @@ export default {
     registerRoute() {
       if (!this.novel) return null
       return registerRouteForNovel(this.novel)
+    },
+    aladinPurchaseUrl() {
+      return getAladinPurchaseUrl(this.novel)
     },
   },
   watch: {
@@ -188,6 +194,12 @@ export default {
 }
 
 .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--glt-space-4);
+}
+
+.modal-header {
   display: grid;
   grid-template-columns: 120px 1fr;
   gap: var(--glt-space-4);
@@ -241,7 +253,9 @@ export default {
 }
 
 .modal-desc {
-  margin: 0 0 var(--glt-space-4);
+  margin: 0;
+  padding-top: var(--glt-space-3);
+  border-top: 1px solid var(--glt-glass-border);
   font-size: 0.86rem;
   line-height: 1.65;
   color: var(--glt-ink-secondary);
@@ -306,13 +320,20 @@ export default {
 }
 
 .modal-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 8px;
+  padding-top: var(--glt-space-3);
+  border-top: 1px solid var(--glt-glass-border);
+}
+
+.modal-action-btn {
+  width: 100%;
+  text-decoration: none;
 }
 
 @media (max-width: 520px) {
-  .modal-body {
+  .modal-header {
     grid-template-columns: 1fr;
     justify-items: center;
     text-align: center;

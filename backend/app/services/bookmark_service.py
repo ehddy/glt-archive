@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.models import Bookmark, Novel, Quote
+from app.models.models import Bookmark, Novel, Quote, Source
 
 
 def list_bookmarks(db: Session, client_id: str) -> list[Quote]:
@@ -16,7 +16,12 @@ def list_bookmarks(db: Session, client_id: str) -> list[Quote]:
     quote_ids = [row.quote_id for row in rows]
     quotes = (
         db.query(Quote)
-        .options(joinedload(Quote.novel).joinedload(Novel.author), joinedload(Quote.author))
+        .options(
+            joinedload(Quote.source).joinedload(Source.author),
+            joinedload(Quote.source).joinedload(Source.novel).joinedload(Novel.author),
+            joinedload(Quote.novel).joinedload(Novel.author),
+            joinedload(Quote.author),
+        )
         .filter(Quote.id.in_(quote_ids))
         .all()
     )
@@ -36,7 +41,7 @@ def is_bookmarked(db: Session, client_id: str, quote_id: int) -> bool:
 def add_bookmark(db: Session, client_id: str, quote_id: int) -> Bookmark:
     quote = db.query(Quote).filter(Quote.id == quote_id).first()
     if not quote:
-        raise ValueError("구절을 찾을 수 없습니다.")
+        raise ValueError("문장을 찾을 수 없습니다.")
 
     existing = (
         db.query(Bookmark)

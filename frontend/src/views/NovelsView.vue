@@ -2,15 +2,15 @@
   <section class="novels glt-container">
     <header class="page-head">
       <router-link to="/" class="back-link">← 검색</router-link>
-      <h1 class="glt-title">전체 작품</h1>
-      <p class="page-lead">작품명·작가명으로 찾고, 표지를 눌러 구절을 확인하세요.</p>
+      <h1 class="glt-title">책장</h1>
+      <p class="page-lead">문장이 담긴 책을 모아두었어요. 표지를 눌러 살펴보세요.</p>
     </header>
 
     <div class="glt-search browse-search">
       <input
         v-model="query"
         type="search"
-        placeholder="작품명 또는 작가명"
+        placeholder="도서명 또는 작가명"
         @keyup.enter="applySearch"
       />
       <button v-if="query" class="glt-btn glt-btn-ghost" @click="clearSearch">초기화</button>
@@ -25,8 +25,8 @@
     <div v-if="loading" class="glt-empty">불러오는 중…</div>
     <div v-else-if="error" class="glt-empty glt-card">{{ error }}</div>
     <div v-else-if="!novels.length" class="glt-empty glt-card">
-      <p>등록된 작품이 없습니다.</p>
-      <router-link to="/register" class="glt-btn glt-btn-primary">구절 등록하기</router-link>
+      <p>아직 담긴 책이 없어요.</p>
+      <router-link to="/register" class="glt-btn glt-btn-primary">문장 등록하기</router-link>
     </div>
     <template v-else>
       <ul class="novel-grid">
@@ -42,7 +42,7 @@
             <div class="novel-meta">
               <strong class="novel-title">{{ novel.title }}</strong>
               <span v-if="novel.author" class="novel-author">{{ novel.author.name }}</span>
-              <span class="novel-quotes">{{ novel.quote_count }}구절</span>
+              <span class="novel-quotes">{{ novel.quote_count }}문장</span>
             </div>
           </router-link>
         </li>
