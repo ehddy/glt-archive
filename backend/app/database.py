@@ -6,7 +6,7 @@ from sqlalchemy.pool import NullPool
 
 from app.config import settings
 
-_db_semaphore = threading.Semaphore(2)
+# _db_semaphore = threading.Semaphore(2)
 
 def _is_sqlite(url: str) -> bool:
     return url.startswith("sqlite")
@@ -21,18 +21,16 @@ def _engine_kwargs(url: str) -> dict:
 
     if _is_sqlite(url):
         kwargs["connect_args"] = {"check_same_thread": False}
+
     elif _is_postgres(url):
-        connect_args: dict = {}
+        connect_args = {}
         if "supabase" in url or "sslmode=" not in url:
             connect_args["sslmode"] = "require"
         kwargs["connect_args"] = connect_args
-        if "supabase" in url:
-            # Supabase session pooler (5432) allows ~15 clients total across all apps.
-            # NullPool avoids holding idle connections in the API process.
-            kwargs["poolclass"] = NullPool
-        else:
-            kwargs["pool_size"] = 5
-            kwargs["max_overflow"] = 5
+        kwargs["pool_size"] = 5
+        kwargs["max_overflow"] = 5
+        kwargs["pool_recycle"] = 1800   # pgbouncer가 끊은 유휴 연결 대비
+        kwargs["pool_timeout"] = 30
 
     return kwargs
 
@@ -46,22 +44,12 @@ class Base(DeclarativeBase):
 
 
 def get_db():
-    use_semaphore = database_kind() == "supabase"
-    acquired = False
-    if use_semaphore:
-        acquired = _db_semaphore.acquire(timeout=60)
-        if not acquired:
-            raise RuntimeError(
-                "데이터베이스 연결이 바쁩니다. 잠시 후 다시 시도해 주세요."
-            )
-
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-        if use_semaphore and acquired:
-            _db_semaphore.release()
+
 
 def database_kind() -> str:
     url = settings.database_url
