@@ -1,12 +1,12 @@
 <template>
   <section class="saved glt-container">
-    <h1 class="glt-title">{{ LIKE.pageTitle }}</h1>
+    <h1 class="glt-title">스크랩</h1>
 
     <div v-if="!loggedIn" class="login-panel glt-card">
-      <p class="login-text">{{ LIKE.loginRequired }}</p>
+      <p class="login-text">로그인하면 문장을 스크랩하고 다시 볼 수 있어요</p>
       <div class="login-actions">
         <router-link :to="{ name: 'login', query: { redirect: '/saved' } }" class="glt-btn glt-btn-primary">
-          {{ LIKE.loginTitle }}
+          로그인
         </router-link>
         <router-link :to="{ name: 'signup', query: { redirect: '/saved' } }" class="glt-btn glt-btn-ghost">
           회원가입
@@ -21,12 +21,12 @@
       </div>
 
       <div v-if="error && !loading" class="glt-empty">{{ error }}</div>
-      <div v-else-if="!loading && !quotes.length" class="glt-empty glt-card">{{ LIKE.empty }}</div>
+      <div v-else-if="!loading && !quotes.length" class="glt-empty glt-card">아직 스크랩한 문장이 없어요</div>
 
       <SavedQuoteList
         v-else-if="!loading"
         :quotes="quotes"
-        @remove="removeLike"
+        @remove="removeScrap"
       />
     </template>
   </section>
@@ -36,7 +36,6 @@
 import { api } from '../api'
 import SavedQuoteList from '../components/SavedQuoteList.vue'
 import { authState, clearSession, isLoggedIn } from '../utils/auth'
-import { LIKE } from '../utils/likeLabels'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
@@ -44,7 +43,6 @@ export default {
   components: { SavedQuoteList },
   data() {
     return {
-      LIKE,
       quotes: [],
       loading: true,
       error: '',
@@ -75,7 +73,7 @@ export default {
       startPageLoading()
       this.error = ''
       try {
-        this.quotes = await api.listLikes()
+        this.quotes = await api.listScraps()
       } catch (e) {
         this.error = e.message
       } finally {
@@ -83,9 +81,9 @@ export default {
         endPageLoading()
       }
     },
-    async removeLike(quoteId) {
+    async removeScrap(quoteId) {
       try {
-        await api.removeLike(quoteId)
+        await api.removeScrap(quoteId)
         this.quotes = this.quotes.filter((q) => q.id !== quoteId)
       } catch (e) {
         this.error = e.message

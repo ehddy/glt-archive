@@ -37,11 +37,16 @@
       </div>
       <article class="detail-quote glt-card-raised">
         <p class="glt-quote glt-quote-lg">{{ quote.text }}</p>
-        <div class="detail-like">
+        <div class="detail-actions">
           <LikeButton
             :liked="isLiked"
             :count="quote.like_count || 0"
             @click="toggleLike"
+          />
+          <ScrapButton
+            :scrapped="isScrapped"
+            :count="quote.scrap_count || 0"
+            @click="toggleScrap"
           />
         </div>
       </article>
@@ -60,6 +65,8 @@
         <p v-if="authorName" class="readonly-author">{{ authorName }}</p>
       </div>
 
+      <div v-if="quoteMeta" class="quote-meta">{{ quoteMeta }}</div>
+
       <p v-if="likeMessage" class="like-message" :class="{ 'is-error': likeIsError }">
         {{ likeMessage }}
       </p>
@@ -72,15 +79,17 @@ import { api } from '../api'
 import BackLink from '../components/BackLink.vue'
 import BookNode from '../components/BookNode.vue'
 import LikeButton from '../components/LikeButton.vue'
+import ScrapButton from '../components/ScrapButton.vue'
 import { requireLogin } from '../utils/auth'
 import { toggleLike as toggleLikeRequest } from '../utils/likeToggle'
+import { toggleScrap as toggleScrapRequest } from '../utils/scrapToggle'
 import { quoteAuthorName, quoteCoverUrl, quoteNovelId, quoteSourceTitle } from '../utils/quoteDisplay'
 import { registerRouteForNovel, registerRouteForQuote } from '../utils/registerBook'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'QuoteDetailView',
-  components: { BackLink, BookNode, LikeButton },
+  components: { BackLink, BookNode, LikeButton, ScrapButton },
   data() {
     return {
       quote: null,
@@ -90,6 +99,8 @@ export default {
       likeIsError: false,
       isLiked: false,
       likedIds: new Set(),
+      isScrapped: false,
+      scrappedIds: new Set(),
     }
   },
   computed: {
@@ -117,6 +128,17 @@ export default {
       }
       return registerRouteForQuote(this.$route.params.id)
     },
+    quoteMeta() {
+      if (!this.quote) return ''
+      const parts = []
+      const name = this.quote.registered_by?.name
+      if (name) parts.push(name)
+      if (this.quote.created_at) {
+        const d = new Date(this.quote.created_at)
+        parts.push(`${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`)
+      }
+      return parts.join('  ·  ')
+    },
   },
   watch: {
     '$route.params.id': {
@@ -134,13 +156,16 @@ export default {
       this.likeMessage = ''
       try {
         const id = this.$route.params.id
-        const [quote, likedRes] = await Promise.all([
+        const [quote, likedRes, scrappedRes] = await Promise.all([
           api.getQuote(id),
           api.getLikeIds().catch(() => ({ quote_ids: [] })),
+          api.getScrapIds().catch(() => ({ quote_ids: [] })),
         ])
         this.quote = quote
         this.likedIds = new Set(likedRes.quote_ids || [])
         this.isLiked = this.likedIds.has(quote.id)
+        this.scrappedIds = new Set(scrappedRes.quote_ids || [])
+        this.isScrapped = this.scrappedIds.has(quote.id)
       } catch (e) {
         this.error = e.message
       } finally {
@@ -158,6 +183,21 @@ export default {
         this.likedIds = likedIds
         this.isLiked = liked
         this.quote = { ...this.quote, like_count: likeCount }
+      } catch (e) {
+        this.likeMessage = e.message
+        this.likeIsError = true
+      }
+    },
+    async toggleScrap() {
+      if (!this.quote) return
+      if (!requireLogin(this.$router, this.$route.fullPath)) return
+      this.likeMessage = ''
+      this.likeIsError = false
+      try {
+        const { scrappedIds, scrapCount, scrapped } = await toggleScrapRequest(api, this.scrappedIds, this.quote.id)
+        this.scrappedIds = scrappedIds
+        this.isScrapped = scrapped
+        this.quote = { ...this.quote, scrap_count: scrapCount }
       } catch (e) {
         this.likeMessage = e.message
         this.likeIsError = true
@@ -296,10 +336,20 @@ export default {
   color: var(--glt-ink-secondary);
 }
 
-.detail-like {
+.detail-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
   margin-top: var(--glt-space-3);
+}
+
+.quote-meta {
+  margin-top: var(--glt-space-3);
+  font-size: 0.78rem;
+  color: var(--glt-ink-tertiary, var(--glt-ink-secondary));
+  text-align: right;
+  letter-spacing: 0.01em;
 }
 
 .like-message {

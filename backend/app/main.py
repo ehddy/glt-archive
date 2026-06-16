@@ -16,7 +16,7 @@ from app.config import settings
 
 from app.database import Base, SessionLocal, database_kind, engine
 
-from app.routers import ai_search, aladin, authors, auth, chat, likes, novels, quotes
+from app.routers import ai_search, aladin, authors, auth, chat, likes, novels, quotes, scraps
 
 from app.seed.loader import seed_database
 from app.services.quote_service import migrate_quote_uniqueness
@@ -74,6 +74,7 @@ app.include_router(quotes.router)
 
 app.include_router(auth.router)
 app.include_router(likes.router)
+app.include_router(scraps.router)
 
 app.include_router(novels.router)
 
@@ -115,6 +116,16 @@ def migrate_user_columns() -> None:
     with engine.begin() as conn:
         if "password_hash" not in existing:
             conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+
+
+def migrate_quote_registered_by() -> None:
+    inspector = inspect(engine)
+    if not inspector.has_table("quotes"):
+        return
+    existing = {col["name"] for col in inspector.get_columns("quotes")}
+    if "registered_by_id" not in existing:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE quotes ADD COLUMN registered_by_id INTEGER REFERENCES users(id)"))
 
 
 def migrate_novel_columns() -> None:
@@ -164,6 +175,7 @@ def init_db(retries: int = 15, delay: float = 3.0):
             Base.metadata.create_all(bind=engine)
             migrate_novel_columns()
             migrate_user_columns()
+            migrate_quote_registered_by()
 
             db = SessionLocal()
 

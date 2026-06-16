@@ -71,6 +71,7 @@ class Quote(Base):
     novel_id: Mapped[int | None] = mapped_column(ForeignKey("novels.id"), nullable=True)
     source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"), nullable=False, index=True)
     author_id: Mapped[int | None] = mapped_column(ForeignKey("authors.id"), nullable=True)
+    registered_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -80,11 +81,13 @@ class Quote(Base):
     novel: Mapped["Novel | None"] = relationship(back_populates="quotes")
     source: Mapped["Source | None"] = relationship(back_populates="quotes")
     author: Mapped["Author | None"] = relationship(back_populates="quotes")
+    registered_by: Mapped["User | None"] = relationship(foreign_keys=[registered_by_id])
     versions: Mapped[list["QuoteVersion"]] = relationship(
         back_populates="quote", order_by="QuoteVersion.version"
     )
     bookmarks: Mapped[list["Bookmark"]] = relationship(back_populates="quote")
     likes: Mapped[list["QuoteLike"]] = relationship(back_populates="quote")
+    scraps: Mapped[list["QuoteScrap"]] = relationship(back_populates="quote")
 
 
 class User(Base):
@@ -119,6 +122,21 @@ class QuoteLike(Base):
 
     user: Mapped["User"] = relationship(back_populates="likes")
     quote: Mapped["Quote"] = relationship(back_populates="likes")
+
+
+class QuoteScrap(Base):
+    __tablename__ = "quote_scraps"
+    __table_args__ = (
+        UniqueConstraint("user_id", "quote_id", name="uq_scrap_user_quote"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    quote_id: Mapped[int] = mapped_column(ForeignKey("quotes.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    user: Mapped["User"] = relationship(foreign_keys=[user_id])
+    quote: Mapped["Quote"] = relationship(back_populates="scraps")
 
 
 class Bookmark(Base):

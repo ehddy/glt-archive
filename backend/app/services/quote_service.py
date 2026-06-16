@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import engine
-from app.models.models import Author, Bookmark, Novel, Quote, QuoteVersion, Source
+from app.models.models import Author, Bookmark, Novel, Quote, QuoteVersion, Source, User
 from app.schemas.schemas import QuoteCreate, QuoteUpdate
 from app.services.novel_service import import_novel_from_aladin
 from app.services.source_service import get_or_create_custom_source, get_or_create_from_novel, get_source
@@ -90,6 +90,7 @@ def _quote_options():
         joinedload(Quote.source).joinedload(Source.novel).joinedload(Novel.author),
         joinedload(Quote.novel).joinedload(Novel.author),
         joinedload(Quote.author),
+        joinedload(Quote.registered_by),
     )
 
 
@@ -99,6 +100,7 @@ def _persist_quote(
     novel_id: int | None,
     source_id: int | None,
     author_id: int | None,
+    user_id: int | None = None,
 ) -> Quote:
     if source_id is None:
         raise ValueError("출처는 필수입니다.")
@@ -115,6 +117,7 @@ def _persist_quote(
         novel_id=novel_id,
         source_id=source_id,
         author_id=author_id,
+        registered_by_id=user_id,
     )
     db.add(quote)
     db.flush()
@@ -135,12 +138,12 @@ def _persist_quote(
     return quote
 
 
-async def create_quote(db: Session, data: QuoteCreate) -> Quote:
+async def create_quote(db: Session, data: QuoteCreate, user_id: int | None = None) -> Quote:
     if data.aladin_item_id:
         novel = await import_novel_from_aladin(db, data.aladin_item_id)
         source = get_or_create_from_novel(db, novel)
         db.commit()
-        return _persist_quote(db, data, novel.id, source.id, novel.author_id)
+        return _persist_quote(db, data, novel.id, source.id, novel.author_id, user_id)
 
     if data.novel_id:
         novel = db.query(Novel).filter(Novel.id == data.novel_id).first()
@@ -148,7 +151,7 @@ async def create_quote(db: Session, data: QuoteCreate) -> Quote:
             raise ValueError("선택한 작품을 찾을 수 없습니다.")
         source = get_or_create_from_novel(db, novel)
         db.commit()
-        return _persist_quote(db, data, novel.id, source.id, novel.author_id)
+        return _persist_quote(db, data, novel.id, source.id, novel.author_id, user_id)
 
     if data.source_id:
         source = get_source(db, data.source_id)
@@ -156,7 +159,7 @@ async def create_quote(db: Session, data: QuoteCreate) -> Quote:
             raise ValueError("선택한 출처를 찾을 수 없습니다.")
         novel_id = source.novel_id
         author_id = source.author_id
-        return _persist_quote(db, data, novel_id, source.id, author_id)
+        return _persist_quote(db, data, novel_id, source.id, author_id, user_id)
 
     if data.custom_source:
         source = get_or_create_custom_source(
@@ -165,7 +168,7 @@ async def create_quote(db: Session, data: QuoteCreate) -> Quote:
             data.custom_source.author_name,
         )
         db.commit()
-        return _persist_quote(db, data, None, source.id, source.author_id)
+        return _persist_quote(db, data, None, source.id, source.author_id, user_id)
 
     raise ValueError("도서를 선택하거나 출처를 직접 입력해 주세요.")
 

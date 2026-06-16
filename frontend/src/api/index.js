@@ -13,6 +13,9 @@ function shouldUseQueue(path, options = {}) {
   if (path.includes('/api/likes/') && (options.method || 'GET').toUpperCase() !== 'GET') {
     return false
   }
+  if (path.includes('/api/scraps/') && (options.method || 'GET').toUpperCase() !== 'GET') {
+    return false
+  }
   if (path.includes('/api/auth/') && (options.method || 'GET').toUpperCase() !== 'GET') {
     return false
   }
@@ -49,6 +52,7 @@ function shouldBypassBrowserCache(path, options = {}) {
   return (
     path.startsWith('/api/home')
     || path.startsWith('/api/likes')
+    || path.startsWith('/api/scraps')
     || path.startsWith('/api/quotes/search')
   )
 }
@@ -144,6 +148,18 @@ export const api = {
   },
   removeLike(quoteId) {
     return request(`/api/likes/${quoteId}`, { method: 'DELETE' })
+  },
+  getScrapIds() {
+    return request('/api/scraps/ids')
+  },
+  listScraps() {
+    return request('/api/scraps')
+  },
+  addScrap(quoteId) {
+    return request(`/api/scraps/${quoteId}`, { method: 'POST' })
+  },
+  removeScrap(quoteId) {
+    return request(`/api/scraps/${quoteId}`, { method: 'DELETE' })
   },
   getNovel(id) {
     return request(`/api/novels/${id}`)

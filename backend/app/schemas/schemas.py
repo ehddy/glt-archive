@@ -115,6 +115,12 @@ class QuoteVersionOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class RegisteredByOut(BaseModel):
+    name: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
 class QuoteOut(BaseModel):
     id: int
     text: str
@@ -122,9 +128,11 @@ class QuoteOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     like_count: int = 0
+    scrap_count: int = 0
     novel: NovelOut | None = None
     source: SourceOut | None = None
     author: AuthorOut | None = None
+    registered_by: RegisteredByOut | None = None
 
     model_config = {"from_attributes": True}
 
@@ -170,6 +178,16 @@ class LikeActionOut(BaseModel):
 
 
 class LikeIdsOut(BaseModel):
+    quote_ids: list[int]
+
+
+class ScrapActionOut(BaseModel):
+    quote_id: int
+    scrapped: bool
+    scrap_count: int
+
+
+class ScrapIdsOut(BaseModel):
     quote_ids: list[int]
 
 

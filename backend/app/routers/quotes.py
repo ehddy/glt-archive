@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.auth.deps import get_current_user
 from app.database import get_db
-from app.models.models import QuoteVersion
+from app.models.models import QuoteVersion, User
 from app.schemas.schemas import (
     PaginatedQuotesOut,
     QuoteCreate,
@@ -78,9 +79,13 @@ def get_versions(quote_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=QuoteOut, status_code=201)
-async def create_quote(data: QuoteCreate, db: Session = Depends(get_db)):
+async def create_quote(
+    data: QuoteCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     try:
-        quote = await quote_service.create_quote(db, data)
+        quote = await quote_service.create_quote(db, data, user_id=current_user.id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     loaded = quote_service.get_quote(db, quote.id)

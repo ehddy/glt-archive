@@ -120,16 +120,15 @@
 
         </router-link>
 
-        <router-link :to="{ name: 'saved' }" class="tab-item" aria-label="좋아요">
+        <router-link :to="{ name: 'saved' }" class="tab-item" aria-label="스크랩">
 
           <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
 
             <path
-              d="M12 20.2l-1-1C6.2 14.8 4 12.6 4 10a4 4 0 0 1 7-2.4A4 4 0 0 1 20 10c0 2.6-2.2 4.8-7 9.2l-1 1z"
+              d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"
               fill="none"
               stroke="currentColor"
               stroke-width="1.75"
-              stroke-linecap="round"
               stroke-linejoin="round"
             />
 

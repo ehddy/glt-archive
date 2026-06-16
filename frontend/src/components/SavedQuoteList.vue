@@ -31,7 +31,7 @@
         <div class="saved-actions">
           <DetailIconLink :to="`/quotes/${quote.id}`" />
           <RemoveIconButton
-            :label="LIKE.done"
+            label="스크랩 취소"
             @click="$emit('remove', quote.id)"
           />
         </div>
@@ -43,7 +43,6 @@
 <script>
 import DetailIconLink from './DetailIconLink.vue'
 import RemoveIconButton from './RemoveIconButton.vue'
-import { LIKE } from '../utils/likeLabels'
 import {
   quoteAuthorName,
   quoteCoverUrl,
@@ -58,9 +57,6 @@ export default {
     quotes: { type: Array, required: true },
   },
   emits: ['remove'],
-  data() {
-    return { LIKE }
-  },
   methods: {
     sourceTitle(quote) {
       return quoteSourceTitle(quote) || '미분류'

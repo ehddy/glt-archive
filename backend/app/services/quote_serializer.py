@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
 from app.models.models import Quote
-from app.schemas.schemas import AuthorOut, NovelOut, QuoteOut, SourceOut
-from app.services import like_service
+from app.schemas.schemas import AuthorOut, NovelOut, QuoteOut, RegisteredByOut, SourceOut
+from app.services import like_service, scrap_service
 from app.services.source_service import source_to_dict
 
 
@@ -45,7 +45,14 @@ def _author_out(quote: Quote) -> AuthorOut | None:
     return None
 
 
-def serialize_quote(quote: Quote, *, like_count: int = 0) -> QuoteOut:
+def _registered_by_out(quote: Quote) -> RegisteredByOut | None:
+    user = quote.registered_by
+    if not user:
+        return None
+    return RegisteredByOut(name=user.name or user.email)
+
+
+def serialize_quote(quote: Quote, *, like_count: int = 0, scrap_count: int = 0) -> QuoteOut:
     return QuoteOut(
         id=quote.id,
         text=quote.text,
@@ -53,22 +60,31 @@ def serialize_quote(quote: Quote, *, like_count: int = 0) -> QuoteOut:
         created_at=quote.created_at,
         updated_at=quote.updated_at,
         like_count=like_count,
+        scrap_count=scrap_count,
         novel=_novel_out(quote),
         source=_source_out(quote),
         author=_author_out(quote),
+        registered_by=_registered_by_out(quote),
     )
 
 
 def serialize_quotes(db: Session, quotes: list[Quote]) -> list[QuoteOut]:
     if not quotes:
         return []
-    counts = like_service.get_like_counts(db, [quote.id for quote in quotes])
+    ids = [quote.id for quote in quotes]
+    like_counts = like_service.get_like_counts(db, ids)
+    scrap_counts = scrap_service.get_scrap_counts(db, ids)
     return [
-        serialize_quote(quote, like_count=counts.get(quote.id, 0))
+        serialize_quote(
+            quote,
+            like_count=like_counts.get(quote.id, 0),
+            scrap_count=scrap_counts.get(quote.id, 0),
+        )
         for quote in quotes
     ]
 
 
 def serialize_quote_with_db(db: Session, quote: Quote) -> QuoteOut:
-    count = like_service.get_like_count(db, quote.id)
-    return serialize_quote(quote, like_count=count)
+    like_count = like_service.get_like_count(db, quote.id)
+    scrap_count = scrap_service.get_scrap_count(db, quote.id)
+    return serialize_quote(quote, like_count=like_count, scrap_count=scrap_count)

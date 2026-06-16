@@ -4,8 +4,12 @@
       <blockquote class="quote-item-text">{{ quote.text }}</blockquote>
     </router-link>
 
-    <div v-if="(quote.like_count || 0) > 0" class="quote-item-like">
-      <LikeCount compact :count="quote.like_count || 0" />
+    <div v-if="(quote.scrap_count || 0) > 0 || (quote.like_count || 0) > 0" class="quote-item-counts">
+      <span v-if="(quote.scrap_count || 0) > 0" class="quote-item-scrap">
+        <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" fill="currentColor" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>
+        {{ quote.scrap_count }}
+      </span>
+      <LikeCount v-if="(quote.like_count || 0) > 0" compact :count="quote.like_count || 0" />
     </div>
 
     <footer v-if="novelTitle || authorName" class="quote-item-meta">
@@ -60,14 +64,26 @@ export default {
   padding: 15px 16px 4px;
 }
 
-.quote-item-like {
+.quote-item-counts {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   padding: 0 14px 4px;
 }
 
-.quote-item--compact .quote-item-like {
+.quote-item--compact .quote-item-counts {
   padding: 0 12px 2px;
+}
+
+.quote-item-scrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #4a8e84;
+  font-variant-numeric: tabular-nums;
 }
 
 .quote-item-meta {

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { isLoggedIn } from '../utils/auth'
 import { isPageLoading } from '../utils/pageLoading'
 import AiSearchView from '../views/AiSearchView.vue'
 import HomeView from '../views/HomeView.vue'
@@ -30,6 +31,10 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   if (isPageLoading() && to.fullPath !== from.fullPath) {
     next(false)
+    return
+  }
+  if (to.name === 'register' && !isLoggedIn()) {
+    next({ name: 'login', query: { redirect: to.fullPath } })
     return
   }
   next()

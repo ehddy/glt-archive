@@ -22,13 +22,19 @@ htmlcov/
 backend/.env
 backend/quotes.db
 backend/*.db
+backend/**/*.db
 backend/*.db-journal
+backend/**/*.db-journal
 
 # Node / Vue
 node_modules/
 frontend/dist/
 frontend/.vite/
 *.local
+
+# Capacitor / Android
+frontend/android/
+frontend/capacitor.config.json
 
 # Environment
 .env
