@@ -8,7 +8,7 @@
             type="text"
             enterkeyhint="search"
             class="search-input"
-            placeholder="느낌, 키워드, 책 제목으로 검색하면 AI가 문장을 찾아드려요"
+            placeholder="키워드나 느낌으로 AI 검색해 보세요"
             :disabled="loading"
           />
           <ClearIconButton v-if="query" @click="clearQuery" />
@@ -178,10 +178,10 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 5px 5px 14px;
+  padding: 4px 4px 4px 16px;
   background: var(--glt-surface);
   border: 1px solid rgba(212, 195, 170, 0.5);
-  border-radius: var(--glt-radius-full);
+  border-radius: var(--glt-radius-lg);
   box-shadow: 0 2px 10px rgba(61, 52, 41, 0.04);
 }
 
@@ -196,7 +196,7 @@ export default {
   border: none;
   outline: none;
   background: transparent;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   color: var(--glt-ink);
   padding: 9px 0;
 }
