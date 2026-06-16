@@ -448,7 +448,7 @@ export default {
 }
 
 .my-bookshelf {
-  margin-bottom: var(--glt-space-5);
+  margin-bottom: var(--glt-space-3);
 }
 
 .shelf-head {
@@ -456,7 +456,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   gap: var(--glt-space-3);
-  margin-bottom: var(--glt-space-3);
+  margin-bottom: var(--glt-space-2);
 }
 
 .shelf-head-left {
@@ -495,7 +495,7 @@ export default {
   gap: 14px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 4px 2px 12px;
+  padding: 4px 2px 6px;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
