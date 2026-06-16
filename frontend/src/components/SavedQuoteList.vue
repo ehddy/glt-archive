@@ -1,7 +1,5 @@
 <template>
   <section class="saved-list">
-    <p class="saved-count">{{ quotes.length }}건</p>
-
     <ul class="saved-items">
       <li v-for="quote in quotes" :key="quote.id" class="saved-card glt-card">
         <button
@@ -79,13 +77,6 @@ export default {
 <style scoped>
 .saved-list {
   margin-top: var(--glt-space-2);
-}
-
-.saved-count {
-  margin: 0 0 var(--glt-space-3);
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--glt-ink-secondary);
 }
 
 .saved-items {

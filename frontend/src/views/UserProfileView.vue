@@ -372,6 +372,16 @@ export default {
   padding: 4px 0 16px;
 }
 
+.own-profile-header .profile-avatar {
+  width: 44px;
+  height: 44px;
+  font-size: 1.15rem;
+}
+
+.own-profile-header .profile-name {
+  font-size: 1.05rem;
+}
+
 .logout-btn {
   flex-shrink: 0;
   border: 1px solid var(--glt-glass-border);

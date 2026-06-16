@@ -2,7 +2,11 @@
   <section class="quote-detail glt-container">
     <BackLink use-history fallback-to="/" label="뒤로" />
 
-    <template v-if="quote">
+    <div v-if="!quote" class="detail-loading">
+      <span class="loading-spinner" aria-hidden="true" />
+    </div>
+
+    <template v-else>
       <!-- Quote text -->
       <div class="quote-hero glt-card">
         <blockquote class="quote-text">{{ quote.text }}</blockquote>
@@ -374,6 +378,26 @@ export default {
   display: flex;
   gap: 10px;
   margin-top: 8px;
+}
+
+.detail-loading {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.loading-spinner {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--glt-glass-border);
+  border-top-color: var(--glt-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .other-count {

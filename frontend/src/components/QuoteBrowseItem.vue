@@ -1,8 +1,8 @@
 <template>
-  <article class="quote-item" :class="{ 'quote-item--compact': compact }">
-    <router-link :to="`/quotes/${quote.id}`" class="quote-item-link">
+  <router-link :to="`/quotes/${quote.id}`" class="quote-item" :class="{ 'quote-item--compact': compact }">
+    <div class="quote-item-link">
       <blockquote class="quote-item-text">{{ quote.text }}</blockquote>
-    </router-link>
+    </div>
 
     <div v-if="(quote.scrap_count || 0) > 0 || (quote.like_count || 0) > 0" class="quote-item-counts">
       <span v-if="(quote.scrap_count || 0) > 0" class="quote-item-scrap">
@@ -20,7 +20,7 @@
         :class="{ 'quote-item-author--sep': novelTitle }"
       >{{ authorName }}</span>
     </footer>
-  </article>
+  </router-link>
 </template>
 
 <script>
@@ -47,10 +47,18 @@ export default {
 
 <style scoped>
 .quote-item {
+  display: block;
   background: var(--glt-surface);
   border: 1px solid rgba(212, 195, 170, 0.42);
   border-radius: var(--glt-radius-lg);
   box-shadow: 0 2px 10px rgba(61, 52, 41, 0.04);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s var(--glt-ease);
+}
+
+.quote-item:hover {
+  box-shadow: 0 4px 18px rgba(61, 52, 41, 0.09);
 }
 
 .quote-item-link {
