@@ -1,18 +1,12 @@
 <template>
-  <!-- Header: only for other user -->
-  <header v-if="!isOwnProfile" class="page-header">
-    <button type="button" class="back-btn" @click="$router.back()" aria-label="뒤로">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-        <path d="M15 6l-6 6 6 6" />
-      </svg>
-    </button>
-    <div class="profile-hero">
-      <div class="profile-avatar">{{ avatarLetter }}</div>
-      <span class="profile-name">{{ displayName }}</span>
-    </div>
-  </header>
-
   <section class="scraps-view glt-container">
+    <!-- Other user profile hero -->
+    <div v-if="!isOwnProfile" class="other-profile-hero">
+      <BackLink use-history fallback-to="/" label="뒤로" />
+      <div class="other-avatar">{{ avatarLetter }}</div>
+      <h1 class="other-name">{{ displayName }}</h1>
+    </div>
+
     <!-- Own profile header -->
     <div v-if="isOwnProfile && loggedIn" class="own-profile-header">
       <div class="profile-hero">
@@ -110,6 +104,7 @@
 
 <script>
 import { api } from '../api'
+import BackLink from '../components/BackLink.vue'
 import QuoteFeedItem from '../components/QuoteFeedItem.vue'
 import SavedQuoteList from '../components/SavedQuoteList.vue'
 import { authState, clearSession, isLoggedIn, requireLogin } from '../utils/auth'
@@ -119,7 +114,7 @@ import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'UserProfileView',
-  components: { SavedQuoteList, QuoteFeedItem },
+  components: { BackLink, SavedQuoteList, QuoteFeedItem },
   data() {
     return {
       userName: '',
@@ -340,31 +335,34 @@ export default {
 </script>
 
 <style scoped>
-.page-header {
+.other-profile-hero {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 6px 16px 4px;
-  background: var(--glt-surface);
-  border-bottom: 1px solid var(--glt-glass-border);
+  padding-bottom: 20px;
 }
 
-.back-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: transparent;
-  color: var(--glt-ink-secondary);
-  cursor: pointer;
-  border-radius: 10px;
-  flex-shrink: 0;
-  transition: background var(--glt-duration), color var(--glt-duration);
+.other-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--glt-accent-soft) 0%, rgba(74, 142, 132, 0.18) 100%);
+  border: 2px solid rgba(74, 142, 132, 0.22);
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--glt-accent-hover);
+  margin-bottom: 10px;
 }
 
-.back-btn:hover { background: var(--glt-bg-subtle); color: var(--glt-ink); }
+.other-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--glt-ink);
+  letter-spacing: -0.01em;
+}
 
 .profile-hero {
   display: flex;
