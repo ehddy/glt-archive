@@ -38,12 +38,7 @@
             <div class="novel-meta">
               <strong class="novel-title">{{ novel.title }}</strong>
               <span v-if="novel.author" class="novel-author">{{ novel.author.name }}</span>
-              <span class="novel-scrap-count">
-                <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true">
-                  <path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" fill="currentColor" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
-                </svg>
-                {{ novel.scrap_count }}
-              </span>
+              <span v-if="novel.publisher" class="novel-publisher">{{ novel.publisher }}</span>
             </div>
           </router-link>
         </li>
@@ -186,21 +181,12 @@ export default {
   white-space: nowrap;
 }
 
-.novel-author {
+.novel-author,
+.novel-publisher {
   font-size: 0.72rem;
   color: var(--glt-ink-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.novel-scrap-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #4a8e84;
-  margin-top: 1px;
 }
 </style>
