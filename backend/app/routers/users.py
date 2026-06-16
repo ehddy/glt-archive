@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 
+from app.auth.deps import get_current_user
 from app.database import get_db
-from app.models.models import Novel, Quote, QuoteScrap, Source, User
-from app.schemas.schemas import NovelOut, PaginatedQuotesOut, UserPublicOut
+from app.models.models import Novel, Quote, QuoteScrap, Source, User, UserFeaturedNovel
+from app.schemas.schemas import FeaturedNovelsIn, FeaturedNovelsOut, NovelOut, PaginatedQuotesOut, UserPublicOut
 from app.services.quote_serializer import serialize_quotes
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -70,6 +71,36 @@ def get_user_quotes(
         skip=skip,
         limit=limit,
     )
+
+
+@router.get("/{user_id}/featured-novels", response_model=FeaturedNovelsOut)
+def get_featured_novels(user_id: int, db: Session = Depends(get_db)):
+    rows = (
+        db.query(UserFeaturedNovel)
+        .filter(UserFeaturedNovel.user_id == user_id)
+        .order_by(UserFeaturedNovel.order)
+        .all()
+    )
+    return FeaturedNovelsOut(novel_ids=[r.novel_id for r in rows])
+
+
+@router.put("/{user_id}/featured-novels", response_model=FeaturedNovelsOut)
+def set_featured_novels(
+    user_id: int,
+    body: FeaturedNovelsIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="본인의 책장만 수정할 수 있습니다.")
+    if len(body.novel_ids) > 3:
+        raise HTTPException(status_code=400, detail="대표 책은 최대 3권까지 선택할 수 있어요.")
+
+    db.query(UserFeaturedNovel).filter(UserFeaturedNovel.user_id == user_id).delete()
+    for order, novel_id in enumerate(body.novel_ids):
+        db.add(UserFeaturedNovel(user_id=user_id, novel_id=novel_id, order=order))
+    db.commit()
+    return FeaturedNovelsOut(novel_ids=body.novel_ids)
 
 
 @router.get("/{user_id}/scraps", response_model=PaginatedQuotesOut)

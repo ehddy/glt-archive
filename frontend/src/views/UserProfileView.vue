@@ -32,6 +32,33 @@
     </div>
 
     <template v-else-if="!initialLoading">
+      <!-- Unified bookshelf (above tabs) -->
+      <section v-if="allBooks.length" class="my-bookshelf">
+        <header class="shelf-head">
+          <div class="shelf-head-left">
+            <h2 class="shelf-title">{{ isOwnProfile ? '내 책장' : `${displayName}님의 책장` }}</h2>
+            <span class="shelf-count">{{ allBooks.length }}권</span>
+          </div>
+          <router-link v-if="isOwnProfile" to="/my-library" class="shelf-more">
+            더보기
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </router-link>
+        </header>
+        <div class="shelf-scroll">
+          <router-link v-for="book in allBooks" :key="book.id" :to="`/novels/${book.id}`" class="shelf-book">
+            <div class="shelf-cover-wrap">
+              <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" class="shelf-cover" />
+              <div v-else class="shelf-cover shelf-cover--empty">📖</div>
+              <span v-if="book.featured" class="shelf-star" aria-label="대표 책">★</span>
+            </div>
+            <p class="shelf-book-title">{{ book.title }}</p>
+            <p v-if="book.authorName" class="shelf-book-author">{{ book.authorName }}</p>
+          </router-link>
+        </div>
+      </section>
+
       <!-- Tabs -->
       <div class="tabs">
         <button class="tab-btn" :class="{ active: tab === 'scraps' }" @click="tab = 'scraps'">
@@ -44,30 +71,6 @@
 
       <!-- Scraps tab -->
       <template v-if="tab === 'scraps'">
-        <!-- Bookshelf -->
-        <section v-if="books.length" class="my-bookshelf">
-          <header class="shelf-head">
-            <div class="shelf-head-left">
-              <h2 class="shelf-title">담은 책</h2>
-              <span class="shelf-count">{{ books.length }}권</span>
-            </div>
-            <router-link v-if="isOwnProfile" to="/my-library" class="shelf-more">
-              더보기
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M9 6l6 6-6 6" />
-              </svg>
-            </router-link>
-          </header>
-          <div class="shelf-scroll">
-            <router-link v-for="book in books" :key="book.id" :to="`/novels/${book.id}`" class="shelf-book">
-              <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" class="shelf-cover" />
-              <div v-else class="shelf-cover shelf-cover--empty">📖</div>
-              <p class="shelf-book-title">{{ book.title }}</p>
-              <p v-if="book.author?.name || book.authorName" class="shelf-book-author">{{ book.author?.name || book.authorName }}</p>
-            </router-link>
-          </div>
-        </section>
-
         <div v-if="scrapsError" class="glt-empty">{{ scrapsError }}</div>
         <div v-else-if="!scraps.length && !scrapsLoading" class="section-empty">아직 스크랩한 문장이 없어요</div>
         <SavedQuoteList
@@ -83,30 +86,6 @@
 
       <!-- Posts tab -->
       <template v-else>
-        <!-- Post bookshelf -->
-        <section v-if="postBooks.length" class="my-bookshelf">
-          <header class="shelf-head">
-            <div class="shelf-head-left">
-              <h2 class="shelf-title">올린 책</h2>
-              <span class="shelf-count">{{ postBooks.length }}권</span>
-            </div>
-            <router-link v-if="isOwnProfile" to="/my-library?type=posts" class="shelf-more">
-              더보기
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M9 6l6 6-6 6" />
-              </svg>
-            </router-link>
-          </header>
-          <div class="shelf-scroll">
-            <router-link v-for="book in postBooks" :key="book.id" :to="`/novels/${book.id}`" class="shelf-book">
-              <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" class="shelf-cover" />
-              <div v-else class="shelf-cover shelf-cover--empty">📖</div>
-              <p class="shelf-book-title">{{ book.title }}</p>
-              <p v-if="book.author?.name" class="shelf-book-author">{{ book.author.name }}</p>
-            </router-link>
-          </div>
-        </section>
-
         <div v-if="postsLoading" class="section-empty"><span class="loading-spinner" /></div>
         <div v-else-if="postsError" class="glt-empty">{{ postsError }}</div>
         <div v-else-if="!posts.length" class="section-empty">아직 포스팅한 문장이 없어요</div>
@@ -160,7 +139,7 @@ export default {
       postsLoaded: false,
       ownBooks: [],
       postBooks: [],
-      postBooksLoaded: false,
+      featuredIds: [],
       initialLoading: true,
       likedIds: new Set(),
       scrappedIds: new Set(),
@@ -178,20 +157,29 @@ export default {
       return this.userName || `사용자 ${this.userId}`
     },
     avatarLetter() { return (this.displayName || '?')[0].toUpperCase() },
-    books() {
+    scrapsBooks() {
       if (this.isOwnProfile) return this.ownBooks
       const seen = new Set()
       const result = []
       for (const q of this.scraps) {
-        const novelId = q.novel?.id || q.source?.novel_id
-        if (!novelId || seen.has(novelId)) continue
-        seen.add(novelId)
-        result.push({
-          id: novelId,
-          title: q.novel?.title || q.source?.title || '',
-          cover_url: q.novel?.cover_url || q.source?.cover_url || null,
-          authorName: q.novel?.author?.name || q.source?.author?.name || null,
-        })
+        const id = q.novel?.id || q.source?.novel_id
+        if (!id || seen.has(id)) continue
+        seen.add(id)
+        result.push({ id, title: q.novel?.title || q.source?.title || '', cover_url: q.novel?.cover_url || q.source?.cover_url || null, authorName: q.novel?.author?.name || q.source?.author?.name || null })
+      }
+      return result
+    },
+    allBooks() {
+      const normalize = b => ({ id: b.id, title: b.title, cover_url: b.cover_url, authorName: b.authorName || b.author?.name || null })
+      const pool = [...this.scrapsBooks, ...this.postBooks].map(normalize)
+      const seen = new Set()
+      const result = []
+      for (const id of this.featuredIds) {
+        const book = pool.find(b => b.id === id)
+        if (book && !seen.has(id)) { seen.add(id); result.push({ ...book, featured: true }) }
+      }
+      for (const book of pool) {
+        if (!seen.has(book.id)) { seen.add(book.id); result.push({ ...book, featured: false }) }
       }
       return result
     },
@@ -217,26 +205,37 @@ export default {
       this.posts = []
       this.ownBooks = []
       this.postBooks = []
+      this.featuredIds = []
       this.scrapsTotal = null
       this.postsTotal = null
       this.postsLoaded = false
-      this.postBooksLoaded = false
       this.tab = 'scraps'
       this.initialLoading = true
 
       if (this.isOwnProfile && !this.loggedIn) { this.initialLoading = false; return }
 
-      const tasks = [this.loadScraps()]
+      const tasks = [this.loadScraps(), this.loadPostBooks()]
       if (!this.isOwnProfile) tasks.push(this.loadUser())
       if (this.isOwnProfile) tasks.push(this.loadOwnBooks(), this.loadUserState())
-      await Promise.all(tasks)
+      await Promise.all([...tasks, this.loadFeaturedIds()])
       this.initialLoading = false
+    },
+    async loadFeaturedIds() {
+      if (!this.userId) return
+      try {
+        const res = await api.getFeaturedNovels(this.userId)
+        this.featuredIds = res.novel_ids || []
+      } catch { this.featuredIds = [] }
     },
     async loadUser() {
       try { const u = await api.getUser(this.userId); this.userName = u.name || '' } catch {}
     },
     async loadOwnBooks() {
       try { this.ownBooks = await api.listScrappedNovels() } catch {}
+    },
+    async loadPostBooks() {
+      if (!this.userId) return
+      try { this.postBooks = await api.getUserNovels(this.userId) } catch {}
     },
     async loadUserState() {
       if (!isLoggedIn()) return
@@ -277,14 +276,6 @@ export default {
     switchToPostsTab() {
       this.tab = 'posts'
       if (!this.postsLoaded) this.loadPosts().then(() => this.$nextTick(() => this.setupPostsScroll()))
-      if (!this.postBooksLoaded) this.loadPostBooks()
-    },
-    async loadPostBooks() {
-      if (!this.userId) return
-      try {
-        this.postBooks = await api.getUserNovels(this.userId)
-        this.postBooksLoaded = true
-      } catch {}
     },
     loadMoreScraps() {
       if (this.scrapsLoadingMore || this.scrapsLoading) return
@@ -331,10 +322,6 @@ export default {
         if (idx !== -1) this.posts.splice(idx, 1, { ...this.posts[idx], like_count: likeCount })
       } catch {}
     },
-    logout() {
-      clearSession()
-      this.$router.push('/')
-    },
     async handleToggleScrap(quoteId) {
       if (!requireLogin(this.$router, this.$route.fullPath)) return
       try {
@@ -343,6 +330,10 @@ export default {
         const idx = this.posts.findIndex(q => q.id === quoteId)
         if (idx !== -1) this.posts.splice(idx, 1, { ...this.posts[idx], scrap_count: scrapCount })
       } catch {}
+    },
+    logout() {
+      clearSession()
+      this.$router.push('/')
     },
   },
 }
@@ -456,51 +447,6 @@ export default {
   gap: 10px;
 }
 
-.tabs {
-  display: flex;
-  border-bottom: 1px solid var(--glt-glass-border);
-  margin-bottom: var(--glt-space-4);
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 10px 12px;
-  border: none;
-  background: transparent;
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: var(--glt-ink-tertiary);
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  transition: color var(--glt-duration);
-}
-
-.tab-btn.active {
-  color: var(--glt-ink);
-  font-weight: 700;
-}
-
-.tab-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 16%;
-  right: 16%;
-  height: 2px;
-  background: var(--glt-accent);
-  border-radius: 999px;
-}
-
-.tab-count {
-  font-size: 0.76rem;
-  font-weight: 400;
-  color: var(--glt-ink-tertiary);
-}
-
 .my-bookshelf {
   margin-bottom: var(--glt-space-5);
 }
@@ -572,6 +518,12 @@ export default {
   scroll-snap-align: start;
 }
 
+.shelf-cover-wrap {
+  position: relative;
+  width: 90px;
+  height: 124px;
+}
+
 .shelf-cover {
   width: 90px;
   height: 124px;
@@ -589,6 +541,18 @@ export default {
   place-items: center;
   background: var(--glt-bg-subtle);
   font-size: 1.4rem;
+  border-radius: 6px;
+}
+
+.shelf-star {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 0.9rem;
+  color: #f5c842;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  line-height: 1;
+  pointer-events: none;
 }
 
 .shelf-book-title {
@@ -609,6 +573,51 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--glt-glass-border);
+  margin-bottom: var(--glt-space-4);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--glt-ink-tertiary);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: color var(--glt-duration);
+}
+
+.tab-btn.active {
+  color: var(--glt-ink);
+  font-weight: 700;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 16%;
+  right: 16%;
+  height: 2px;
+  background: var(--glt-accent);
+  border-radius: 999px;
+}
+
+.tab-count {
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: var(--glt-ink-tertiary);
 }
 
 .section-empty {

@@ -319,3 +319,11 @@ class AiSearchResponse(BaseModel):
     query: str
     summary: str
     articles: list[AiSearchArticle]
+
+
+class FeaturedNovelsOut(BaseModel):
+    novel_ids: list[int]
+
+
+class FeaturedNovelsIn(BaseModel):
+    novel_ids: list[int] = Field(..., max_length=3)

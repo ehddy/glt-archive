@@ -151,6 +151,22 @@ class Bookmark(Base):
     quote: Mapped["Quote"] = relationship(back_populates="bookmarks")
 
 
+class UserFeaturedNovel(Base):
+    __tablename__ = "user_featured_novels"
+    __table_args__ = (
+        UniqueConstraint("user_id", "novel_id", name="uq_featured_user_novel"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    novel_id: Mapped[int] = mapped_column(ForeignKey("novels.id"), index=True)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    user: Mapped["User"] = relationship(foreign_keys=[user_id])
+    novel: Mapped["Novel"] = relationship(foreign_keys=[novel_id])
+
+
 class QuoteVersion(Base):
     __tablename__ = "quote_versions"
 

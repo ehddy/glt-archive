@@ -170,6 +170,16 @@ export const api = {
   listScrappedNovels() {
     return request('/api/scraps/novels')
   },
+  getFeaturedNovels(userId) {
+    return request(`/api/users/${userId}/featured-novels`)
+  },
+  setFeaturedNovels(userId, novelIds) {
+    return request(`/api/users/${userId}/featured-novels`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ novel_ids: novelIds }),
+    })
+  },
   addScrap(quoteId) {
     return request(`/api/scraps/${quoteId}`, { method: 'POST' })
   },
