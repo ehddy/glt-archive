@@ -34,6 +34,7 @@ def list_scrapped_novels(
             author=novel.author,
             cover_url=novel.cover_url,
             scrap_count=scrap_count,
+            publisher=novel.publisher,
         )
         result.append(out)
     return result

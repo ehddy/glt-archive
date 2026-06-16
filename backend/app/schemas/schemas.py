@@ -196,6 +196,7 @@ class MyLibraryNovelOut(BaseModel):
     author: AuthorOut | None = None
     cover_url: str | None = None
     scrap_count: int = 0
+    publisher: str | None = None
 
     model_config = {"from_attributes": True}
 
