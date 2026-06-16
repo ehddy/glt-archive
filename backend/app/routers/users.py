@@ -29,7 +29,7 @@ def get_user_novels(user_id: int, db: Session = Depends(get_db)):
     )
     via_source = (
         db.query(Source.novel_id)
-        .join(Quote, Quote.id == Source.quote_id)
+        .join(Quote, Quote.source_id == Source.id)
         .filter(Quote.registered_by_id == user_id, Source.novel_id.isnot(None))
     )
     novel_ids = {row[0] for row in direct} | {row[0] for row in via_source}
