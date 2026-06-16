@@ -38,7 +38,6 @@
             <div class="novel-meta">
               <strong class="novel-title">{{ novel.title }}</strong>
               <span v-if="novel.author" class="novel-author">{{ novel.author.name }}</span>
-              <span v-if="novel.publisher" class="novel-publisher">{{ novel.publisher }}</span>
             </div>
           </router-link>
         </li>
@@ -181,8 +180,7 @@ export default {
   white-space: nowrap;
 }
 
-.novel-author,
-.novel-publisher {
+.novel-author {
   font-size: 0.72rem;
   color: var(--glt-ink-tertiary);
   overflow: hidden;
