@@ -85,23 +85,9 @@
 
         </router-link>
 
-        <router-link :to="{ name: 'saved' }" class="tab-item" aria-label="스크랩">
+        <div class="tab-item tab-item--empty" aria-hidden="true"></div>
 
-          <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
-
-            <path
-              d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linejoin="round"
-            />
-
-          </svg>
-
-        </router-link>
-
-        <router-link :to="{ name: 'my-profile' }" class="tab-item" aria-label="프로필">
+        <router-link :to="{ name: 'saved' }" class="tab-item" aria-label="나">
 
           <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
 

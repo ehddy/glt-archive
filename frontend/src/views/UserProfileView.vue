@@ -54,7 +54,7 @@
 
       <!-- Scraps -->
       <div v-if="scrapsError" class="glt-empty">{{ scrapsError }}</div>
-      <div v-else-if="!scraps.length && !scrapsLoading" class="glt-empty glt-card">아직 스크랩한 문장이 없어요</div>
+      <div v-else-if="!scraps.length && !scrapsLoading" class="section-empty">아직 스크랩한 문장이 없어요</div>
       <SavedQuoteList
         v-else-if="scraps.length"
         :quotes="scraps"
@@ -65,19 +65,45 @@
       <div ref="scrapsAnchor" class="scroll-anchor">
         <span v-if="scrapsLoadingMore" class="loading-spinner" aria-hidden="true" />
       </div>
+
+      <!-- Registered posts -->
+      <template v-if="postsTotal !== null || posts.length > 0">
+        <div class="section-divider">
+          <span class="section-label">등록한 문장<span v-if="postsTotal" class="section-count">{{ postsTotal }}</span></span>
+        </div>
+        <div v-if="postsError" class="glt-empty">{{ postsError }}</div>
+        <div v-else-if="!posts.length && !postsLoading" class="section-empty">아직 등록한 문장이 없어요</div>
+        <div v-else class="quote-feed">
+          <QuoteFeedItem
+            v-for="q in posts"
+            :key="q.id"
+            :quote="q"
+            :liked="likedIds.has(q.id)"
+            :scrapped="scrappedIds.has(q.id)"
+            @toggle-like="handleToggleLike(q.id)"
+            @toggle-scrap="handleToggleScrap(q.id)"
+          />
+        </div>
+        <div ref="postsAnchor" class="scroll-anchor">
+          <span v-if="postsLoadingMore" class="loading-spinner" aria-hidden="true" />
+        </div>
+      </template>
     </template>
   </section>
 </template>
 
 <script>
 import { api } from '../api'
+import QuoteFeedItem from '../components/QuoteFeedItem.vue'
 import SavedQuoteList from '../components/SavedQuoteList.vue'
-import { authState, isLoggedIn } from '../utils/auth'
+import { authState, isLoggedIn, requireLogin } from '../utils/auth'
+import { toggleLike as toggleLikeRequest } from '../utils/likeToggle'
+import { toggleScrap as toggleScrapRequest } from '../utils/scrapToggle'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'UserProfileView',
-  components: { SavedQuoteList },
+  components: { SavedQuoteList, QuoteFeedItem },
   data() {
     return {
       userName: '',
@@ -87,8 +113,16 @@ export default {
       scrapsLoadingMore: false,
       scrapsError: '',
       scrapsObserver: null,
+      posts: [],
+      postsTotal: null,
+      postsLoading: false,
+      postsLoadingMore: false,
+      postsError: '',
+      postsObserver: null,
       ownBooks: [],
       initialLoading: true,
+      likedIds: new Set(),
+      scrappedIds: new Set(),
       pageSize: 20,
     }
   },
@@ -133,18 +167,25 @@ export default {
       handler() { this.init() },
     },
     scrapsLoading(newVal, oldVal) {
-      if (oldVal && !newVal) this.$nextTick(() => this.setupScroll())
+      if (oldVal && !newVal) this.$nextTick(() => this.setupScrapsScroll())
+    },
+    postsLoading(newVal, oldVal) {
+      if (oldVal && !newVal) this.$nextTick(() => this.setupPostsScroll())
     },
   },
   beforeUnmount() {
     if (this.scrapsObserver) this.scrapsObserver.disconnect()
+    if (this.postsObserver) this.postsObserver.disconnect()
   },
   methods: {
     async init() {
       if (this.scrapsObserver) { this.scrapsObserver.disconnect(); this.scrapsObserver = null }
+      if (this.postsObserver) { this.postsObserver.disconnect(); this.postsObserver = null }
       this.scraps = []
+      this.posts = []
       this.ownBooks = []
       this.scrapsTotal = null
+      this.postsTotal = null
       this.initialLoading = true
 
       if (this.isOwnProfile && !this.loggedIn) {
@@ -152,9 +193,9 @@ export default {
         return
       }
 
-      const tasks = [this.loadScraps()]
+      const tasks = [this.loadScraps(), this.loadPosts()]
       if (!this.isOwnProfile) tasks.push(this.loadUser())
-      if (this.isOwnProfile) tasks.push(this.loadOwnBooks())
+      if (this.isOwnProfile) tasks.push(this.loadOwnBooks(), this.loadUserState())
       await Promise.all(tasks)
       this.initialLoading = false
     },
@@ -169,6 +210,17 @@ export default {
         this.ownBooks = await api.listScrappedNovels()
       } catch {}
     },
+    async loadUserState() {
+      if (!isLoggedIn()) return
+      try {
+        const [likedRes, scrappedRes] = await Promise.all([
+          api.getLikeIds().catch(() => ({ quote_ids: [] })),
+          api.getScrapIds().catch(() => ({ quote_ids: [] })),
+        ])
+        this.likedIds = new Set(likedRes.quote_ids || [])
+        this.scrappedIds = new Set(scrappedRes.quote_ids || [])
+      } catch {}
+    },
     async loadScraps({ append = false } = {}) {
       if (!this.userId) return
       if (append) {
@@ -176,7 +228,7 @@ export default {
       } else {
         this.scrapsLoading = true
         this.scraps = []
-        if (!append) startPageLoading()
+        startPageLoading()
       }
       this.scrapsError = ''
       try {
@@ -193,12 +245,40 @@ export default {
         this.scrapsLoadingMore = false
       }
     },
+    async loadPosts({ append = false } = {}) {
+      if (!this.userId) return
+      if (append) {
+        this.postsLoadingMore = true
+      } else {
+        this.postsLoading = true
+        this.posts = []
+      }
+      this.postsError = ''
+      try {
+        const res = await api.getUserQuotes(this.userId, {
+          skip: append ? this.posts.length : 0,
+          limit: this.pageSize,
+        })
+        this.postsTotal = res.total
+        this.posts = append ? [...this.posts, ...res.items] : res.items
+      } catch (e) {
+        this.postsError = e.message
+      } finally {
+        this.postsLoading = false
+        this.postsLoadingMore = false
+      }
+    },
     loadMoreScraps() {
       if (this.scrapsLoadingMore || this.scrapsLoading) return
       if (this.scrapsTotal !== null && this.scraps.length >= this.scrapsTotal) return
       this.loadScraps({ append: true })
     },
-    setupScroll() {
+    loadMorePosts() {
+      if (this.postsLoadingMore || this.postsLoading) return
+      if (this.postsTotal !== null && this.posts.length >= this.postsTotal) return
+      this.loadPosts({ append: true })
+    },
+    setupScrapsScroll() {
       const anchor = this.$refs.scrapsAnchor
       if (!anchor || this.scrapsObserver) return
       this.scrapsObserver = new IntersectionObserver(
@@ -207,6 +287,15 @@ export default {
       )
       this.scrapsObserver.observe(anchor)
     },
+    setupPostsScroll() {
+      const anchor = this.$refs.postsAnchor
+      if (!anchor || this.postsObserver) return
+      this.postsObserver = new IntersectionObserver(
+        (entries) => { if (entries[0].isIntersecting) this.loadMorePosts() },
+        { rootMargin: '300px' },
+      )
+      this.postsObserver.observe(anchor)
+    },
     async handleRemove(quoteId) {
       try {
         await api.removeScrap(quoteId)
@@ -214,6 +303,29 @@ export default {
         if (this.scrapsTotal !== null) this.scrapsTotal--
         this.ownBooks = await api.listScrappedNovels()
       } catch {}
+    },
+    async handleToggleLike(quoteId) {
+      if (!requireLogin(this.$router, this.$route.fullPath)) return
+      try {
+        const { likedIds, likeCount } = await toggleLikeRequest(api, this.likedIds, quoteId)
+        this.likedIds = likedIds
+        this.updateCount(quoteId, 'like_count', likeCount)
+      } catch {}
+    },
+    async handleToggleScrap(quoteId) {
+      if (!requireLogin(this.$router, this.$route.fullPath)) return
+      try {
+        const { scrappedIds, scrapCount } = await toggleScrapRequest(api, this.scrappedIds, quoteId)
+        this.scrappedIds = scrappedIds
+        this.updateCount(quoteId, 'scrap_count', scrapCount)
+      } catch {}
+    },
+    updateCount(quoteId, field, value) {
+      const update = (list) => {
+        const idx = list.findIndex(q => q.id === quoteId)
+        if (idx !== -1) list.splice(idx, 1, { ...list[idx], [field]: value })
+      }
+      update(this.posts)
     },
   },
 }
@@ -406,6 +518,50 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: var(--glt-space-5) 0 var(--glt-space-4);
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--glt-glass-border);
+}
+
+.section-label {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--glt-ink-secondary);
+  white-space: nowrap;
+}
+
+.section-count {
+  font-size: 0.74rem;
+  font-weight: 400;
+  color: var(--glt-ink-tertiary);
+}
+
+.section-empty {
+  padding: var(--glt-space-5) 0;
+  text-align: center;
+  font-size: 0.86rem;
+  color: var(--glt-ink-tertiary);
+}
+
+.quote-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .scroll-anchor {
