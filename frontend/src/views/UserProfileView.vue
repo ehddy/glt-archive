@@ -13,7 +13,7 @@
   </header>
 
   <section class="scraps-view glt-container">
-    <!-- Login prompt (own profile, not logged in) -->
+    <!-- Login prompt -->
     <div v-if="isOwnProfile && !loggedIn" class="login-panel glt-card">
       <p class="login-text">로그인하면 문장을 스크랩하고 다시 볼 수 있어요</p>
       <div class="login-actions">
@@ -23,56 +23,60 @@
     </div>
 
     <template v-else-if="!initialLoading">
-      <!-- Bookshelf -->
-      <section v-if="books.length" class="my-bookshelf">
-        <header class="shelf-head">
-          <div class="shelf-head-left">
-            <h2 class="shelf-title">{{ isOwnProfile ? '내 책장' : '책장' }}</h2>
-            <span class="shelf-count">{{ books.length }}권</span>
-          </div>
-          <router-link v-if="isOwnProfile" to="/my-library" class="shelf-more">
-            더보기
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M9 6l6 6-6 6" />
-            </svg>
-          </router-link>
-        </header>
-        <div class="shelf-scroll">
-          <router-link
-            v-for="book in books"
-            :key="book.id"
-            :to="`/novels/${book.id}`"
-            class="shelf-book"
-          >
-            <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" class="shelf-cover" />
-            <div v-else class="shelf-cover shelf-cover--empty">📖</div>
-            <p class="shelf-book-title">{{ book.title }}</p>
-            <p v-if="book.author?.name || book.authorName" class="shelf-book-author">{{ book.author?.name || book.authorName }}</p>
-          </router-link>
-        </div>
-      </section>
-
-      <!-- Scraps -->
-      <div v-if="scrapsError" class="glt-empty">{{ scrapsError }}</div>
-      <div v-else-if="!scraps.length && !scrapsLoading" class="section-empty">아직 스크랩한 문장이 없어요</div>
-      <SavedQuoteList
-        v-else-if="scraps.length"
-        :quotes="scraps"
-        :removable="isOwnProfile"
-        @remove="handleRemove"
-      />
-
-      <div ref="scrapsAnchor" class="scroll-anchor">
-        <span v-if="scrapsLoadingMore" class="loading-spinner" aria-hidden="true" />
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn" :class="{ active: tab === 'scraps' }" @click="tab = 'scraps'">
+          스크랩<span v-if="scrapsTotal" class="tab-count">{{ scrapsTotal }}</span>
+        </button>
+        <button class="tab-btn" :class="{ active: tab === 'posts' }" @click="switchToPostsTab">
+          등록한 문장<span v-if="postsTotal" class="tab-count">{{ postsTotal }}</span>
+        </button>
       </div>
 
-      <!-- Registered posts -->
-      <template v-if="postsTotal !== null || posts.length > 0">
-        <div class="section-divider">
-          <span class="section-label">등록한 문장<span v-if="postsTotal" class="section-count">{{ postsTotal }}</span></span>
+      <!-- Scraps tab -->
+      <template v-if="tab === 'scraps'">
+        <!-- Bookshelf -->
+        <section v-if="books.length" class="my-bookshelf">
+          <header class="shelf-head">
+            <div class="shelf-head-left">
+              <h2 class="shelf-title">{{ isOwnProfile ? '내 책장' : '책장' }}</h2>
+              <span class="shelf-count">{{ books.length }}권</span>
+            </div>
+            <router-link v-if="isOwnProfile" to="/my-library" class="shelf-more">
+              더보기
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </router-link>
+          </header>
+          <div class="shelf-scroll">
+            <router-link v-for="book in books" :key="book.id" :to="`/novels/${book.id}`" class="shelf-book">
+              <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" class="shelf-cover" />
+              <div v-else class="shelf-cover shelf-cover--empty">📖</div>
+              <p class="shelf-book-title">{{ book.title }}</p>
+              <p v-if="book.author?.name || book.authorName" class="shelf-book-author">{{ book.author?.name || book.authorName }}</p>
+            </router-link>
+          </div>
+        </section>
+
+        <div v-if="scrapsError" class="glt-empty">{{ scrapsError }}</div>
+        <div v-else-if="!scraps.length && !scrapsLoading" class="section-empty">아직 스크랩한 문장이 없어요</div>
+        <SavedQuoteList
+          v-else-if="scraps.length"
+          :quotes="scraps"
+          :removable="isOwnProfile"
+          @remove="handleRemove"
+        />
+        <div ref="scrapsAnchor" class="scroll-anchor">
+          <span v-if="scrapsLoadingMore" class="loading-spinner" aria-hidden="true" />
         </div>
-        <div v-if="postsError" class="glt-empty">{{ postsError }}</div>
-        <div v-else-if="!posts.length && !postsLoading" class="section-empty">아직 등록한 문장이 없어요</div>
+      </template>
+
+      <!-- Posts tab -->
+      <template v-else>
+        <div v-if="postsLoading" class="section-empty"><span class="loading-spinner" /></div>
+        <div v-else-if="postsError" class="glt-empty">{{ postsError }}</div>
+        <div v-else-if="!posts.length" class="section-empty">아직 등록한 문장이 없어요</div>
         <div v-else class="quote-feed">
           <QuoteFeedItem
             v-for="q in posts"
@@ -107,6 +111,7 @@ export default {
   data() {
     return {
       userName: '',
+      tab: 'scraps',
       scraps: [],
       scrapsTotal: null,
       scrapsLoading: true,
@@ -119,6 +124,7 @@ export default {
       postsLoadingMore: false,
       postsError: '',
       postsObserver: null,
+      postsLoaded: false,
       ownBooks: [],
       initialLoading: true,
       likedIds: new Set(),
@@ -127,12 +133,8 @@ export default {
     }
   },
   computed: {
-    isOwnProfile() {
-      return !this.$route.params.id
-    },
-    loggedIn() {
-      return isLoggedIn()
-    },
+    isOwnProfile() { return !this.$route.params.id },
+    loggedIn() { return isLoggedIn() },
     userId() {
       return this.$route.params.id ? Number(this.$route.params.id) : authState.user?.id
     },
@@ -140,9 +142,7 @@ export default {
       if (this.isOwnProfile) return authState.user?.name || authState.user?.email?.split('@')[0] || ''
       return this.userName || `사용자 ${this.userId}`
     },
-    avatarLetter() {
-      return (this.displayName || '?')[0].toUpperCase()
-    },
+    avatarLetter() { return (this.displayName || '?')[0].toUpperCase() },
     books() {
       if (this.isOwnProfile) return this.ownBooks
       const seen = new Set()
@@ -162,16 +162,9 @@ export default {
     },
   },
   watch: {
-    '$route.fullPath': {
-      immediate: true,
-      handler() { this.init() },
-    },
-    scrapsLoading(newVal, oldVal) {
-      if (oldVal && !newVal) this.$nextTick(() => this.setupScrapsScroll())
-    },
-    postsLoading(newVal, oldVal) {
-      if (oldVal && !newVal) this.$nextTick(() => this.setupPostsScroll())
-    },
+    '$route.fullPath': { immediate: true, handler() { this.init() } },
+    scrapsLoading(newVal, oldVal) { if (oldVal && !newVal) this.$nextTick(() => this.setupScrapsScroll()) },
+    postsLoading(newVal, oldVal) { if (oldVal && !newVal) this.$nextTick(() => this.setupPostsScroll()) },
   },
   beforeUnmount() {
     if (this.scrapsObserver) this.scrapsObserver.disconnect()
@@ -186,87 +179,63 @@ export default {
       this.ownBooks = []
       this.scrapsTotal = null
       this.postsTotal = null
+      this.postsLoaded = false
+      this.tab = 'scraps'
       this.initialLoading = true
 
-      if (this.isOwnProfile && !this.loggedIn) {
-        this.initialLoading = false
-        return
-      }
+      if (this.isOwnProfile && !this.loggedIn) { this.initialLoading = false; return }
 
-      const tasks = [this.loadScraps(), this.loadPosts()]
+      const tasks = [this.loadScraps()]
       if (!this.isOwnProfile) tasks.push(this.loadUser())
       if (this.isOwnProfile) tasks.push(this.loadOwnBooks(), this.loadUserState())
       await Promise.all(tasks)
       this.initialLoading = false
     },
     async loadUser() {
-      try {
-        const user = await api.getUser(this.userId)
-        this.userName = user.name || ''
-      } catch {}
+      try { const u = await api.getUser(this.userId); this.userName = u.name || '' } catch {}
     },
     async loadOwnBooks() {
-      try {
-        this.ownBooks = await api.listScrappedNovels()
-      } catch {}
+      try { this.ownBooks = await api.listScrappedNovels() } catch {}
     },
     async loadUserState() {
       if (!isLoggedIn()) return
       try {
-        const [likedRes, scrappedRes] = await Promise.all([
+        const [l, s] = await Promise.all([
           api.getLikeIds().catch(() => ({ quote_ids: [] })),
           api.getScrapIds().catch(() => ({ quote_ids: [] })),
         ])
-        this.likedIds = new Set(likedRes.quote_ids || [])
-        this.scrappedIds = new Set(scrappedRes.quote_ids || [])
+        this.likedIds = new Set(l.quote_ids || [])
+        this.scrappedIds = new Set(s.quote_ids || [])
       } catch {}
     },
     async loadScraps({ append = false } = {}) {
       if (!this.userId) return
-      if (append) {
-        this.scrapsLoadingMore = true
-      } else {
-        this.scrapsLoading = true
-        this.scraps = []
-        startPageLoading()
-      }
+      if (append) { this.scrapsLoadingMore = true }
+      else { this.scrapsLoading = true; this.scraps = []; startPageLoading() }
       this.scrapsError = ''
       try {
-        const res = await api.getUserScraps(this.userId, {
-          skip: append ? this.scraps.length : 0,
-          limit: this.pageSize,
-        })
+        const res = await api.getUserScraps(this.userId, { skip: append ? this.scraps.length : 0, limit: this.pageSize })
         this.scrapsTotal = res.total
         this.scraps = append ? [...this.scraps, ...res.items] : res.items
-      } catch (e) {
-        this.scrapsError = e.message
-      } finally {
-        if (!append) { this.scrapsLoading = false; endPageLoading() }
-        this.scrapsLoadingMore = false
-      }
+      } catch (e) { this.scrapsError = e.message }
+      finally { if (!append) { this.scrapsLoading = false; endPageLoading() }; this.scrapsLoadingMore = false }
     },
     async loadPosts({ append = false } = {}) {
       if (!this.userId) return
-      if (append) {
-        this.postsLoadingMore = true
-      } else {
-        this.postsLoading = true
-        this.posts = []
-      }
+      if (append) { this.postsLoadingMore = true }
+      else { this.postsLoading = true; this.posts = [] }
       this.postsError = ''
       try {
-        const res = await api.getUserQuotes(this.userId, {
-          skip: append ? this.posts.length : 0,
-          limit: this.pageSize,
-        })
+        const res = await api.getUserQuotes(this.userId, { skip: append ? this.posts.length : 0, limit: this.pageSize })
         this.postsTotal = res.total
         this.posts = append ? [...this.posts, ...res.items] : res.items
-      } catch (e) {
-        this.postsError = e.message
-      } finally {
-        this.postsLoading = false
-        this.postsLoadingMore = false
-      }
+        this.postsLoaded = true
+      } catch (e) { this.postsError = e.message }
+      finally { this.postsLoading = false; this.postsLoadingMore = false }
+    },
+    switchToPostsTab() {
+      this.tab = 'posts'
+      if (!this.postsLoaded) this.loadPosts().then(() => this.$nextTick(() => this.setupPostsScroll()))
     },
     loadMoreScraps() {
       if (this.scrapsLoadingMore || this.scrapsLoading) return
@@ -309,7 +278,8 @@ export default {
       try {
         const { likedIds, likeCount } = await toggleLikeRequest(api, this.likedIds, quoteId)
         this.likedIds = likedIds
-        this.updateCount(quoteId, 'like_count', likeCount)
+        const idx = this.posts.findIndex(q => q.id === quoteId)
+        if (idx !== -1) this.posts.splice(idx, 1, { ...this.posts[idx], like_count: likeCount })
       } catch {}
     },
     async handleToggleScrap(quoteId) {
@@ -317,15 +287,9 @@ export default {
       try {
         const { scrappedIds, scrapCount } = await toggleScrapRequest(api, this.scrappedIds, quoteId)
         this.scrappedIds = scrappedIds
-        this.updateCount(quoteId, 'scrap_count', scrapCount)
+        const idx = this.posts.findIndex(q => q.id === quoteId)
+        if (idx !== -1) this.posts.splice(idx, 1, { ...this.posts[idx], scrap_count: scrapCount })
       } catch {}
-    },
-    updateCount(quoteId, field, value) {
-      const update = (list) => {
-        const idx = list.findIndex(q => q.id === quoteId)
-        if (idx !== -1) list.splice(idx, 1, { ...list[idx], [field]: value })
-      }
-      update(this.posts)
     },
   },
 }
@@ -356,10 +320,7 @@ export default {
   transition: background var(--glt-duration), color var(--glt-duration);
 }
 
-.back-btn:hover {
-  background: var(--glt-bg-subtle);
-  color: var(--glt-ink);
-}
+.back-btn:hover { background: var(--glt-bg-subtle); color: var(--glt-ink); }
 
 .profile-hero {
   display: flex;
@@ -405,6 +366,51 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--glt-glass-border);
+  margin-bottom: var(--glt-space-4);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--glt-ink-tertiary);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: color var(--glt-duration);
+}
+
+.tab-btn.active {
+  color: var(--glt-ink);
+  font-weight: 700;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 16%;
+  right: 16%;
+  height: 2px;
+  background: var(--glt-accent);
+  border-radius: 999px;
+}
+
+.tab-count {
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: var(--glt-ink-tertiary);
 }
 
 .my-bookshelf {
@@ -488,10 +494,7 @@ export default {
   display: block;
 }
 
-.shelf-book:hover .shelf-cover {
-  transform: translateY(-2px);
-  box-shadow: var(--glt-shadow-md);
-}
+.shelf-book:hover .shelf-cover { transform: translateY(-2px); box-shadow: var(--glt-shadow-md); }
 
 .shelf-cover--empty {
   display: grid;
@@ -520,39 +523,8 @@ export default {
   white-space: nowrap;
 }
 
-.section-divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: var(--glt-space-5) 0 var(--glt-space-4);
-}
-
-.section-divider::before,
-.section-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--glt-glass-border);
-}
-
-.section-label {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--glt-ink-secondary);
-  white-space: nowrap;
-}
-
-.section-count {
-  font-size: 0.74rem;
-  font-weight: 400;
-  color: var(--glt-ink-tertiary);
-}
-
 .section-empty {
-  padding: var(--glt-space-5) 0;
+  padding: var(--glt-space-8) 0;
   text-align: center;
   font-size: 0.86rem;
   color: var(--glt-ink-tertiary);
@@ -581,7 +553,5 @@ export default {
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
