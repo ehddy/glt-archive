@@ -1,4 +1,4 @@
-from sqlalchemy import func
+from sqlalchemy import distinct, func
 from sqlalchemy.orm import Session, joinedload
 
 from app.cache import invalidate_read_cache
@@ -63,6 +63,55 @@ def list_scrapped_quotes(db: Session, user_id: int) -> list[Quote]:
     )
     by_id = {q.id: q for q in quotes}
     return [by_id[qid] for qid in quote_ids if qid in by_id]
+
+
+def list_scrapped_novels(db: Session, user_id: int) -> list[tuple]:
+    """Returns (Novel, scrap_count) tuples for novels the user has scrapped quotes from."""
+    scrapped_ids_sq = (
+        db.query(QuoteScrap.quote_id)
+        .filter(QuoteScrap.user_id == user_id)
+        .subquery()
+    )
+
+    direct = (
+        db.query(distinct(Quote.novel_id))
+        .filter(Quote.id.in_(scrapped_ids_sq), Quote.novel_id.isnot(None))
+    )
+    via_source = (
+        db.query(distinct(Source.novel_id))
+        .join(Quote, Quote.source_id == Source.id)
+        .filter(Quote.id.in_(scrapped_ids_sq), Source.novel_id.isnot(None))
+    )
+
+    novel_ids = {row[0] for row in direct} | {row[0] for row in via_source}
+    if not novel_ids:
+        return []
+
+    novels = (
+        db.query(Novel)
+        .options(joinedload(Novel.author))
+        .filter(Novel.id.in_(novel_ids))
+        .all()
+    )
+
+    # count scraps per novel
+    def _scrap_count(novel: Novel) -> int:
+        return (
+            db.query(func.count(QuoteScrap.id))
+            .join(Quote, Quote.id == QuoteScrap.quote_id)
+            .filter(
+                QuoteScrap.user_id == user_id,
+                (Quote.novel_id == novel.id) | (
+                    Quote.source_id.in_(
+                        db.query(Source.id).filter(Source.novel_id == novel.id)
+                    )
+                ),
+            )
+            .scalar()
+            or 0
+        )
+
+    return [(novel, _scrap_count(novel)) for novel in novels]
 
 
 def add_scrap(db: Session, user: User, quote_id: int) -> QuoteScrap:

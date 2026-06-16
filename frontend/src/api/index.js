@@ -155,6 +155,9 @@ export const api = {
   listScraps() {
     return request('/api/scraps')
   },
+  listScrappedNovels() {
+    return request('/api/scraps/novels')
+  },
   addScrap(quoteId) {
     return request(`/api/scraps/${quoteId}`, { method: 'POST' })
   },

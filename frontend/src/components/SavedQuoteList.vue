@@ -123,20 +123,18 @@ export default {
 
 .saved-source {
   display: flex;
-  gap: 10px;
+  gap: 11px;
   align-items: center;
-  padding: 10px 12px;
-  border-radius: var(--glt-radius-md);
-  background: var(--glt-bg-subtle);
-  border: 1px solid rgba(212, 195, 170, 0.35);
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #d6ede5 0%, #eaf5f0 100%);
   text-decoration: none;
   color: inherit;
-  transition: border-color var(--glt-duration), box-shadow var(--glt-duration);
+  transition: opacity 0.15s var(--glt-ease);
 }
 
 .saved-source:not(.saved-source--static):hover {
-  border-color: var(--glt-accent-muted);
-  box-shadow: var(--glt-shadow-sm);
+  opacity: 0.82;
 }
 
 .saved-source--static {
@@ -149,12 +147,13 @@ export default {
   object-fit: cover;
   border-radius: 4px;
   flex-shrink: 0;
+  box-shadow: 0 1px 6px rgba(40, 80, 60, 0.18);
 }
 
 .saved-cover--empty {
   display: grid;
   place-items: center;
-  background: var(--glt-surface);
+  background: rgba(74, 142, 132, 0.12);
   font-size: 1rem;
 }
 
@@ -162,27 +161,27 @@ export default {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .saved-source-label {
   font-size: 0.66rem;
   font-weight: 600;
-  color: var(--glt-accent);
+  color: #3a7a60;
   letter-spacing: 0.04em;
 }
 
 .saved-source-title {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
   line-height: 1.4;
-  color: var(--glt-ink);
+  color: #1e3d32;
   word-break: keep-all;
 }
 
 .saved-source-author {
   font-size: 0.72rem;
-  color: var(--glt-ink-tertiary);
+  color: #4a7a6a;
 }
 
 .saved-actions {

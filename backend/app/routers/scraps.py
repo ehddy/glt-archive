@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.auth.deps import get_current_user
 from app.database import get_db
 from app.models.models import User
-from app.schemas.schemas import QuoteOut, ScrapActionOut, ScrapIdsOut
+from app.schemas.schemas import MyLibraryNovelOut, QuoteOut, ScrapActionOut, ScrapIdsOut
 from app.services import scrap_service
 from app.services.quote_serializer import serialize_quotes
 
@@ -18,6 +18,25 @@ def list_scraps(
 ):
     quotes = scrap_service.list_scrapped_quotes(db, user.id)
     return serialize_quotes(db, quotes)
+
+
+@router.get("/novels", response_model=list[MyLibraryNovelOut])
+def list_scrapped_novels(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    rows = scrap_service.list_scrapped_novels(db, user.id)
+    result = []
+    for novel, scrap_count in rows:
+        out = MyLibraryNovelOut(
+            id=novel.id,
+            title=novel.title,
+            author=novel.author,
+            cover_url=novel.cover_url,
+            scrap_count=scrap_count,
+        )
+        result.append(out)
+    return result
 
 
 @router.get("/ids", response_model=ScrapIdsOut)

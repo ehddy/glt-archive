@@ -87,12 +87,12 @@
 
         <router-link
 
-          :to="{ name: 'novels' }"
+          :to="{ name: 'my-library' }"
 
           class="tab-item"
 
           :class="{ 'is-tab-active': $route.name === 'novel-detail' }"
-          aria-label="책장"
+          aria-label="내 책장"
 
         >
 
@@ -163,6 +163,7 @@ import { pageLoading } from './utils/pageLoading'
 import AiSearchView from './views/AiSearchView.vue'
 import HomeView from './views/HomeView.vue'
 import NovelDetailView from './views/NovelDetailView.vue'
+import MyLibraryView from './views/MyLibraryView.vue'
 import NovelsView from './views/NovelsView.vue'
 import QuoteDetailView from './views/QuoteDetailView.vue'
 import QuotesBrowseView from './views/QuotesBrowseView.vue'
@@ -178,6 +179,7 @@ const ROUTE_VIEWS = {
   'ai-search': AiSearchView,
   saved: SavedView,
   novels: NovelsView,
+  'my-library': MyLibraryView,
   'novel-detail': NovelDetailView,
   'quotes-browse': QuotesBrowseView,
   'quote-detail': QuoteDetailView,
@@ -288,13 +290,13 @@ export default {
 
 .app {
 
-  min-height: 100vh;
-
-  min-height: 100dvh;
+  height: 100dvh;
 
   display: flex;
 
   justify-content: center;
+
+  overflow: hidden;
 
   background: var(--glt-bg-outer);
 
@@ -310,9 +312,7 @@ export default {
 
   max-width: var(--glt-app-width);
 
-  min-height: 100vh;
-
-  min-height: 100dvh;
+  height: 100dvh;
 
   background: var(--glt-bg);
 
@@ -320,9 +320,41 @@ export default {
 
   overflow-x: clip;
 
+  overflow-y: scroll;
+
   display: flex;
 
   flex-direction: column;
+
+  scrollbar-width: thin;
+
+  scrollbar-color: rgba(170, 145, 120, 0.3) transparent;
+
+}
+
+.app-frame::-webkit-scrollbar {
+
+  width: 5px;
+
+}
+
+.app-frame::-webkit-scrollbar-track {
+
+  background: transparent;
+
+}
+
+.app-frame::-webkit-scrollbar-thumb {
+
+  background: rgba(170, 145, 120, 0.35);
+
+  border-radius: 999px;
+
+}
+
+.app-frame::-webkit-scrollbar-thumb:hover {
+
+  background: rgba(170, 145, 120, 0.6);
 
 }
 

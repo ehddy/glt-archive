@@ -39,6 +39,7 @@ class NovelOut(BaseModel):
     category_name: str | None = None
     aladin_link: str | None = None
     aladin_item_id: int | None = None
+    quote_count: int = 0
 
     model_config = {"from_attributes": True}
 
@@ -179,6 +180,16 @@ class LikeActionOut(BaseModel):
 
 class LikeIdsOut(BaseModel):
     quote_ids: list[int]
+
+
+class MyLibraryNovelOut(BaseModel):
+    id: int
+    title: str
+    author: AuthorOut | None = None
+    cover_url: str | None = None
+    scrap_count: int = 0
+
+    model_config = {"from_attributes": True}
 
 
 class ScrapActionOut(BaseModel):

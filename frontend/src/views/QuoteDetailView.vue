@@ -65,6 +65,14 @@
         <p v-if="authorName" class="readonly-author">{{ authorName }}</p>
       </div>
 
+      <router-link
+        v-if="novelLinkId && novelQuoteCount > 0"
+        :to="`/novels/${novelLinkId}`"
+        class="novel-more-quotes"
+      >
+        이 책의 문장 {{ novelQuoteCount }}개 →
+      </router-link>
+
       <div v-if="quoteMeta" class="quote-meta">{{ quoteMeta }}</div>
 
       <p v-if="likeMessage" class="like-message" :class="{ 'is-error': likeIsError }">
@@ -121,6 +129,9 @@ export default {
     },
     bookColorIndex() {
       return (this.novelLinkId || 0) % 8
+    },
+    novelQuoteCount() {
+      return Number(this.quote?.novel?.quote_count) || 0
     },
     registerRoute() {
       if (this.quote?.novel) {
@@ -350,6 +361,20 @@ export default {
   color: var(--glt-ink-tertiary, var(--glt-ink-secondary));
   text-align: right;
   letter-spacing: 0.01em;
+}
+
+.novel-more-quotes {
+  display: block;
+  margin-top: var(--glt-space-3);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--glt-accent);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.novel-more-quotes:hover {
+  text-decoration: underline;
 }
 
 .like-message {

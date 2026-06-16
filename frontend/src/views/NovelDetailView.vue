@@ -1,7 +1,7 @@
 <template>
   <section v-if="error && !loading" class="glt-empty glt-container glt-card">{{ error }}</section>
   <section v-else-if="novel && !loading" class="novel-detail glt-container">
-    <BackLink to="/novels" label="책장" />
+    <BackLink use-history fallback-to="/my-library" label="뒤로" />
 
     <div class="detail-body glt-card">
       <div class="detail-header">
