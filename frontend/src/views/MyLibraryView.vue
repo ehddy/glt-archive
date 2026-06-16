@@ -12,12 +12,10 @@
 
     <template v-else>
       <div v-if="!loading && novels.length" class="library-header">
-        <div class="library-header-left">
-          <p class="result-count"><span class="result-count-num">{{ novels.length }}</span>권</p>
-          <p class="library-hint">별 표시한 3권이 내 책장 맨 앞에 보여요</p>
-        </div>
-        <span v-if="saving" class="saving-label">저장 중…</span>
-        <span v-else-if="savedFlash" class="saving-label saved-flash">저장됨 ✓</span>
+        <p class="result-count"><span class="result-count-num">{{ novels.length }}</span>권</p>
+        <span class="featured-counter" :class="{ 'featured-counter--full': featuredIds.length >= 3 }">
+          ★ {{ featuredIds.length }} / 3
+        </span>
       </div>
 
       <div v-if="error && !loading" class="glt-empty glt-card">{{ error }}</div>
@@ -75,10 +73,7 @@ export default {
       loading: true,
       error: '',
       featuredIds: [],
-      saving: false,
-      savedFlash: false,
       _saveTimer: null,
-      _flashTimer: null,
     }
   },
   computed: {
@@ -91,7 +86,6 @@ export default {
   },
   beforeUnmount() {
     clearTimeout(this._saveTimer)
-    clearTimeout(this._flashTimer)
   },
   methods: {
     async load() {
@@ -136,17 +130,7 @@ export default {
     },
     async saveFeatured() {
       if (!this.userId) return
-      this.saving = true
-      this.savedFlash = false
-      try {
-        await api.setFeaturedNovels(this.userId, this.featuredIds)
-        this.saving = false
-        this.savedFlash = true
-        clearTimeout(this._flashTimer)
-        this._flashTimer = setTimeout(() => { this.savedFlash = false }, 2000)
-      } catch {
-        this.saving = false
-      }
+      try { await api.setFeaturedNovels(this.userId, this.featuredIds) } catch {}
     },
   },
 }
@@ -178,20 +162,15 @@ export default {
   color: var(--glt-ink-secondary);
 }
 
-.library-hint {
-  margin: 0;
-  font-size: 0.76rem;
+.featured-counter {
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--glt-ink-tertiary);
+  letter-spacing: 0.02em;
 }
 
-.saving-label {
-  font-size: 0.76rem;
-  color: var(--glt-ink-tertiary);
-  flex-shrink: 0;
-}
-
-.saved-flash {
-  color: var(--glt-accent);
+.featured-counter--full {
+  color: #f5c842;
 }
 
 .login-panel,
