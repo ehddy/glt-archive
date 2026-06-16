@@ -85,7 +85,11 @@
 
         </router-link>
 
-        <div class="tab-item tab-item--empty" aria-hidden="true"></div>
+        <router-link :to="{ name: 'trends' }" class="tab-item" aria-label="트렌드">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+        </router-link>
 
         <router-link :to="{ name: 'saved' }" class="tab-item" aria-label="나">
 
@@ -138,6 +142,7 @@ import UserProfileView from './views/UserProfileView.vue'
 import NovelsView from './views/NovelsView.vue'
 import QuotesBrowseView from './views/QuotesBrowseView.vue'
 import QuoteDetailView from './views/QuoteDetailView.vue'
+import TrendsView from './views/TrendsView.vue'
 const SHEET_ROUTE_NAMES = new Set(['register', 'login', 'signup'])
 const AUTH_MODAL_ROUTES = new Set(['login', 'signup'])
 
@@ -152,6 +157,7 @@ const ROUTE_VIEWS = {
   'novel-detail': NovelDetailView,
   'quotes-browse': QuotesBrowseView,
   'quote-detail': QuoteDetailView,
+  trends: TrendsView,
 }
 
 

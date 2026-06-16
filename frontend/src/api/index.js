@@ -185,6 +185,9 @@ export const api = {
   removeScrap(quoteId) {
     return request(`/api/scraps/${quoteId}`, { method: 'DELETE' })
   },
+  getStatsOverview() {
+    return request('/api/stats/overview')
+  },
   getNovel(id) {
     return request(`/api/novels/${id}`)
   },

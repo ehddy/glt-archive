@@ -13,11 +13,13 @@ import SignupView from '../views/SignupView.vue'
 import MyProfileView from '../views/MyProfileView.vue'
 import UserProfileView from '../views/UserProfileView.vue'
 import QuoteDetailView from '../views/QuoteDetailView.vue'
+import TrendsView from '../views/TrendsView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'home', component: HomeView },
+    { path: '/trends', name: 'trends', component: TrendsView },
     { path: '/ai-search', name: 'ai-search', component: AiSearchView },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/signup', name: 'signup', component: SignupView },
