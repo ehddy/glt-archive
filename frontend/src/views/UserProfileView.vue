@@ -13,6 +13,15 @@
   </header>
 
   <section class="scraps-view glt-container">
+    <!-- Own profile header -->
+    <div v-if="isOwnProfile && loggedIn" class="own-profile-header">
+      <div class="profile-hero">
+        <div class="profile-avatar">{{ avatarLetter }}</div>
+        <span class="profile-name">{{ displayName }}</span>
+      </div>
+      <button type="button" class="logout-btn" @click="logout">로그아웃</button>
+    </div>
+
     <!-- Login prompt -->
     <div v-if="isOwnProfile && !loggedIn" class="login-panel glt-card">
       <p class="login-text">로그인하면 문장을 스크랩하고 다시 볼 수 있어요</p>
@@ -100,7 +109,7 @@
 import { api } from '../api'
 import QuoteFeedItem from '../components/QuoteFeedItem.vue'
 import SavedQuoteList from '../components/SavedQuoteList.vue'
-import { authState, isLoggedIn, requireLogin } from '../utils/auth'
+import { authState, clearSession, isLoggedIn, requireLogin } from '../utils/auth'
 import { toggleLike as toggleLikeRequest } from '../utils/likeToggle'
 import { toggleScrap as toggleScrapRequest } from '../utils/scrapToggle'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
@@ -282,6 +291,10 @@ export default {
         if (idx !== -1) this.posts.splice(idx, 1, { ...this.posts[idx], like_count: likeCount })
       } catch {}
     },
+    logout() {
+      clearSession()
+      this.$router.push('/')
+    },
     async handleToggleScrap(quoteId) {
       if (!requireLogin(this.$router, this.$route.fullPath)) return
       try {
@@ -349,6 +362,31 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.own-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0 16px;
+}
+
+.logout-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--glt-glass-border);
+  background: transparent;
+  color: var(--glt-ink-tertiary);
+  font-size: 0.78rem;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color var(--glt-duration), border-color var(--glt-duration);
+}
+
+.logout-btn:hover {
+  color: var(--glt-ink);
+  border-color: var(--glt-ink-tertiary);
 }
 
 .login-panel {

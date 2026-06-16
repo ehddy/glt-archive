@@ -1,372 +1,256 @@
 <template>
-  <div
-    ref="sheetEl"
-    class="quote-sheet"
-    :class="{ 'is-dragging': sheetDragging }"
-    :style="sheetStyle"
-  >
-    <!-- Drag handle zone -->
-    <div
-      class="sheet-drag-zone"
-      @pointerdown="onDragStart"
-      @pointermove="onDragMove"
-      @pointerup="onDragEnd"
-      @pointercancel="onDragEnd"
-    >
-      <div class="sheet-handle-pill" aria-hidden="true" />
-    </div>
+  <section class="quote-detail glt-container">
+    <BackLink use-history fallback-to="/" label="뒤로" />
 
-    <!-- Loading -->
-    <div v-if="loading" class="sheet-state">
-      <span class="loading-spinner" />
-    </div>
+    <template v-if="quote">
+      <!-- Quote text -->
+      <div class="quote-hero glt-card">
+        <blockquote class="quote-text">{{ quote.text }}</blockquote>
 
-    <!-- Error -->
-    <div v-else-if="error" class="sheet-state sheet-state--error">{{ error }}</div>
+        <!-- Book info -->
+        <component
+          :is="novelId ? 'router-link' : 'div'"
+          v-bind="novelId ? { to: `/novels/${novelId}` } : {}"
+          class="book-strip"
+          :class="{ 'book-strip--static': !novelId }"
+        >
+          <img v-if="coverUrl" :src="coverUrl" :alt="novelTitle" class="book-cover" />
+          <div v-else class="book-cover book-cover--empty">📖</div>
+          <div class="book-info">
+            <span class="book-title">{{ novelTitle }}</span>
+            <span v-if="authorName" class="book-author">{{ authorName }}</span>
+          </div>
+        </component>
 
-    <!-- Content -->
-    <div v-else-if="quote" class="sheet-body">
-      <blockquote class="sheet-quote">{{ quote.text }}</blockquote>
-
-      <component
-        v-if="novelTitle || authorName"
-        :is="novelLinkId ? 'router-link' : 'div'"
-        v-bind="novelLinkId ? { to: `/novels/${novelLinkId}` } : {}"
-        class="sheet-source"
-        :class="{ 'sheet-source--static': !novelLinkId }"
-      >
-        <img v-if="coverUrl" :src="coverUrl" :alt="novelTitle" class="sheet-cover" />
-        <div v-else class="sheet-cover sheet-cover--empty">📖</div>
-        <div class="sheet-source-info">
-          <span v-if="novelTitle" class="sheet-book">{{ novelTitle }}</span>
-          <span v-if="authorName" class="sheet-author">{{ authorName }}</span>
+        <!-- Meta + actions -->
+        <div class="quote-footer">
+          <div class="quote-meta">
+            <router-link
+              v-if="registeredById"
+              :to="`/users/${registeredById}`"
+              class="meta-name"
+            >{{ registeredByName }}</router-link>
+            <span v-else-if="registeredByName" class="meta-name meta-name--static">{{ registeredByName }}</span>
+            <span v-if="timeAgo" class="meta-time">{{ timeAgo }}</span>
+          </div>
+          <div class="quote-actions">
+            <button
+              type="button"
+              class="action-btn action-btn--like"
+              :class="{ 'is-active': liked }"
+              @click="handleToggleLike"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <path
+                  d="M12 21l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.18L12 21z"
+                  :fill="liked ? 'currentColor' : 'none'"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span v-if="likeCount > 0">{{ likeCount }}</span>
+            </button>
+            <button
+              type="button"
+              class="action-btn action-btn--scrap"
+              :class="{ 'is-active': scrapped }"
+              @click="handleToggleScrap"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <path
+                  d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"
+                  :fill="scrapped ? 'currentColor' : 'none'"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span v-if="scrapCount > 0">{{ scrapCount }}</span>
+            </button>
+          </div>
         </div>
-      </component>
-
-      <div class="sheet-actions">
-        <LikeButton :liked="isLiked" :count="quote.like_count || 0" @click="toggleLike" />
-        <ScrapButton :scrapped="isScrapped" :count="quote.scrap_count || 0" @click="toggleScrap" />
       </div>
 
-      <router-link
-        v-if="novelLinkId && novelQuoteCount > 0"
-        :to="`/novels/${novelLinkId}`"
-        class="sheet-novel-link"
-      >
-        이 책의 문장 {{ novelQuoteCount }}개 →
-      </router-link>
-
-      <div class="sheet-footer">
-        <p v-if="quoteMeta" class="sheet-meta">{{ quoteMeta }}</p>
-        <router-link v-if="hasLinkedNovel" :to="registerRoute" class="sheet-add-btn">
-          문장 추가
-        </router-link>
-      </div>
-
-      <p v-if="likeMessage" class="sheet-msg" :class="{ 'is-error': likeIsError }">
-        {{ likeMessage }}
-      </p>
-    </div>
-  </div>
+      <!-- Other quotes from same book -->
+      <section v-if="otherQuotes.length" class="other-quotes">
+        <h2 class="other-title">이 책의 다른 문장</h2>
+        <ul class="other-list">
+          <li v-for="q in otherQuotes" :key="q.id">
+            <router-link :to="`/quotes/${q.id}`" class="other-item glt-card">
+              <p class="other-text">{{ q.text }}</p>
+              <div v-if="q.like_count > 0 || q.scrap_count > 0" class="other-counts">
+                <span v-if="q.like_count > 0" class="other-count">
+                  <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+                    <path d="M12 21l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.18L12 21z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  {{ q.like_count }}
+                </span>
+                <span v-if="q.scrap_count > 0" class="other-count">
+                  <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+                    <path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+                  </svg>
+                  {{ q.scrap_count }}
+                </span>
+              </div>
+            </router-link>
+          </li>
+        </ul>
+      </section>
+    </template>
+  </section>
 </template>
 
 <script>
 import { api } from '../api'
-import LikeButton from '../components/LikeButton.vue'
-import ScrapButton from '../components/ScrapButton.vue'
-import { requireLogin } from '../utils/auth'
+import BackLink from '../components/BackLink.vue'
+import { isLoggedIn, requireLogin } from '../utils/auth'
 import { toggleLike as toggleLikeRequest } from '../utils/likeToggle'
 import { toggleScrap as toggleScrapRequest } from '../utils/scrapToggle'
-import { quoteAuthorName, quoteCoverUrl, quoteNovelId, quoteSourceTitle } from '../utils/quoteDisplay'
-import { registerRouteForNovel, registerRouteForQuote } from '../utils/registerBook'
+import { quoteAuthorName, quoteCoverUrl, quoteSourceTitle } from '../utils/quoteDisplay'
+import { formatRelativeTime } from '../utils/formatters'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'QuoteDetailView',
-  components: { LikeButton, ScrapButton },
+  components: { BackLink },
   data() {
     return {
       quote: null,
-      loading: true,
-      error: '',
-      likeMessage: '',
-      likeIsError: false,
-      isLiked: false,
+      novel: null,
+      liked: false,
+      scrapped: false,
       likedIds: new Set(),
-      isScrapped: false,
       scrappedIds: new Set(),
-      sheetDragY: 0,
-      sheetDragging: false,
-      sheetDragPointerId: null,
-      sheetDragStartY: 0,
-      sheetDragStartOffset: 0,
     }
   },
   computed: {
-    authorName() { return quoteAuthorName(this.quote) },
     novelTitle() { return quoteSourceTitle(this.quote) },
-    coverUrl() { return quoteCoverUrl(this.quote) || '' },
-    novelLinkId() { return quoteNovelId(this.quote) },
-    hasLinkedNovel() { return !!this.novelLinkId },
-    novelQuoteCount() { return Number(this.quote?.novel?.quote_count) || 0 },
-    registerRoute() {
-      if (this.quote?.novel) return registerRouteForNovel(this.quote.novel)
-      return registerRouteForQuote(this.$route.params.id)
-    },
-    quoteMeta() {
-      if (!this.quote) return ''
-      const parts = []
-      const name = this.quote.registered_by?.name
-      if (name) parts.push(name)
-      if (this.quote.created_at) {
-        const d = new Date(this.quote.created_at)
-        parts.push(`${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`)
-      }
-      return parts.join('  ·  ')
-    },
-    sheetStyle() {
-      if (this.sheetDragY <= 0) return null
-      return { transform: `translateY(${this.sheetDragY}px)` }
+    authorName() { return quoteAuthorName(this.quote) },
+    coverUrl() { return quoteCoverUrl(this.quote) },
+    novelId() { return this.quote?.novel?.id || this.quote?.source?.novel_id || null },
+    likeCount() { return Number(this.quote?.like_count) || 0 },
+    scrapCount() { return Number(this.quote?.scrap_count) || 0 },
+    registeredById() { return this.quote?.registered_by?.id || null },
+    registeredByName() { return this.quote?.registered_by?.name || '' },
+    timeAgo() { return formatRelativeTime(this.quote?.created_at) },
+    otherQuotes() {
+      if (!this.novel?.quotes) return []
+      return this.novel.quotes.filter(q => q.id !== this.quote?.id).slice(0, 5)
     },
   },
   watch: {
-    '$route.params.id': {
-      immediate: true,
-      handler() { this.loadQuote() },
-    },
+    '$route.params.id': { immediate: true, handler() { this.load() } },
   },
   methods: {
-    async loadQuote() {
-      this.loading = true
+    async load() {
       startPageLoading()
-      this.error = ''
-      this.likeMessage = ''
+      this.quote = null
+      this.novel = null
+      const id = Number(this.$route.params.id)
+      if (!id) { endPageLoading(); return }
       try {
-        const id = this.$route.params.id
         const [quote, likedRes, scrappedRes] = await Promise.all([
           api.getQuote(id),
-          api.getLikeIds().catch(() => ({ quote_ids: [] })),
-          api.getScrapIds().catch(() => ({ quote_ids: [] })),
+          isLoggedIn() ? api.getLikeIds().catch(() => ({ quote_ids: [] })) : { quote_ids: [] },
+          isLoggedIn() ? api.getScrapIds().catch(() => ({ quote_ids: [] })) : { quote_ids: [] },
         ])
         this.quote = quote
         this.likedIds = new Set(likedRes.quote_ids || [])
-        this.isLiked = this.likedIds.has(quote.id)
         this.scrappedIds = new Set(scrappedRes.quote_ids || [])
-        this.isScrapped = this.scrappedIds.has(quote.id)
-      } catch (e) {
-        this.error = e.message
-      } finally {
-        this.loading = false
-        endPageLoading()
-      }
-    },
+        this.liked = this.likedIds.has(id)
+        this.scrapped = this.scrappedIds.has(id)
 
-    onDragStart(event) {
-      const sheet = this.$refs.sheetEl
-      if (!sheet || sheet.scrollTop > 0) return
-      if (event.pointerType === 'mouse' && event.button !== 0) return
-      this.sheetDragging = true
-      this.sheetDragPointerId = event.pointerId
-      this.sheetDragStartY = event.clientY
-      this.sheetDragStartOffset = this.sheetDragY
-      event.currentTarget.setPointerCapture(event.pointerId)
+        const novelId = quote?.novel?.id || quote?.source?.novel_id
+        if (novelId) this.novel = await api.getNovel(novelId).catch(() => null)
+      } catch {}
+      finally { endPageLoading() }
     },
-    onDragMove(event) {
-      if (!this.sheetDragging || event.pointerId !== this.sheetDragPointerId) return
-      const delta = event.clientY - this.sheetDragStartY
-      this.sheetDragY = Math.max(0, this.sheetDragStartOffset + delta)
-    },
-    onDragEnd(event) {
-      if (event.pointerId !== this.sheetDragPointerId) return
-      const zone = event.currentTarget
-      if (zone?.hasPointerCapture?.(event.pointerId)) zone.releasePointerCapture(event.pointerId)
-      const shouldClose = this.sheetDragY > 96
-      this.sheetDragging = false
-      this.sheetDragPointerId = null
-      if (shouldClose) {
-        const sheet = this.$refs.sheetEl
-        this.sheetDragY = sheet?.offsetHeight || 600
-        window.setTimeout(() => this.$router.back(), 260)
-        return
-      }
-      this.sheetDragY = 0
-    },
-
-    async toggleLike() {
-      if (!this.quote) return
+    async handleToggleLike() {
       if (!requireLogin(this.$router, this.$route.fullPath)) return
-      this.likeMessage = ''
-      this.likeIsError = false
       try {
-        const { likedIds, likeCount, liked } = await toggleLikeRequest(api, this.likedIds, this.quote.id)
+        const { likedIds, likeCount } = await toggleLikeRequest(api, this.likedIds, this.quote.id)
         this.likedIds = likedIds
-        this.isLiked = liked
+        this.liked = likedIds.has(this.quote.id)
         this.quote = { ...this.quote, like_count: likeCount }
-      } catch (e) {
-        this.likeMessage = e.message
-        this.likeIsError = true
-      }
+      } catch {}
     },
-    async toggleScrap() {
-      if (!this.quote) return
+    async handleToggleScrap() {
       if (!requireLogin(this.$router, this.$route.fullPath)) return
-      this.likeMessage = ''
-      this.likeIsError = false
       try {
-        const { scrappedIds, scrapCount, scrapped } = await toggleScrapRequest(api, this.scrappedIds, this.quote.id)
+        const { scrappedIds, scrapCount } = await toggleScrapRequest(api, this.scrappedIds, this.quote.id)
         this.scrappedIds = scrappedIds
-        this.isScrapped = scrapped
+        this.scrapped = scrappedIds.has(this.quote.id)
         this.quote = { ...this.quote, scrap_count: scrapCount }
-      } catch (e) {
-        this.likeMessage = e.message
-        this.likeIsError = true
-      }
-    },
-
-    goBack() {
-      if (window.history.length > 1) this.$router.back()
-      else this.$router.push('/')
+      } catch {}
     },
   },
 }
 </script>
 
 <style scoped>
-.quote-sheet {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 150;
-  width: 100%;
-  max-width: var(--glt-app-width);
-  max-height: calc(100dvh - var(--glt-safe-top) - 6px);
-  margin: 0 auto;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  background: var(--glt-bg);
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -16px 48px rgba(61, 52, 41, 0.14);
-  transition: transform 0.28s var(--glt-ease);
-}
-
-.quote-sheet.is-dragging {
-  transition: none;
-}
-
-.sheet-drag-zone {
+.quote-hero {
+  padding: var(--glt-space-5);
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 14px 20px 10px;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
+  flex-direction: column;
+  gap: var(--glt-space-4);
+  margin-bottom: var(--glt-space-5);
 }
 
-.sheet-drag-zone:active {
-  cursor: grabbing;
-}
-
-.sheet-handle-pill {
-  width: 36px;
-  height: 4px;
-  background: rgba(170, 145, 120, 0.35);
-  border-radius: 999px;
-}
-
-.sheet-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 60px 20px;
-  color: var(--glt-ink-tertiary);
-  font-size: 0.9rem;
-}
-
-.sheet-state--error {
-  color: var(--glt-accent-hover);
-}
-
-.loading-spinner {
-  display: block;
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--glt-glass-border);
-  border-top-color: var(--glt-accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.sheet-body {
-  padding: 4px 20px calc(env(safe-area-inset-bottom, 0px) + 32px);
-}
-
-.sheet-quote {
-  margin: 0 0 22px;
+.quote-text {
+  margin: 0;
   padding: 0;
   border: none;
   font-family: var(--glt-font-serif);
-  font-size: 1.18rem;
+  font-size: 1.12rem;
   font-weight: 400;
-  line-height: 1.92;
-  letter-spacing: -0.01em;
+  line-height: 1.85;
+  letter-spacing: -0.015em;
   color: var(--glt-ink);
   word-break: keep-all;
-  overflow-wrap: anywhere;
 }
 
-.sheet-source {
+.book-strip {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  border-radius: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
   background: linear-gradient(120deg, #d6ede5 0%, #eaf5f0 100%);
   text-decoration: none;
   color: inherit;
-  margin-bottom: 20px;
   transition: opacity 0.15s var(--glt-ease);
 }
 
-.sheet-source:not(.sheet-source--static):hover {
-  opacity: 0.82;
-}
+.book-strip:not(.book-strip--static):hover { opacity: 0.82; }
+.book-strip--static { pointer-events: none; }
 
-.sheet-source--static {
-  pointer-events: none;
-}
-
-.sheet-cover {
-  width: 44px;
-  height: 60px;
+.book-cover {
+  width: 40px;
+  height: 56px;
   object-fit: cover;
-  border-radius: 5px;
+  border-radius: 4px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(40, 80, 60, 0.2);
+  box-shadow: 0 1px 6px rgba(40, 80, 60, 0.18);
 }
 
-.sheet-cover--empty {
+.book-cover--empty {
   display: grid;
   place-items: center;
   background: rgba(74, 142, 132, 0.12);
-  font-size: 1.2rem;
-  border-radius: 5px;
+  font-size: 1rem;
 }
 
-.sheet-source-info {
+.book-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
-.sheet-book {
-  font-size: 0.9rem;
+.book-title {
+  font-size: 0.86rem;
   font-weight: 600;
   color: #1e3d32;
   overflow: hidden;
@@ -374,77 +258,131 @@ export default {
   white-space: nowrap;
 }
 
-.sheet-author {
-  font-size: 0.8rem;
+.book-author {
+  font-size: 0.76rem;
   color: #4a7a6a;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.sheet-actions {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.sheet-novel-link {
-  display: block;
-  margin-bottom: 20px;
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--glt-accent);
-  text-decoration: none;
-  letter-spacing: -0.01em;
-}
-
-.sheet-novel-link:hover {
-  text-decoration: underline;
-}
-
-.sheet-footer {
+.quote-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding-top: 4px;
+  gap: 8px;
+  padding-top: var(--glt-space-3);
   border-top: 1px solid var(--glt-glass-border);
-  margin-top: 4px;
 }
 
-.sheet-meta {
-  margin: 0;
-  font-size: 0.76rem;
-  color: var(--glt-ink-tertiary);
-  letter-spacing: 0.01em;
+.quote-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.sheet-add-btn {
-  flex-shrink: 0;
-  padding: 7px 14px;
-  border-radius: var(--glt-radius-full);
-  background: transparent;
-  border: 1px solid var(--glt-glass-border);
-  color: var(--glt-ink-secondary);
-  font-size: 0.78rem;
+.meta-name {
+  font-size: 0.8rem;
   font-weight: 600;
+  color: var(--glt-ink-secondary);
   text-decoration: none;
-  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sheet-add-btn:hover {
-  border-color: var(--glt-accent);
-  color: var(--glt-accent);
-}
-
-.sheet-msg {
-  margin: 14px 0 0;
-  font-size: 0.82rem;
-  color: var(--glt-accent);
-  text-align: center;
-}
-
-.sheet-msg.is-error {
+.meta-name:not(.meta-name--static):hover {
   color: var(--glt-accent-hover);
+  text-decoration: underline;
+}
+
+.meta-time {
+  font-size: 0.74rem;
+  color: var(--glt-ink-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.quote-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.84rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.15s var(--glt-ease), color 0.15s var(--glt-ease);
+  color: var(--glt-ink-tertiary);
+}
+
+.action-btn:hover { background: rgba(212, 195, 170, 0.22); }
+.action-btn--like.is-active { color: #c18a8a; }
+.action-btn--scrap.is-active { color: #4a8e84; }
+.action-btn--like:hover { color: #c18a8a; }
+.action-btn--scrap:hover { color: #4a8e84; }
+
+.other-title {
+  margin: 0 0 var(--glt-space-3);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--glt-ink-secondary);
+}
+
+.other-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.other-item {
+  display: block;
+  padding: var(--glt-space-4);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s var(--glt-ease);
+}
+
+.other-item:hover { box-shadow: var(--glt-shadow-md); }
+
+.other-text {
+  margin: 0;
+  font-family: var(--glt-font-serif);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--glt-ink);
+  word-break: keep-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.other-counts {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.other-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--glt-ink-tertiary);
 }
 </style>

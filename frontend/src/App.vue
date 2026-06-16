@@ -137,6 +137,7 @@ import MyProfileView from './views/MyProfileView.vue'
 import UserProfileView from './views/UserProfileView.vue'
 import NovelsView from './views/NovelsView.vue'
 import QuotesBrowseView from './views/QuotesBrowseView.vue'
+import QuoteDetailView from './views/QuoteDetailView.vue'
 const SHEET_ROUTE_NAMES = new Set(['register', 'login', 'signup'])
 const AUTH_MODAL_ROUTES = new Set(['login', 'signup'])
 
@@ -150,6 +151,7 @@ const ROUTE_VIEWS = {
   'user-profile': UserProfileView,
   'novel-detail': NovelDetailView,
   'quotes-browse': QuotesBrowseView,
+  'quote-detail': QuoteDetailView,
 }
 
 

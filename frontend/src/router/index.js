@@ -12,6 +12,7 @@ import LoginView from '../views/LoginView.vue'
 import SignupView from '../views/SignupView.vue'
 import MyProfileView from '../views/MyProfileView.vue'
 import UserProfileView from '../views/UserProfileView.vue'
+import QuoteDetailView from '../views/QuoteDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -28,6 +29,7 @@ const router = createRouter({
     { path: '/quotes', name: 'quotes-browse', component: QuotesBrowseView },
     { path: '/register', name: 'register', component: RegisterView },
     { path: '/users/:id', name: 'user-profile', component: UserProfileView },
+    { path: '/quotes/:id', name: 'quote-detail', component: QuoteDetailView },
   ],
 })
 

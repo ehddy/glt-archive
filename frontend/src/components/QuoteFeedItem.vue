@@ -1,8 +1,8 @@
 <template>
   <article class="feed-card">
-    <div class="feed-card-body">
+    <router-link :to="`/quotes/${quote.id}`" class="feed-card-body">
       <blockquote class="feed-text">{{ quote.text }}</blockquote>
-    </div>
+    </router-link>
 
     <footer v-if="novelTitle || authorName" class="feed-footer">
       <component
