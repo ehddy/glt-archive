@@ -6,7 +6,6 @@ import HomeView from '../views/HomeView.vue'
 import NovelDetailView from '../views/NovelDetailView.vue'
 import NovelsView from '../views/NovelsView.vue'
 import MyLibraryView from '../views/MyLibraryView.vue'
-import QuoteDetailView from '../views/QuoteDetailView.vue'
 import QuotesBrowseView from '../views/QuotesBrowseView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -28,7 +27,6 @@ const router = createRouter({
     { path: '/my-library', name: 'my-library', component: MyLibraryView },
     { path: '/novels/:id', name: 'novel-detail', component: NovelDetailView },
     { path: '/quotes', name: 'quotes-browse', component: QuotesBrowseView },
-    { path: '/quotes/:id', name: 'quote-detail', component: QuoteDetailView },
     { path: '/register', name: 'register', component: RegisterView },
     { path: '/users/:id', name: 'user-profile', component: UserProfileView },
   ],

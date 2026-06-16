@@ -60,7 +60,7 @@
 
       <ul v-else class="quote-list">
         <li v-for="quote in novel.quotes" :key="quote.id">
-          <router-link :to="`/quotes/${quote.id}`" class="quote-item glt-card">
+          <div class="quote-item glt-card">
             <p class="quote-text">{{ quote.text }}</p>
             <div v-if="quote.like_count > 0 || quote.scrap_count > 0" class="quote-counts">
               <span v-if="quote.like_count > 0" class="quote-count-item">
@@ -76,7 +76,7 @@
                 {{ quote.scrap_count }}
               </span>
             </div>
-          </router-link>
+          </div>
         </li>
       </ul>
     </section>
@@ -253,13 +253,6 @@ export default {
 .quote-item {
   display: block;
   padding: var(--glt-space-4);
-  text-decoration: none;
-  color: inherit;
-  transition: box-shadow 0.2s var(--glt-ease);
-}
-
-.quote-item:hover {
-  box-shadow: var(--glt-shadow-md);
 }
 
 .quote-text {

@@ -150,13 +150,10 @@ import MyLibraryView from './views/MyLibraryView.vue'
 import MyProfileView from './views/MyProfileView.vue'
 import UserProfileView from './views/UserProfileView.vue'
 import NovelsView from './views/NovelsView.vue'
-import QuoteDetailView from './views/QuoteDetailView.vue'
 import QuotesBrowseView from './views/QuotesBrowseView.vue'
 import SavedView from './views/SavedView.vue'
 
-import { registerRouteForQuote } from './utils/registerBook'
-
-const SHEET_ROUTE_NAMES = new Set(['register', 'login', 'signup', 'quote-detail'])
+const SHEET_ROUTE_NAMES = new Set(['register', 'login', 'signup'])
 const AUTH_MODAL_ROUTES = new Set(['login', 'signup'])
 
 const ROUTE_VIEWS = {
@@ -169,7 +166,6 @@ const ROUTE_VIEWS = {
   'user-profile': UserProfileView,
   'novel-detail': NovelDetailView,
   'quotes-browse': QuotesBrowseView,
-  'quote-detail': QuoteDetailView,
 }
 
 
@@ -200,7 +196,6 @@ export default {
     sheetCloseLabel() {
       if (this.$route.name === 'register') return '등록 닫기'
       if (this.$route.name === 'signup') return '회원가입 닫기'
-      if (this.$route.name === 'quote-detail') return '닫기'
       return '로그인 닫기'
     },
 
@@ -210,15 +205,7 @@ export default {
     },
 
     registerNavTarget() {
-
-      if (this.$route.name === 'quote-detail' && this.$route.params.id) {
-
-        return registerRouteForQuote(this.$route.params.id)
-
-      }
-
       return { name: 'register' }
-
     },
 
   },

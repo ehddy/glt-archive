@@ -1,8 +1,8 @@
 <template>
   <article class="quote-item" :class="{ 'quote-item--compact': compact }">
-    <router-link :to="`/quotes/${quote.id}`" class="quote-item-link">
+    <div class="quote-item-link">
       <blockquote class="quote-item-text">{{ quote.text }}</blockquote>
-    </router-link>
+    </div>
 
     <div v-if="(quote.scrap_count || 0) > 0 || (quote.like_count || 0) > 0" class="quote-item-counts">
       <span v-if="(quote.scrap_count || 0) > 0" class="quote-item-scrap">
