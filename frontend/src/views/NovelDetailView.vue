@@ -62,6 +62,20 @@
         <li v-for="quote in novel.quotes" :key="quote.id">
           <router-link :to="`/quotes/${quote.id}`" class="quote-item glt-card">
             <p class="quote-text">{{ quote.text }}</p>
+            <div v-if="quote.like_count > 0 || quote.scrap_count > 0" class="quote-counts">
+              <span v-if="quote.like_count > 0" class="quote-count-item">
+                <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+                  <path d="M12 21l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.18L12 21z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {{ quote.like_count }}
+              </span>
+              <span v-if="quote.scrap_count > 0" class="quote-count-item">
+                <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+                  <path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+                </svg>
+                {{ quote.scrap_count }}
+              </span>
+            </div>
           </router-link>
         </li>
       </ul>
@@ -254,6 +268,22 @@ export default {
   line-height: 1.65;
   color: var(--glt-ink);
   word-break: keep-all;
+}
+
+.quote-counts {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.quote-count-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--glt-ink-tertiary);
 }
 
 @media (max-width: 520px) {

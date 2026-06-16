@@ -8,7 +8,7 @@
             type="text"
             enterkeyhint="search"
             class="search-input"
-            placeholder="어떤 느낌의 문장을 찾으세요?"
+            placeholder="느낌, 키워드, 책 제목으로 검색하면 AI가 문장을 찾아드려요"
             :disabled="loading"
           />
           <ClearIconButton v-if="query" @click="clearQuery" />
@@ -18,7 +18,6 @@
           />
         </div>
       </form>
-      <p class="search-hint">느낌, 키워드, 책 이름을 입력하면 AI가 관련 문장을 찾아드려요</p>
     </header>
 
     <p v-if="error" class="error-msg">{{ error }}</p>
@@ -162,14 +161,6 @@ export default {
   margin-bottom: var(--glt-space-5);
 }
 
-.search-hint {
-  margin: 10px 2px 0;
-  font-size: 0.78rem;
-  color: var(--glt-ink-tertiary);
-  line-height: 1.5;
-  word-break: keep-all;
-}
-
 .page-lead {
   margin: 4px 0 var(--glt-space-4);
   font-size: 0.8rem;
@@ -205,7 +196,7 @@ export default {
   border: none;
   outline: none;
   background: transparent;
-  font-size: 0.92rem;
+  font-size: 0.8rem;
   color: var(--glt-ink);
   padding: 9px 0;
 }
