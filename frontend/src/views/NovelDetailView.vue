@@ -36,7 +36,7 @@
 
       <div class="detail-actions">
         <router-link :to="registerRoute" class="glt-btn glt-btn-primary detail-action-btn">
-          포스팅
+          문장 추가
         </router-link>
         <a
           v-if="aladinPurchaseUrl"
@@ -55,7 +55,7 @@
 
       <div v-if="!novel.quotes?.length" class="glt-empty glt-card">
         <p>아직 없어요</p>
-        <router-link :to="registerRoute" class="glt-btn glt-btn-primary">첫 포스팅</router-link>
+        <router-link :to="registerRoute" class="glt-btn glt-btn-primary">첫 문장 등록</router-link>
       </div>
 
       <ul v-else class="quote-list">

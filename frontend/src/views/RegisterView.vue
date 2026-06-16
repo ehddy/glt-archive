@@ -14,7 +14,7 @@
       @pointercancel="onSheetDragEnd"
     >
       <div class="sheet-handle" aria-hidden="true" />
-      <h1 class="glt-title sheet-title">등록</h1>
+      <h1 class="glt-title sheet-title">포스팅</h1>
     </div>
 
     <form class="form-card glt-card" @submit.prevent="submit">
@@ -201,7 +201,7 @@
       <div class="submit-block submit-block--standalone">
         <RegisterIconButton
           type="submit"
-          label="등록"
+          label="포스팅"
           large
           :disabled="submitting || !canSubmit"
         />
