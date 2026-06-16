@@ -16,9 +16,9 @@
           </svg>
         </button>
 
-        <div class="saved-quote-link">
+        <router-link :to="`/quotes/${quote.id}`" class="saved-quote-link">
           <blockquote class="saved-quote">{{ quote.text }}</blockquote>
-        </div>
+        </router-link>
 
         <component
           :is="sourceLink(quote) ? 'router-link' : 'div'"
