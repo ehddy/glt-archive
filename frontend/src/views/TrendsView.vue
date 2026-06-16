@@ -1,6 +1,17 @@
 <template>
   <section class="trends-view glt-container">
-    <div v-if="loading" class="trends-loading">
+
+    <!-- 로그인 유도 -->
+    <div v-if="!loggedIn" class="login-panel glt-card">
+      <p class="login-title">로그인하면 내 활동을 분석해드려요</p>
+      <p class="login-desc">스크랩·좋아요 내역을 기반으로 나만의 트렌드를 확인하세요</p>
+      <div class="login-actions">
+        <router-link :to="{ name: 'login', query: { redirect: '/trends' } }" class="glt-btn glt-btn-primary">로그인</router-link>
+        <router-link :to="{ name: 'signup', query: { redirect: '/trends' } }" class="glt-btn glt-btn-ghost">회원가입</router-link>
+      </div>
+    </div>
+
+    <div v-else-if="loading" class="trends-loading">
       <span class="loading-spinner" />
     </div>
 
@@ -23,15 +34,15 @@
         </router-link>
       </section>
 
-      <!-- 수치 -->
+      <!-- 수치 카드 -->
       <div class="stat-grid">
         <div class="stat-card">
           <span class="stat-value">{{ data.today_stats.scraps_today }}</span>
-          <span class="stat-label">오늘 담긴 문장</span>
+          <span class="stat-label">오늘 내가 담은</span>
         </div>
         <div class="stat-card">
           <span class="stat-value">{{ data.today_stats.quotes_today }}</span>
-          <span class="stat-label">오늘 등록</span>
+          <span class="stat-label">오늘 내가 등록</span>
         </div>
         <div class="stat-card">
           <span class="stat-value">{{ fmt(data.today_stats.total_quotes) }}</span>
@@ -39,49 +50,107 @@
         </div>
         <div class="stat-card">
           <span class="stat-value">{{ fmt(data.today_stats.total_scraps) }}</span>
-          <span class="stat-label">누적 스크랩</span>
+          <span class="stat-label">내 스크랩 합계</span>
         </div>
       </div>
 
-      <!-- 7일 바 차트 -->
+      <!-- 내 7일 활동 바 차트 -->
       <section class="trends-section">
-        <p class="section-eyebrow">최근 7일 활동</p>
+        <p class="section-eyebrow">내 최근 7일 활동</p>
         <div class="bar-chart">
           <div v-for="day in data.weekly_activity" :key="day.label" class="bar-col">
             <div class="bar-track">
-              <div
-                class="bar-fill"
-                :style="{ height: barPct(day.scraps + day.likes) + '%' }"
-              ></div>
+              <div class="bar-fill" :style="{ height: barPct(day.scraps + day.likes) + '%' }"></div>
             </div>
             <span class="bar-label">{{ day.label }}</span>
           </div>
         </div>
+        <div class="chart-legend">
+          <span class="legend-dot legend-dot--accent"></span><span class="legend-text">스크랩 + 좋아요</span>
+        </div>
       </section>
 
-      <!-- 랭킹 3개 -->
+      <!-- 인기 책 책장 -->
+      <section v-if="data.top_books.length" class="trends-section">
+        <p class="section-eyebrow">문장이 많이 나온 책</p>
+        <div class="shelf-scroll">
+          <router-link
+            v-for="book in data.top_books"
+            :key="book.id"
+            :to="`/novels/${book.id}`"
+            class="shelf-book"
+          >
+            <div class="shelf-cover-wrap">
+              <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" class="shelf-cover" />
+              <div v-else class="shelf-cover shelf-cover--empty">📖</div>
+              <span class="shelf-badge">{{ book.quote_count }}</span>
+            </div>
+            <p class="shelf-title">{{ book.title }}</p>
+            <p v-if="book.author" class="shelf-author">{{ book.author.name }}</p>
+          </router-link>
+        </div>
+      </section>
+
+      <!-- 오늘 많이 담긴 문장 -->
       <section v-if="data.top_today.length" class="trends-section">
         <p class="section-eyebrow">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/></svg>
           오늘 많이 담긴 문장
         </p>
-        <RankRows :quotes="data.top_today" chip-type="scrap" />
+        <ol class="rank-list">
+          <li v-for="(q, i) in data.top_today" :key="q.id">
+            <router-link :to="`/quotes/${q.id}`" class="rank-link">
+              <span class="rank-num" :class="`rank-num--${i + 1}`">{{ i + 1 }}</span>
+              <div class="rank-body">
+                <p class="rank-text">{{ q.text }}</p>
+                <p v-if="sourceName(q)" class="rank-source">{{ sourceName(q) }}</p>
+              </div>
+              <span class="chip chip--scrap">
+                <svg viewBox="0 0 24 24" width="10" height="10"><path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" fill="currentColor"/></svg>{{ q.scrap_count }}
+              </span>
+            </router-link>
+          </li>
+        </ol>
       </section>
 
+      <!-- 이번 주 인기 문장 -->
       <section v-if="data.top_week.length" class="trends-section">
         <p class="section-eyebrow">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           이번 주 인기 문장
         </p>
-        <RankRows :quotes="data.top_week" chip-type="like" />
+        <ol class="rank-list">
+          <li v-for="(q, i) in data.top_week" :key="q.id">
+            <router-link :to="`/quotes/${q.id}`" class="rank-link">
+              <span class="rank-num" :class="`rank-num--${i + 1}`">{{ i + 1 }}</span>
+              <div class="rank-body">
+                <p class="rank-text">{{ q.text }}</p>
+                <p v-if="sourceName(q)" class="rank-source">{{ sourceName(q) }}</p>
+              </div>
+              <span class="chip chip--like">♥ {{ q.like_count }}</span>
+            </router-link>
+          </li>
+        </ol>
       </section>
 
+      <!-- 역대 인기 문장 -->
       <section v-if="data.top_alltime.length" class="trends-section trends-section--last">
         <p class="section-eyebrow">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           역대 인기 문장
         </p>
-        <RankRows :quotes="data.top_alltime" chip-type="like" />
+        <ol class="rank-list">
+          <li v-for="(q, i) in data.top_alltime" :key="q.id">
+            <router-link :to="`/quotes/${q.id}`" class="rank-link">
+              <span class="rank-num" :class="`rank-num--${i + 1}`">{{ i + 1 }}</span>
+              <div class="rank-body">
+                <p class="rank-text">{{ q.text }}</p>
+                <p v-if="sourceName(q)" class="rank-source">{{ sourceName(q) }}</p>
+              </div>
+              <span class="chip chip--like">♥ {{ q.like_count }}</span>
+            </router-link>
+          </li>
+        </ol>
       </section>
 
     </template>
@@ -91,57 +160,27 @@
 </template>
 
 <script>
-import { defineComponent, h, resolveComponent } from 'vue'
 import { api } from '../api'
+import { isLoggedIn } from '../utils/auth'
 import { quoteAuthorName, quoteSourceTitle } from '../utils/quoteDisplay'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
-const RankRows = defineComponent({
-  name: 'RankRows',
-  props: {
-    quotes: { type: Array, required: true },
-    chipType: { type: String, default: 'like' },
-  },
-  setup(props) {
-    function sourceName(q) { return quoteSourceTitle(q) || quoteAuthorName(q) || '' }
-    return () => {
-      const RouterLink = resolveComponent('RouterLink')
-      return h('ol', { class: 'rank-list' },
-        props.quotes.map((q, i) =>
-          h('li', { key: q.id },
-            h(RouterLink, { to: `/quotes/${q.id}`, class: 'rank-link' }, () => [
-              h('span', { class: `rank-num rank-num--${i + 1}` }, String(i + 1)),
-              h('div', { class: 'rank-body' }, [
-                h('p', { class: 'rank-text' }, q.text),
-                sourceName(q) && h('p', { class: 'rank-source' }, sourceName(q)),
-              ]),
-              h('span', { class: `chip chip--${props.chipType}` },
-                props.chipType === 'scrap'
-                  ? [h('svg', { viewBox: '0 0 24 24', width: 10, height: 10 }, h('path', { d: 'M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z', fill: 'currentColor' })), String(q.scrap_count)]
-                  : `♥ ${q.like_count}`
-              ),
-            ])
-          )
-        )
-      )
-    }
-  },
-})
-
 export default {
   name: 'TrendsView',
-  components: { RankRows },
   data() {
-    return { data: null, loading: true, error: '', maxActivity: 1 }
+    return { data: null, loading: false, error: '', maxActivity: 1 }
   },
   computed: {
+    loggedIn() { return isLoggedIn() },
     formattedDate() {
       if (!this.data) return ''
       const [, m, d] = this.data.date.split('-')
       return `${Number(m)}월 ${Number(d)}일`
     },
   },
-  mounted() { this.load() },
+  mounted() {
+    if (this.loggedIn) this.load()
+  },
   methods: {
     async load() {
       this.loading = true
@@ -165,6 +204,33 @@ export default {
 
 <style scoped>
 .trends-view { padding-bottom: 32px; }
+
+/* 로그인 패널 */
+.login-panel {
+  padding: 28px 20px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.login-title {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--glt-ink);
+}
+
+.login-desc {
+  margin: 0 0 18px;
+  font-size: 0.82rem;
+  color: var(--glt-ink-secondary);
+  line-height: 1.6;
+}
+
+.login-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
 .trends-loading {
   display: flex;
@@ -193,21 +259,21 @@ export default {
   align-items: center;
   gap: 5px;
   margin: 0 0 8px;
-  font-size: 0.74rem;
+  font-size: 0.73rem;
   font-weight: 700;
   color: var(--glt-ink-secondary);
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
-.section-eyebrow svg { opacity: 0.7; flex-shrink: 0; }
+.section-eyebrow svg { opacity: 0.65; flex-shrink: 0; }
 
 /* 오늘의 문장 */
 .qod-card {
   display: block;
   text-decoration: none;
   color: inherit;
-  padding: 18px 20px 16px;
+  padding: 18px 20px 14px;
   border-left: 3px solid var(--glt-accent);
   transition: box-shadow 0.15s var(--glt-ease);
 }
@@ -219,7 +285,7 @@ export default {
   padding: 0;
   border: none;
   font-family: var(--glt-font-serif);
-  font-size: 0.98rem;
+  font-size: 0.96rem;
   font-weight: 400;
   line-height: 1.8;
   letter-spacing: -0.01em;
@@ -231,33 +297,12 @@ export default {
   overflow: hidden;
 }
 
-.qod-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.qod-source {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--glt-ink-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-  min-width: 0;
-}
-
+.qod-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.qod-source { font-size: 0.72rem; font-weight: 600; color: var(--glt-ink-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
 .qod-chips { display: flex; gap: 7px; flex-shrink: 0; }
 
 /* 수치 카드 */
-.stat-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 22px;
-}
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
 
 .stat-card {
   background: var(--glt-surface);
@@ -278,45 +323,29 @@ export default {
   line-height: 1.1;
 }
 
-.stat-label {
-  font-size: 0.68rem;
-  color: var(--glt-ink-tertiary);
-  font-weight: 500;
-}
+.stat-label { font-size: 0.68rem; color: var(--glt-ink-tertiary); font-weight: 500; }
 
 /* 바 차트 */
 .bar-chart {
   display: flex;
   align-items: flex-end;
   gap: 5px;
-  height: 72px;
+  height: 64px;
   background: var(--glt-surface);
   border: 1px solid var(--glt-glass-border);
   border-radius: var(--glt-radius-lg);
-  padding: 10px 14px 22px;
+  padding: 10px 14px 20px;
   position: relative;
+  margin-bottom: 6px;
 }
 
-.bar-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  position: relative;
-}
-
-.bar-track {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-}
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; position: relative; }
+.bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; }
 
 .bar-fill {
   width: 100%;
   background: var(--glt-accent);
-  opacity: 0.6;
+  opacity: 0.65;
   border-radius: 3px 3px 0 0;
   min-height: 2px;
   transition: height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
@@ -324,9 +353,94 @@ export default {
 
 .bar-label {
   position: absolute;
-  bottom: -16px;
-  font-size: 0.6rem;
+  bottom: -14px;
+  font-size: 0.58rem;
   color: var(--glt-ink-tertiary);
+  white-space: nowrap;
+}
+
+.chart-legend { display: flex; align-items: center; gap: 5px; padding-left: 2px; }
+.legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+.legend-dot--accent { background: var(--glt-accent); opacity: 0.65; }
+.legend-text { font-size: 0.68rem; color: var(--glt-ink-tertiary); }
+
+/* 인기 책 책장 */
+.shelf-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 2px 8px;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.shelf-scroll::-webkit-scrollbar { display: none; }
+
+.shelf-book {
+  flex: 0 0 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-decoration: none;
+  color: inherit;
+  scroll-snap-align: start;
+}
+
+.shelf-cover-wrap { position: relative; width: 80px; height: 110px; }
+
+.shelf-cover {
+  width: 80px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 5px;
+  box-shadow: var(--glt-shadow-sm);
+  display: block;
+  transition: transform 0.18s var(--glt-ease);
+}
+
+.shelf-book:hover .shelf-cover { transform: translateY(-2px); }
+
+.shelf-cover--empty {
+  display: grid;
+  place-items: center;
+  background: var(--glt-bg-subtle);
+  font-size: 1.2rem;
+  border-radius: 5px;
+}
+
+.shelf-badge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.shelf-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--glt-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shelf-author {
+  margin: 0;
+  font-size: 0.66rem;
+  color: var(--glt-ink-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -353,9 +467,7 @@ export default {
   overflow: hidden;
 }
 
-.rank-list li + li {
-  border-top: 1px solid var(--glt-glass-border);
-}
+.rank-list li + li { border-top: 1px solid var(--glt-glass-border); }
 
 .rank-link {
   display: flex;
