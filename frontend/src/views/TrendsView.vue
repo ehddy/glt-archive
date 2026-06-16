@@ -170,7 +170,6 @@
 import { api } from '../api'
 import { isLoggedIn } from '../utils/auth'
 import { quoteAuthorName, quoteSourceTitle } from '../utils/quoteDisplay'
-import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'TrendsView',
@@ -207,7 +206,6 @@ export default {
   methods: {
     async load() {
       this.loading = true
-      startPageLoading()
       try {
         this.data = await api.getStatsOverview()
         this.maxActivity = Math.max(1, ...this.data.weekly_activity.map(d => d.scraps + d.likes))
@@ -215,7 +213,6 @@ export default {
         this.error = e.message
       } finally {
         this.loading = false
-        endPageLoading()
       }
     },
     barPct(val) { return Math.round((val / this.maxActivity) * 100) },

@@ -176,7 +176,6 @@ export const api = {
     form.append('file', blob, 'avatar.jpg')
     return request(`/api/users/${userId}/avatar`, {
       method: 'POST',
-      headers: {},
       body: form,
     })
   },
