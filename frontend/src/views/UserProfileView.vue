@@ -90,6 +90,12 @@
               <h2 class="shelf-title">올린 책</h2>
               <span class="shelf-count">{{ postBooks.length }}권</span>
             </div>
+            <router-link v-if="isOwnProfile" to="/my-library?type=posts" class="shelf-more">
+              더보기
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </router-link>
           </header>
           <div class="shelf-scroll">
             <router-link v-for="book in postBooks" :key="book.id" :to="`/novels/${book.id}`" class="shelf-book">
@@ -153,6 +159,8 @@ export default {
       postsObserver: null,
       postsLoaded: false,
       ownBooks: [],
+      postBooks: [],
+      postBooksLoaded: false,
       initialLoading: true,
       likedIds: new Set(),
       scrappedIds: new Set(),
@@ -170,22 +178,6 @@ export default {
       return this.userName || `사용자 ${this.userId}`
     },
     avatarLetter() { return (this.displayName || '?')[0].toUpperCase() },
-    postBooks() {
-      const seen = new Set()
-      const result = []
-      for (const q of this.posts) {
-        const novelId = q.novel?.id || q.source?.novel_id
-        if (!novelId || seen.has(novelId)) continue
-        seen.add(novelId)
-        result.push({
-          id: novelId,
-          title: q.novel?.title || q.source?.title || '',
-          cover_url: q.novel?.cover_url || q.source?.cover_url || null,
-          author: { name: q.novel?.author?.name || q.source?.author?.name || null },
-        })
-      }
-      return result
-    },
     books() {
       if (this.isOwnProfile) return this.ownBooks
       const seen = new Set()
@@ -224,9 +216,11 @@ export default {
       this.scraps = []
       this.posts = []
       this.ownBooks = []
+      this.postBooks = []
       this.scrapsTotal = null
       this.postsTotal = null
       this.postsLoaded = false
+      this.postBooksLoaded = false
       this.tab = 'scraps'
       this.initialLoading = true
 
@@ -283,6 +277,14 @@ export default {
     switchToPostsTab() {
       this.tab = 'posts'
       if (!this.postsLoaded) this.loadPosts().then(() => this.$nextTick(() => this.setupPostsScroll()))
+      if (!this.postBooksLoaded) this.loadPostBooks()
+    },
+    async loadPostBooks() {
+      if (!this.userId) return
+      try {
+        this.postBooks = await api.getUserNovels(this.userId)
+        this.postBooksLoaded = true
+      } catch {}
     },
     loadMoreScraps() {
       if (this.scrapsLoadingMore || this.scrapsLoading) return

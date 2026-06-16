@@ -2,12 +2,12 @@
   <section class="my-library glt-container">
     <BackLink use-history fallback-to="/saved" label="뒤로" />
     <div v-if="!loggedIn" class="login-panel glt-card">
-      <p class="login-text">로그인하면 스크랩한 문장의 책들을 모아볼 수 있어요</p>
+      <p class="login-text">로그인하면 내 책장을 볼 수 있어요</p>
       <div class="login-actions">
-        <router-link :to="{ name: 'login', query: { redirect: '/my-library' } }" class="glt-btn glt-btn-primary">
+        <router-link :to="{ name: 'login', query: { redirect: $route.fullPath } }" class="glt-btn glt-btn-primary">
           로그인
         </router-link>
-        <router-link :to="{ name: 'signup', query: { redirect: '/my-library' } }" class="glt-btn glt-btn-ghost">
+        <router-link :to="{ name: 'signup', query: { redirect: $route.fullPath } }" class="glt-btn glt-btn-ghost">
           회원가입
         </router-link>
       </div>
@@ -15,14 +15,14 @@
 
     <template v-else>
       <p v-if="!loading && novels.length" class="result-count">
-        <span class="result-count-num">{{ novels.length }}</span>권
+        <span class="result-count-num">{{ novels.length }}</span>권 · {{ isPostsMode ? '올린 책' : '담은 책' }}
       </p>
 
       <div v-if="error && !loading" class="glt-empty glt-card">{{ error }}</div>
 
       <div v-else-if="!loading && !novels.length" class="empty-panel glt-card">
-        <p class="empty-title">아직 수집한 책이 없어요</p>
-        <p class="empty-desc">문장을 스크랩하면 여기에 책이 쌓여요</p>
+        <p class="empty-title">{{ isPostsMode ? '아직 포스팅한 책이 없어요' : '아직 수집한 책이 없어요' }}</p>
+        <p class="empty-desc">{{ isPostsMode ? '문장을 포스팅하면 여기에 책이 쌓여요' : '문장을 스크랩하면 여기에 책이 쌓여요' }}</p>
         <router-link to="/" class="glt-btn glt-btn-primary">문장 둘러보기</router-link>
       </div>
 
@@ -50,7 +50,7 @@
 <script>
 import { api } from '../api'
 import BackLink from '../components/BackLink.vue'
-import { isLoggedIn } from '../utils/auth'
+import { authState, isLoggedIn } from '../utils/auth'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
@@ -64,9 +64,11 @@ export default {
     }
   },
   computed: {
-    loggedIn() {
-      return isLoggedIn()
-    },
+    loggedIn() { return isLoggedIn() },
+    isPostsMode() { return this.$route.query.type === 'posts' },
+  },
+  watch: {
+    '$route.query.type': { immediate: false, handler() { if (this.loggedIn) this.load() } },
   },
   mounted() {
     if (this.loggedIn) this.load()
@@ -78,7 +80,12 @@ export default {
       startPageLoading()
       this.error = ''
       try {
-        this.novels = await api.listScrappedNovels()
+        if (this.isPostsMode) {
+          const userId = authState.user?.id
+          if (userId) this.novels = await api.getUserNovels(userId)
+        } else {
+          this.novels = await api.listScrappedNovels()
+        }
       } catch (e) {
         this.error = e.message
       } finally {
