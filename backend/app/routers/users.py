@@ -1,13 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, joinedload
 
 from app.auth.deps import get_current_user
 from app.database import get_db
 from app.models.models import Novel, Quote, QuoteScrap, Source, User, UserFeaturedNovel
-from app.schemas.schemas import AvatarIn, FeaturedNovelsIn, FeaturedNovelsOut, NovelOut, PaginatedQuotesOut, UserPublicOut
+from app.schemas.schemas import FeaturedNovelsIn, FeaturedNovelsOut, NovelOut, PaginatedQuotesOut, UserPublicOut
 from app.services.quote_serializer import serialize_quotes
 
 router = APIRouter(prefix="/api/users", tags=["users"])
+
+BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
+AVATARS_DIR = BACKEND_ROOT / "uploads" / "avatars"
+_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
 
 @router.get("/{user_id}", response_model=UserPublicOut)
@@ -18,16 +25,38 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     return user
 
 
-@router.patch("/{user_id}/avatar", response_model=UserPublicOut)
-def update_avatar(
+@router.get("/{user_id}/avatar-image")
+def get_avatar_image(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    path = AVATARS_DIR / f"{user_id}.jpg"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Avatar not found")
+    return FileResponse(str(path), media_type="image/jpeg", headers={"Cache-Control": "no-cache"})
+
+
+@router.post("/{user_id}/avatar", response_model=UserPublicOut)
+async def upload_avatar(
     user_id: int,
-    body: AvatarIn,
+    file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     if current_user.id != user_id:
         raise HTTPException(status_code=403, detail="본인 프로필만 수정할 수 있어요.")
-    current_user.avatar_url = body.avatar_url
+    if file.content_type not in _ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="이미지 파일만 업로드할 수 있어요.")
+
+    AVATARS_DIR.mkdir(parents=True, exist_ok=True)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="파일 크기는 5MB 이하여야 해요.")
+
+    dest = AVATARS_DIR / f"{user_id}.jpg"
+    dest.write_bytes(contents)
+
+    current_user.avatar_url = f"/api/users/{user_id}/avatar-image"
     db.commit()
     db.refresh(current_user)
     return current_user

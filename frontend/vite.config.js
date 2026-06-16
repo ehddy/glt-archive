@@ -16,6 +16,10 @@ export default defineConfig({
         changeOrigin: true,
         timeout: 120000,
       },
+      '/uploads': {
+        target: API_TARGET,
+        changeOrigin: true,
+      },
     },
   },
 })

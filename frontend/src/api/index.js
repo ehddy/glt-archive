@@ -63,10 +63,11 @@ async function requestRaw(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   const token = getAccessToken()
   const bypassCache = shouldBypassBrowserCache(path, options)
 
+  const isFormData = options.body instanceof FormData
   try {
     const response = await fetch(`${API_BASE}${path}`, {
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
@@ -170,10 +171,13 @@ export const api = {
   listScrappedNovels() {
     return request('/api/scraps/novels')
   },
-  updateAvatar(userId, avatarUrl) {
+  updateAvatar(userId, blob) {
+    const form = new FormData()
+    form.append('file', blob, 'avatar.jpg')
     return request(`/api/users/${userId}/avatar`, {
-      method: 'PATCH',
-      body: JSON.stringify({ avatar_url: avatarUrl }),
+      method: 'POST',
+      headers: {},
+      body: form,
     })
   },
   getFeaturedNovels(userId) {

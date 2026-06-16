@@ -1,10 +1,10 @@
 import time
-
+from pathlib import Path
 
 
 from fastapi import FastAPI
-
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from sqlalchemy import inspect, text
 
@@ -22,7 +22,9 @@ from app.seed.loader import seed_database
 from app.services.quote_service import migrate_quote_uniqueness
 from app.services.source_service import migrate_sources
 
-
+BACKEND_ROOT = Path(__file__).resolve().parent.parent
+UPLOADS_DIR = BACKEND_ROOT / "uploads"
+AVATARS_DIR = UPLOADS_DIR / "avatars"
 
 app = FastAPI(title=settings.app_name)
 
@@ -114,10 +116,20 @@ def migrate_user_columns() -> None:
     if not inspector.has_table("users"):
         return
 
+    is_pg = engine.dialect.name == "postgresql"
     existing = {col["name"] for col in inspector.get_columns("users")}
     with engine.begin() as conn:
         if "password_hash" not in existing:
             conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+        if "avatar_url" not in existing:
+            conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url TEXT"))
+        elif is_pg:
+            row = conn.execute(text(
+                "SELECT data_type FROM information_schema.columns "
+                "WHERE table_name='users' AND column_name='avatar_url'"
+            )).fetchone()
+            if row and row[0].lower() != "text":
+                conn.execute(text("ALTER TABLE users ALTER COLUMN avatar_url TYPE TEXT"))
 
 
 def migrate_quote_registered_by() -> None:
@@ -213,7 +225,8 @@ def init_db(retries: int = 15, delay: float = 3.0):
 @app.on_event("startup")
 
 def on_startup():
-
+    AVATARS_DIR.mkdir(parents=True, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
     init_db()
 
 

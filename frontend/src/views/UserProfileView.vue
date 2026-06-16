@@ -39,6 +39,44 @@
       <button type="button" class="logout-btn" @click="logout">로그아웃</button>
     </div>
 
+    <!-- Avatar crop modal -->
+    <Teleport to="body">
+      <div v-if="cropSrc" class="crop-overlay" @click.self="cancelCrop">
+        <div class="crop-modal">
+          <p class="crop-modal-title">프로필 사진 조정</p>
+          <div
+            class="crop-viewport"
+            ref="cropViewport"
+            @mousedown.prevent="onCropMouseDown"
+            @mousemove.prevent="onCropMouseMove"
+            @mouseup="onCropMouseUp"
+            @mouseleave="onCropMouseUp"
+            @wheel.prevent="onCropWheel"
+            @touchstart.prevent="onCropTouchStart"
+            @touchmove.prevent="onCropTouchMove"
+            @touchend="onCropTouchEnd"
+          >
+            <img
+              ref="cropImg"
+              :src="cropSrc"
+              class="crop-img"
+              :style="cropImgStyle"
+              draggable="false"
+              @load="onCropImageLoad"
+            />
+          </div>
+          <p class="crop-hint">드래그로 위치 조정 · 핀치로 확대/축소</p>
+          <div class="crop-actions">
+            <button type="button" class="glt-btn glt-btn-ghost" @click="cancelCrop">취소</button>
+            <button type="button" class="glt-btn glt-btn-primary" :disabled="avatarUploading" @click="confirmCrop">
+              <span v-if="avatarUploading" class="btn-spinner" />
+              <span v-else>저장</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- Login prompt -->
     <div v-if="isOwnProfile && !loggedIn" class="login-panel glt-card">
       <p class="login-title">로그인하면 나만의 공간이 생겨요</p>
@@ -144,6 +182,19 @@ export default {
       userName: '',
       userAvatarUrl: '',
       avatarUploading: false,
+      cropSrc: null,
+      cropImageNW: 0,
+      cropImageNH: 0,
+      cropX: 0,
+      cropY: 0,
+      cropScale: 1,
+      cropDragging: false,
+      cropDragStartX: 0,
+      cropDragStartY: 0,
+      cropDragOriginX: 0,
+      cropDragOriginY: 0,
+      pinchDist: null,
+      pinchScaleStart: 1,
       tab: 'scraps',
       scraps: [],
       scrapsTotal: null,
@@ -183,6 +234,18 @@ export default {
       return this.userAvatarUrl
     },
     authState() { return authState },
+    cropImgStyle() {
+      return {
+        position: 'absolute',
+        left: '0',
+        top: '0',
+        transformOrigin: '0 0',
+        transform: `translate(${this.cropX}px, ${this.cropY}px) scale(${this.cropScale})`,
+        userSelect: 'none',
+        pointerEvents: 'none',
+        maxWidth: 'none',
+      }
+    },
     scrapsBooks() {
       if (this.isOwnProfile) return this.ownBooks
       const seen = new Set()
@@ -373,13 +436,133 @@ export default {
       const file = e.target.files?.[0]
       if (!file || !file.type.startsWith('image/')) return
       e.target.value = ''
-      this.avatarUploading = true
-      try {
-        const dataUrl = await resizeImageToDataUrl(file, 240)
-        const res = await api.updateAvatar(this.userId, dataUrl)
-        if (authState.user) authState.user.avatar_url = res.avatar_url
-      } catch {}
-      finally { this.avatarUploading = false }
+      this.openCropModal(file)
+    },
+    openCropModal(file) {
+      if (this.cropSrc) URL.revokeObjectURL(this.cropSrc)
+      this.cropSrc = URL.createObjectURL(file)
+      this.cropX = 0
+      this.cropY = 0
+      this.cropScale = 1
+      this.cropImageNW = 0
+      this.cropImageNH = 0
+    },
+    onCropImageLoad() {
+      const img = this.$refs.cropImg
+      if (!img) return
+      const VP = 280
+      this.cropImageNW = img.naturalWidth
+      this.cropImageNH = img.naturalHeight
+      const minDim = Math.min(img.naturalWidth, img.naturalHeight)
+      this.cropScale = VP / minDim
+      const imgW = img.naturalWidth * this.cropScale
+      const imgH = img.naturalHeight * this.cropScale
+      this.cropX = (VP - imgW) / 2
+      this.cropY = (VP - imgH) / 2
+    },
+    _clampCrop() {
+      const VP = 280
+      const imgW = this.cropImageNW * this.cropScale
+      const imgH = this.cropImageNH * this.cropScale
+      this.cropX = Math.min(0, Math.max(VP - imgW, this.cropX))
+      this.cropY = Math.min(0, Math.max(VP - imgH, this.cropY))
+    },
+    onCropMouseDown(e) {
+      this.cropDragging = true
+      this.cropDragStartX = e.clientX
+      this.cropDragStartY = e.clientY
+      this.cropDragOriginX = this.cropX
+      this.cropDragOriginY = this.cropY
+    },
+    onCropMouseMove(e) {
+      if (!this.cropDragging) return
+      this.cropX = this.cropDragOriginX + (e.clientX - this.cropDragStartX)
+      this.cropY = this.cropDragOriginY + (e.clientY - this.cropDragStartY)
+      this._clampCrop()
+    },
+    onCropMouseUp() { this.cropDragging = false },
+    onCropWheel(e) {
+      const VP = 280
+      const center = VP / 2
+      const factor = e.deltaY < 0 ? 1.12 : 0.88
+      const minScale = VP / Math.min(this.cropImageNW, this.cropImageNH)
+      const newScale = Math.max(minScale, Math.min(6, this.cropScale * factor))
+      const sf = newScale / this.cropScale
+      this.cropX = center + (this.cropX - center) * sf
+      this.cropY = center + (this.cropY - center) * sf
+      this.cropScale = newScale
+      this._clampCrop()
+    },
+    onCropTouchStart(e) {
+      if (e.touches.length === 1) {
+        this.cropDragging = true
+        this.cropDragStartX = e.touches[0].clientX
+        this.cropDragStartY = e.touches[0].clientY
+        this.cropDragOriginX = this.cropX
+        this.cropDragOriginY = this.cropY
+        this.pinchDist = null
+      } else if (e.touches.length === 2) {
+        this.cropDragging = false
+        this.pinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY,
+        )
+        this.pinchScaleStart = this.cropScale
+      }
+    },
+    onCropTouchMove(e) {
+      if (e.touches.length === 1 && this.cropDragging) {
+        this.cropX = this.cropDragOriginX + (e.touches[0].clientX - this.cropDragStartX)
+        this.cropY = this.cropDragOriginY + (e.touches[0].clientY - this.cropDragStartY)
+        this._clampCrop()
+      } else if (e.touches.length === 2 && this.pinchDist) {
+        const VP = 280
+        const center = VP / 2
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY,
+        )
+        const minScale = VP / Math.min(this.cropImageNW, this.cropImageNH)
+        const newScale = Math.max(minScale, Math.min(6, this.pinchScaleStart * (dist / this.pinchDist)))
+        const sf = newScale / this.cropScale
+        this.cropX = center + (this.cropX - center) * sf
+        this.cropY = center + (this.cropY - center) * sf
+        this.cropScale = newScale
+        this._clampCrop()
+      }
+    },
+    onCropTouchEnd() { this.cropDragging = false; this.pinchDist = null },
+    cancelCrop() {
+      if (this.cropSrc) { URL.revokeObjectURL(this.cropSrc); this.cropSrc = null }
+    },
+    async confirmCrop() {
+      const img = this.$refs.cropImg
+      if (!img || !this.cropImageNW) return
+      const VP = 280
+      const OUTPUT = 480
+      const center = VP / 2
+      const imgCenterX = (center - this.cropX) / this.cropScale
+      const imgCenterY = (center - this.cropY) / this.cropScale
+      const half = (VP / 2) / this.cropScale
+      const sx = imgCenterX - half
+      const sy = imgCenterY - half
+      const sw = VP / this.cropScale
+
+      const canvas = document.createElement('canvas')
+      canvas.width = OUTPUT
+      canvas.height = OUTPUT
+      canvas.getContext('2d').drawImage(img, sx, sy, sw, sw, 0, 0, OUTPUT, OUTPUT)
+
+      canvas.toBlob(async (blob) => {
+        URL.revokeObjectURL(this.cropSrc)
+        this.cropSrc = null
+        this.avatarUploading = true
+        try {
+          const res = await api.updateAvatar(this.userId, blob)
+          if (authState.user) authState.user.avatar_url = res.avatar_url + '?v=' + Date.now()
+        } catch {}
+        finally { this.avatarUploading = false }
+      }, 'image/jpeg', 0.85)
     },
     logout() {
       clearSession()
@@ -388,26 +571,6 @@ export default {
   },
 }
 
-function resizeImageToDataUrl(file, size) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = size
-      canvas.height = size
-      const ctx = canvas.getContext('2d')
-      const min = Math.min(img.width, img.height)
-      const sx = (img.width - min) / 2
-      const sy = (img.height - min) / 2
-      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size)
-      URL.revokeObjectURL(url)
-      resolve(canvas.toDataURL('image/jpeg', 0.75))
-    }
-    img.onerror = reject
-    img.src = url
-  })
-}
 </script>
 
 <style scoped>
@@ -788,4 +951,91 @@ function resizeImageToDataUrl(file, size) {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Crop modal ─────────────────────────────────────── */
+.crop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+}
+
+.crop-modal {
+  background: var(--glt-surface);
+  border-radius: 18px;
+  padding: 22px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 330px;
+}
+
+.crop-modal-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--glt-ink);
+  align-self: flex-start;
+}
+
+.crop-viewport {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  background: var(--glt-bg-subtle);
+  box-shadow: 0 0 0 3px var(--glt-glass-border), 0 4px 24px rgba(0,0,0,0.18);
+  flex-shrink: 0;
+}
+
+.crop-viewport:active { cursor: grabbing; }
+
+.crop-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  max-width: none;
+  display: block;
+}
+
+.crop-hint {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--glt-ink-tertiary);
+  text-align: center;
+}
+
+.crop-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.crop-actions .glt-btn { flex: 1; }
+
+.btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
 </style>
