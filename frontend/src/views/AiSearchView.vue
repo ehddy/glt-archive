@@ -1,8 +1,6 @@
 <template>
   <section class="ai-search glt-container">
     <header class="page-head">
-      <h1 class="glt-title page-title">AI로 찾기</h1>
-
       <form class="search-hero" @submit.prevent="handleSearch">
         <div class="search-row">
           <input
@@ -10,7 +8,7 @@
             type="text"
             enterkeyhint="search"
             class="search-input"
-            placeholder="느낌·키워드로 검색해 보세요"
+            placeholder="AI로 느낌·키워드 검색해 보세요"
             :disabled="loading"
           />
           <ClearIconButton v-if="query" @click="clearQuery" />
@@ -161,10 +159,6 @@ export default {
 <style scoped>
 .page-head {
   margin-bottom: var(--glt-space-5);
-}
-
-.page-title {
-  margin: 0 0 var(--glt-space-5);
 }
 
 .page-lead {

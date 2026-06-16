@@ -33,7 +33,6 @@
           />
           <div v-else class="saved-cover saved-cover--empty" aria-hidden="true">📖</div>
           <div class="saved-source-meta">
-            <span class="saved-source-label">출처</span>
             <span class="saved-source-title">{{ sourceTitle(quote) }}</span>
             <span v-if="authorName(quote)" class="saved-source-author">{{ authorName(quote) }}</span>
           </div>
@@ -188,13 +187,6 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 3px;
-}
-
-.saved-source-label {
-  font-size: 0.66rem;
-  font-weight: 600;
-  color: #3a7a60;
-  letter-spacing: 0.04em;
 }
 
 .saved-source-title {

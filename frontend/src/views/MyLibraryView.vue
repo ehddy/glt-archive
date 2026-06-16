@@ -1,9 +1,5 @@
 <template>
   <section class="my-library glt-container">
-    <header class="page-head">
-      <h1 class="glt-title">내 책장</h1>
-    </header>
-
     <div v-if="!loggedIn" class="login-panel glt-card">
       <p class="login-text">로그인하면 스크랩한 문장의 책들을 모아볼 수 있어요</p>
       <div class="login-actions">

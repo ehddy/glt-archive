@@ -1,7 +1,5 @@
 <template>
   <section class="my-profile glt-container">
-    <h1 class="glt-title">프로필</h1>
-
     <div v-if="!loggedIn" class="login-panel glt-card">
       <p class="login-text">로그인하면 내 프로필을 볼 수 있어요</p>
       <div class="login-actions">

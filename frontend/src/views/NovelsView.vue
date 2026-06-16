@@ -1,9 +1,5 @@
 <template>
   <section class="novels glt-container">
-    <header class="page-head">
-      <h1 class="glt-title">책장</h1>
-    </header>
-
     <div class="glt-search browse-search">
       <input
         v-model="query"

@@ -1,7 +1,5 @@
 <template>
   <section class="saved glt-container">
-    <h1 class="glt-title">스크랩</h1>
-
     <div v-if="!loggedIn" class="login-panel glt-card">
       <p class="login-text">로그인하면 문장을 스크랩하고 다시 볼 수 있어요</p>
       <div class="login-actions">

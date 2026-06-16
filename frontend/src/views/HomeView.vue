@@ -26,7 +26,9 @@
         v-if="searchResults.length"
         :results="searchResults"
         :liked-ids="likedIds"
+        :scrapped-ids="scrappedIds"
         @toggle-like="toggleLike"
+        @toggle-scrap="toggleScrap"
       />
       <div v-else-if="!loading" class="state-panel">
         <p class="state-title">아직 없어요</p>
@@ -231,6 +233,18 @@ export default {
       } catch (e) {
         this.error = e.message
       }
+    },
+    async toggleScrap(quoteId) {
+      if (!requireLogin(this.$router, this.$route.fullPath)) return
+      try {
+        const { scrappedIds, scrapCount } = await toggleScrapRequest(api, this.scrappedIds, quoteId)
+        this.scrappedIds = scrappedIds
+        this.searchResults = this.searchResults.map(item =>
+          item.quote?.id === quoteId
+            ? { ...item, quote: { ...item.quote, scrap_count: scrapCount } }
+            : item
+        )
+      } catch {}
     },
   },
 }
