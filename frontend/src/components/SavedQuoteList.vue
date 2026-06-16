@@ -4,6 +4,17 @@
 
     <ul class="saved-items">
       <li v-for="quote in quotes" :key="quote.id" class="saved-card glt-card">
+        <button
+          type="button"
+          class="remove-btn"
+          aria-label="스크랩 취소"
+          @click="$emit('remove', quote.id)"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+
         <router-link :to="`/quotes/${quote.id}`" class="saved-quote-link">
           <blockquote class="saved-quote">{{ quote.text }}</blockquote>
         </router-link>
@@ -27,22 +38,12 @@
             <span v-if="authorName(quote)" class="saved-source-author">{{ authorName(quote) }}</span>
           </div>
         </component>
-
-        <div class="saved-actions">
-          <DetailIconLink :to="`/quotes/${quote.id}`" />
-          <RemoveIconButton
-            label="스크랩 취소"
-            @click="$emit('remove', quote.id)"
-          />
-        </div>
       </li>
     </ul>
   </section>
 </template>
 
 <script>
-import DetailIconLink from './DetailIconLink.vue'
-import RemoveIconButton from './RemoveIconButton.vue'
 import {
   quoteAuthorName,
   quoteCoverUrl,
@@ -52,7 +53,6 @@ import {
 
 export default {
   name: 'SavedQuoteList',
-  components: { DetailIconLink, RemoveIconButton },
   props: {
     quotes: { type: Array, required: true },
   },
@@ -97,15 +97,41 @@ export default {
 }
 
 .saved-card {
+  position: relative;
   padding: var(--glt-space-4);
+  padding-top: calc(var(--glt-space-4) + 4px);
   display: flex;
   flex-direction: column;
   gap: var(--glt-space-3);
 }
 
+.remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: var(--glt-bg-subtle);
+  color: var(--glt-ink-tertiary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background var(--glt-duration), color var(--glt-duration);
+  flex-shrink: 0;
+}
+
+.remove-btn:hover {
+  background: rgba(196, 105, 58, 0.1);
+  color: var(--glt-accent-hover);
+}
+
 .saved-quote-link {
   text-decoration: none;
   color: inherit;
+  padding-right: 28px;
 }
 
 .saved-quote {
@@ -182,11 +208,5 @@ export default {
 .saved-source-author {
   font-size: 0.72rem;
   color: #4a7a6a;
-}
-
-.saved-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
 }
 </style>
