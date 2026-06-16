@@ -126,8 +126,13 @@ class RegisteredByOut(BaseModel):
 class UserPublicOut(BaseModel):
     id: int
     name: str | None = None
+    avatar_url: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class AvatarIn(BaseModel):
+    avatar_url: str
 
 
 class QuoteOut(BaseModel):

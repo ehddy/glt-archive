@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.auth.deps import get_current_user
 from app.database import get_db
 from app.models.models import Novel, Quote, QuoteScrap, Source, User, UserFeaturedNovel
-from app.schemas.schemas import FeaturedNovelsIn, FeaturedNovelsOut, NovelOut, PaginatedQuotesOut, UserPublicOut
+from app.schemas.schemas import AvatarIn, FeaturedNovelsIn, FeaturedNovelsOut, NovelOut, PaginatedQuotesOut, UserPublicOut
 from app.services.quote_serializer import serialize_quotes
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -16,6 +16,21 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+@router.patch("/{user_id}/avatar", response_model=UserPublicOut)
+def update_avatar(
+    user_id: int,
+    body: AvatarIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="본인 프로필만 수정할 수 있어요.")
+    current_user.avatar_url = body.avatar_url
+    db.commit()
+    db.refresh(current_user)
+    return current_user
 
 
 @router.get("/{user_id}/novels", response_model=list[NovelOut])

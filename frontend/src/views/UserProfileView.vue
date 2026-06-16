@@ -1,21 +1,40 @@
 <template>
   <section class="scraps-view glt-container">
     <!-- Other user profile header -->
-    <div v-if="!isOwnProfile" class="other-profile-header">
+    <div v-if="!isOwnProfile" class="profile-header">
       <button type="button" class="back-btn" @click="$router.back()" aria-label="뒤로">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
       </button>
-      <div class="profile-hero">
-        <div class="profile-avatar">{{ avatarLetter }}</div>
-        <span class="profile-name">{{ displayName }}</span>
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar-circle">
+          <img v-if="currentAvatarUrl" :src="currentAvatarUrl" class="profile-avatar-img" :alt="displayName" />
+          <span v-else class="profile-avatar-letter">{{ avatarLetter }}</span>
+        </div>
+      </div>
+      <div class="profile-info">
+        <p class="profile-name">{{ displayName }}</p>
       </div>
     </div>
 
     <!-- Own profile header -->
-    <div v-if="isOwnProfile && loggedIn" class="own-profile-header">
-      <div class="profile-hero">
-        <div class="profile-avatar">{{ avatarLetter }}</div>
-        <span class="profile-name">{{ displayName }}</span>
+    <div v-if="isOwnProfile && loggedIn" class="profile-header profile-header--own">
+      <div class="profile-avatar-wrap" @click="triggerAvatarUpload">
+        <div class="profile-avatar-circle" :class="{ 'profile-avatar-circle--uploading': avatarUploading }">
+          <img v-if="currentAvatarUrl && !avatarUploading" :src="currentAvatarUrl" class="profile-avatar-img" :alt="displayName" />
+          <span v-else-if="!avatarUploading" class="profile-avatar-letter">{{ avatarLetter }}</span>
+          <span v-else class="profile-avatar-spinner" />
+        </div>
+        <div class="profile-avatar-edit" aria-label="프로필 사진 변경">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
+        <input ref="avatarInput" type="file" accept="image/*" class="avatar-file-input" @change="handleAvatarChange" />
+      </div>
+      <div class="profile-info">
+        <p class="profile-name">{{ displayName }}</p>
+        <p class="profile-sub">{{ authState.user?.email || '' }}</p>
       </div>
       <button type="button" class="logout-btn" @click="logout">로그아웃</button>
     </div>
@@ -123,6 +142,8 @@ export default {
   data() {
     return {
       userName: '',
+      userAvatarUrl: '',
+      avatarUploading: false,
       tab: 'scraps',
       scraps: [],
       scrapsTotal: null,
@@ -157,6 +178,11 @@ export default {
       return this.userName || `사용자 ${this.userId}`
     },
     avatarLetter() { return (this.displayName || '?')[0].toUpperCase() },
+    currentAvatarUrl() {
+      if (this.isOwnProfile) return authState.user?.avatar_url || ''
+      return this.userAvatarUrl
+    },
+    authState() { return authState },
     scrapsBooks() {
       if (this.isOwnProfile) return this.ownBooks
       const seen = new Set()
@@ -214,11 +240,16 @@ export default {
 
       if (this.isOwnProfile && !this.loggedIn) { this.initialLoading = false; return }
 
-      const tasks = [this.loadScraps(), this.loadPostBooks()]
-      if (!this.isOwnProfile) tasks.push(this.loadUser())
-      if (this.isOwnProfile) tasks.push(this.loadOwnBooks(), this.loadUserState())
-      await Promise.all([...tasks, this.loadFeaturedIds()])
-      this.initialLoading = false
+      startPageLoading()
+      try {
+        const tasks = [this.loadScraps(), this.loadPostBooks()]
+        if (!this.isOwnProfile) tasks.push(this.loadUser())
+        if (this.isOwnProfile) tasks.push(this.loadOwnBooks(), this.loadUserState())
+        await Promise.all([...tasks, this.loadFeaturedIds()])
+      } finally {
+        this.initialLoading = false
+        endPageLoading()
+      }
     },
     async loadFeaturedIds() {
       if (!this.userId) return
@@ -228,7 +259,11 @@ export default {
       } catch { this.featuredIds = [] }
     },
     async loadUser() {
-      try { const u = await api.getUser(this.userId); this.userName = u.name || '' } catch {}
+      try {
+        const u = await api.getUser(this.userId)
+        this.userName = u.name || ''
+        this.userAvatarUrl = u.avatar_url || ''
+      } catch {}
     },
     async loadOwnBooks() {
       try { this.ownBooks = await api.listScrappedNovels() } catch {}
@@ -251,14 +286,14 @@ export default {
     async loadScraps({ append = false } = {}) {
       if (!this.userId) return
       if (append) { this.scrapsLoadingMore = true }
-      else { this.scrapsLoading = true; this.scraps = []; startPageLoading() }
+      else { this.scrapsLoading = true; this.scraps = [] }
       this.scrapsError = ''
       try {
         const res = await api.getUserScraps(this.userId, { skip: append ? this.scraps.length : 0, limit: this.pageSize })
         this.scrapsTotal = res.total
         this.scraps = append ? [...this.scraps, ...res.items] : res.items
       } catch (e) { this.scrapsError = e.message }
-      finally { if (!append) { this.scrapsLoading = false; endPageLoading() }; this.scrapsLoadingMore = false }
+      finally { if (!append) { this.scrapsLoading = false }; this.scrapsLoadingMore = false }
     },
     async loadPosts({ append = false } = {}) {
       if (!this.userId) return
@@ -331,20 +366,61 @@ export default {
         if (idx !== -1) this.posts.splice(idx, 1, { ...this.posts[idx], scrap_count: scrapCount })
       } catch {}
     },
+    triggerAvatarUpload() {
+      this.$refs.avatarInput?.click()
+    },
+    async handleAvatarChange(e) {
+      const file = e.target.files?.[0]
+      if (!file || !file.type.startsWith('image/')) return
+      e.target.value = ''
+      this.avatarUploading = true
+      try {
+        const dataUrl = await resizeImageToDataUrl(file, 240)
+        const res = await api.updateAvatar(this.userId, dataUrl)
+        if (authState.user) authState.user.avatar_url = res.avatar_url
+      } catch {}
+      finally { this.avatarUploading = false }
+    },
     logout() {
       clearSession()
       this.$router.push('/')
     },
   },
 }
+
+function resizeImageToDataUrl(file, size) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = size
+      canvas.height = size
+      const ctx = canvas.getContext('2d')
+      const min = Math.min(img.width, img.height)
+      const sx = (img.width - min) / 2
+      const sy = (img.height - min) / 2
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size)
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL('image/jpeg', 0.75))
+    }
+    img.onerror = reject
+    img.src = url
+  })
+}
 </script>
 
 <style scoped>
-.other-profile-header {
+/* 공통 프로필 헤더 */
+.profile-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 2px 0 14px;
+  gap: 14px;
+  padding: 4px 0 20px;
+}
+
+.profile-header--own {
+  padding-bottom: 20px;
 }
 
 .back-btn {
@@ -364,28 +440,90 @@ export default {
 
 .back-btn:hover { color: var(--glt-ink); }
 
-.profile-hero {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
+/* 아바타 */
+.profile-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
-.profile-avatar {
-  width: 34px;
-  height: 34px;
+.profile-header:not(.profile-header--own) .profile-avatar-wrap {
+  cursor: default;
+}
+
+.profile-avatar-circle {
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--glt-accent-soft) 0%, rgba(74, 142, 132, 0.2) 100%);
+  border: 2px solid var(--glt-glass-border);
   display: grid;
   place-items: center;
-  font-size: 1rem;
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+
+.profile-header--own .profile-avatar-wrap:hover .profile-avatar-circle {
+  opacity: 0.85;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-avatar-letter {
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--glt-accent-hover);
-  flex-shrink: 0;
+  line-height: 1;
+}
+
+.profile-avatar-spinner {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--glt-glass-border);
+  border-top-color: var(--glt-accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.profile-avatar-edit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--glt-surface);
+  border: 1.5px solid var(--glt-glass-border);
+  display: grid;
+  place-items: center;
+  color: var(--glt-ink-secondary);
+  pointer-events: none;
+}
+
+.avatar-file-input {
+  display: none;
+}
+
+/* 프로필 정보 */
+.profile-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .profile-name {
-  font-size: 1rem;
+  margin: 0;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--glt-ink);
   overflow: hidden;
@@ -393,22 +531,13 @@ export default {
   white-space: nowrap;
 }
 
-.own-profile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 4px 0 16px;
-}
-
-.own-profile-header .profile-avatar {
-  width: 44px;
-  height: 44px;
-  font-size: 1.15rem;
-}
-
-.own-profile-header .profile-name {
-  font-size: 1.05rem;
+.profile-sub {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--glt-ink-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .logout-btn {
@@ -416,11 +545,12 @@ export default {
   border: 1px solid var(--glt-glass-border);
   background: transparent;
   color: var(--glt-ink-tertiary);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   padding: 5px 10px;
   border-radius: 8px;
   cursor: pointer;
   transition: color var(--glt-duration), border-color var(--glt-duration);
+  align-self: flex-start;
 }
 
 .logout-btn:hover {

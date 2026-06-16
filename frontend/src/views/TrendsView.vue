@@ -42,7 +42,7 @@
 
       <!-- 오늘의 문장 -->
       <section v-if="data.quote_of_day" class="trends-section">
-        <p class="section-eyebrow">{{ formattedDate }} · 오늘의 문장</p>
+        <p class="section-eyebrow">Daily Pick <span class="eyebrow-date">· {{ formattedDate }}</span></p>
         <router-link :to="`/quotes/${data.quote_of_day.id}`" class="qod-card glt-card">
           <blockquote class="qod-text">{{ data.quote_of_day.text }}</blockquote>
           <footer class="qod-footer">
@@ -59,7 +59,7 @@
 
       <!-- 지금 많이 읽히는 책 -->
       <section v-if="data.top_books.length" class="trends-section">
-        <p class="section-eyebrow">지금 많이 읽히는 책</p>
+        <p class="section-eyebrow">Trending</p>
         <div class="shelf-scroll">
           <router-link
             v-for="book in data.top_books"
@@ -80,7 +80,7 @@
 
       <!-- 내 7일 활동 바 차트 -->
       <section class="trends-section">
-        <p class="section-eyebrow">내 최근 7일 활동</p>
+        <p class="section-eyebrow">My Activity</p>
         <div class="bar-chart-wrap">
           <div class="bar-chart">
             <div v-for="day in data.weekly_activity" :key="day.label" class="bar-col">
@@ -333,6 +333,7 @@ export default {
 }
 
 .section-eyebrow svg { opacity: 0.65; flex-shrink: 0; }
+.eyebrow-date { font-weight: 400; opacity: 0.6; }
 
 /* 오늘의 문장 */
 .qod-card {

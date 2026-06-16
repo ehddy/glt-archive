@@ -170,6 +170,12 @@ export const api = {
   listScrappedNovels() {
     return request('/api/scraps/novels')
   },
+  updateAvatar(userId, avatarUrl) {
+    return request(`/api/users/${userId}/avatar`, {
+      method: 'PATCH',
+      body: JSON.stringify({ avatar_url: avatarUrl }),
+    })
+  },
   getFeaturedNovels(userId) {
     return request(`/api/users/${userId}/featured-novels`)
   },
