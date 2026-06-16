@@ -47,9 +47,12 @@ class StatsOverviewOut(BaseModel):
     weekly_activity: list[DayCount] = []
     top_books: list[PopularBookOut] = []
     quote_of_day: QuoteOut | None = None
-    top_today: list[QuoteOut] = []
-    top_week: list[QuoteOut] = []
-    top_alltime: list[QuoteOut] = []
+    top_scraps_today: list[QuoteOut] = []
+    top_scraps_week: list[QuoteOut] = []
+    top_scraps_alltime: list[QuoteOut] = []
+    top_likes_today: list[QuoteOut] = []
+    top_likes_week: list[QuoteOut] = []
+    top_likes_alltime: list[QuoteOut] = []
 
 
 @router.get("/overview", response_model=StatsOverviewOut)
@@ -64,36 +67,19 @@ def get_stats_overview(
     cutoff_7d_start = cutoff_7d.replace(hour=0, minute=0, second=0, microsecond=0)
     uid = current_user.id if current_user else None
 
-    # ── 오늘 통계 ──────────────────────────────────────────────
-    if uid:
-        scraps_today = (
-            db.query(func.count(QuoteScrap.id))
-            .filter(QuoteScrap.user_id == uid, QuoteScrap.created_at >= today_start)
-            .scalar() or 0
-        )
-        quotes_today = (
-            db.query(func.count(Quote.id))
-            .filter(Quote.registered_by_id == uid, Quote.created_at >= today_start)
-            .scalar() or 0
-        )
-    else:
-        scraps_today = (
-            db.query(func.count(QuoteScrap.id))
-            .filter(QuoteScrap.created_at >= today_start)
-            .scalar() or 0
-        )
-        quotes_today = (
-            db.query(func.count(Quote.id))
-            .filter(Quote.created_at >= today_start)
-            .scalar() or 0
-        )
-
-    total_quotes = db.query(func.count(Quote.id)).scalar() or 0
-    total_scraps = (
+    # ── 전체 통계 (로그인 여부 무관) ───────────────────────────
+    scraps_today = (
         db.query(func.count(QuoteScrap.id))
-        .filter(QuoteScrap.user_id == uid)
+        .filter(QuoteScrap.created_at >= today_start)
         .scalar() or 0
-    ) if uid else db.query(func.count(QuoteScrap.id)).scalar() or 0
+    )
+    quotes_today = (
+        db.query(func.count(Quote.id))
+        .filter(Quote.created_at >= today_start)
+        .scalar() or 0
+    )
+    total_quotes = db.query(func.count(Quote.id)).scalar() or 0
+    total_scraps = db.query(func.count(QuoteScrap.id)).scalar() or 0
 
     # ── 7일 일별 활동 (개인 or 전체) ───────────────────────────
     def _week_rows(model, uid_col):
@@ -148,52 +134,45 @@ def get_stats_overview(
         for nid in novel_id_order if nid in novels_by_id
     ]
 
-    # ── 랭킹 ───────────────────────────────────────────────────
     cutoff_24h = now - timedelta(hours=24)
 
-    today_subq = (
-        db.query(QuoteScrap.quote_id, func.count(QuoteScrap.id).label("cnt"))
-        .filter(QuoteScrap.created_at >= cutoff_24h)
-        .group_by(QuoteScrap.quote_id).subquery()
-    )
-    today_quotes = (
-        db.query(Quote).join(today_subq, Quote.id == today_subq.c.quote_id)
-        .order_by(today_subq.c.cnt.desc()).limit(RANK_LIMIT).all()
-    )
-    if not today_quotes:
-        fb = db.query(QuoteScrap.quote_id, func.count(QuoteScrap.id).label("cnt")).group_by(QuoteScrap.quote_id).subquery()
-        today_quotes = db.query(Quote).join(fb, Quote.id == fb.c.quote_id).order_by(fb.c.cnt.desc()).limit(RANK_LIMIT).all()
+    def _rank(model, time_filter=None):
+        q = db.query(model.quote_id, func.count(model.id).label("cnt"))
+        if time_filter is not None:
+            q = q.filter(model.created_at >= time_filter)
+        subq = q.group_by(model.quote_id).subquery()
+        return (
+            db.query(Quote).join(subq, Quote.id == subq.c.quote_id)
+            .order_by(subq.c.cnt.desc()).limit(RANK_LIMIT).all()
+        )
 
-    week_subq = (
-        db.query(QuoteLike.quote_id, func.count(QuoteLike.id).label("cnt"))
-        .filter(QuoteLike.created_at >= cutoff_7d)
-        .group_by(QuoteLike.quote_id).subquery()
-    )
-    week_quotes = (
-        db.query(Quote).join(week_subq, Quote.id == week_subq.c.quote_id)
-        .order_by(week_subq.c.cnt.desc()).limit(RANK_LIMIT).all()
-    )
-    alltime_subq = (
-        db.query(QuoteLike.quote_id, func.count(QuoteLike.id).label("cnt"))
-        .group_by(QuoteLike.quote_id).subquery()
-    )
-    alltime_quotes = (
-        db.query(Quote).join(alltime_subq, Quote.id == alltime_subq.c.quote_id)
-        .order_by(alltime_subq.c.cnt.desc()).limit(RANK_LIMIT).all()
-    )
-    if not week_quotes:
-        week_quotes = alltime_quotes
+    # ── 스크랩 기준 (오늘/이번주/역대) ─────────────────────────
+    st = _rank(QuoteScrap, cutoff_24h)
+    sw = _rank(QuoteScrap, cutoff_7d_start)
+    sa = _rank(QuoteScrap)
+    if not st: st = sa
+    if not sw: sw = sa
 
-    pool = week_quotes or alltime_quotes
+    # ── 좋아요 기준 (오늘/이번주/역대) ─────────────────────────
+    lt = _rank(QuoteLike, cutoff_24h)
+    lw = _rank(QuoteLike, cutoff_7d_start)
+    la = _rank(QuoteLike)
+    if not lt: lt = la
+    if not lw: lw = la
+
+    # ── 오늘의 문장 pool ────────────────────────────────────────
+    pool = la or sa
     if not pool:
         pool = db.query(Quote).order_by(Quote.created_at.desc()).limit(20).all()
     qod = pool[now.timetuple().tm_yday % len(pool)] if pool else None
 
     all_raw = list({
         q.id: q
-        for q in today_quotes + week_quotes + alltime_quotes + ([qod] if qod else [])
+        for q in st + sw + sa + lt + lw + la + ([qod] if qod else [])
     }.values())
     serialized = {out.id: out for out in serialize_quotes(db, all_raw)}
+
+    def _ser(qs): return [serialized[q.id] for q in qs if q.id in serialized]
 
     return StatsOverviewOut(
         date=today,
@@ -207,7 +186,10 @@ def get_stats_overview(
         weekly_activity=weekly_activity,
         top_books=top_books,
         quote_of_day=serialized.get(qod.id) if qod else None,
-        top_today=[serialized[q.id] for q in today_quotes if q.id in serialized],
-        top_week=[serialized[q.id] for q in week_quotes if q.id in serialized],
-        top_alltime=[serialized[q.id] for q in alltime_quotes if q.id in serialized],
+        top_scraps_today=_ser(st),
+        top_scraps_week=_ser(sw),
+        top_scraps_alltime=_ser(sa),
+        top_likes_today=_ser(lt),
+        top_likes_week=_ser(lw),
+        top_likes_alltime=_ser(la),
     )

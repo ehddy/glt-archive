@@ -17,6 +17,29 @@
 
     <template v-else-if="data">
 
+      <!-- 전체 통계 (최상단 컴팩트 한 줄) -->
+      <div class="stat-strip">
+        <div class="stat-item">
+          <span class="stat-value">{{ fmt(data.today_stats.scraps_today) }}</span>
+          <span class="stat-label">오늘 담긴</span>
+        </div>
+        <div class="stat-divider" />
+        <div class="stat-item">
+          <span class="stat-value">{{ fmt(data.today_stats.quotes_today) }}</span>
+          <span class="stat-label">오늘 등록</span>
+        </div>
+        <div class="stat-divider" />
+        <div class="stat-item">
+          <span class="stat-value">{{ fmt(data.today_stats.total_quotes) }}</span>
+          <span class="stat-label">전체 문장</span>
+        </div>
+        <div class="stat-divider" />
+        <div class="stat-item">
+          <span class="stat-value">{{ fmt(data.today_stats.total_scraps) }}</span>
+          <span class="stat-label">전체 스크랩</span>
+        </div>
+      </div>
+
       <!-- 오늘의 문장 -->
       <section v-if="data.quote_of_day" class="trends-section">
         <p class="section-eyebrow">{{ formattedDate }} · 오늘의 문장</p>
@@ -26,53 +49,17 @@
             <span v-if="sourceName(data.quote_of_day)" class="qod-source">{{ sourceName(data.quote_of_day) }}</span>
             <div class="qod-chips">
               <span v-if="data.quote_of_day.scrap_count" class="chip chip--scrap">
-                <svg viewBox="0 0 24 24" width="10" height="10"><path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" fill="currentColor"/></svg>{{ data.quote_of_day.scrap_count }}
+                <svg viewBox="0 0 24 24" width="10" height="10"><path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" fill="currentColor"/></svg>{{ fmt(data.quote_of_day.scrap_count) }}
               </span>
-              <span v-if="data.quote_of_day.like_count" class="chip chip--like">♥ {{ data.quote_of_day.like_count }}</span>
+              <span v-if="data.quote_of_day.like_count" class="chip chip--like">♥ {{ fmt(data.quote_of_day.like_count) }}</span>
             </div>
           </footer>
         </router-link>
       </section>
 
-      <!-- 수치 카드 -->
-      <div class="stat-grid">
-        <div class="stat-card">
-          <span class="stat-value">{{ data.today_stats.scraps_today }}</span>
-          <span class="stat-label">오늘 내가 담은</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value">{{ data.today_stats.quotes_today }}</span>
-          <span class="stat-label">오늘 내가 등록</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value">{{ fmt(data.today_stats.total_quotes) }}</span>
-          <span class="stat-label">전체 문장</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value">{{ fmt(data.today_stats.total_scraps) }}</span>
-          <span class="stat-label">내 스크랩 합계</span>
-        </div>
-      </div>
-
-      <!-- 내 7일 활동 바 차트 -->
-      <section class="trends-section">
-        <p class="section-eyebrow">내 최근 7일 활동</p>
-        <div class="bar-chart">
-          <div v-for="day in data.weekly_activity" :key="day.label" class="bar-col">
-            <div class="bar-track">
-              <div class="bar-fill" :style="{ height: barPct(day.scraps + day.likes) + '%' }"></div>
-            </div>
-            <span class="bar-label">{{ day.label }}</span>
-          </div>
-        </div>
-        <div class="chart-legend">
-          <span class="legend-dot legend-dot--accent"></span><span class="legend-text">스크랩 + 좋아요</span>
-        </div>
-      </section>
-
-      <!-- 인기 책 책장 -->
+      <!-- 지금 많이 읽히는 책 -->
       <section v-if="data.top_books.length" class="trends-section">
-        <p class="section-eyebrow">문장이 많이 나온 책</p>
+        <p class="section-eyebrow">지금 많이 읽히는 책</p>
         <div class="shelf-scroll">
           <router-link
             v-for="book in data.top_books"
@@ -83,7 +70,7 @@
             <div class="shelf-cover-wrap">
               <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" class="shelf-cover" />
               <div v-else class="shelf-cover shelf-cover--empty">📖</div>
-              <span class="shelf-badge">{{ book.quote_count }}</span>
+              <span class="shelf-badge">{{ fmt(book.quote_count) }}</span>
             </div>
             <p class="shelf-title">{{ book.title }}</p>
             <p v-if="book.author" class="shelf-author">{{ book.author.name }}</p>
@@ -91,66 +78,86 @@
         </div>
       </section>
 
-      <!-- 오늘 많이 담긴 문장 -->
-      <section v-if="data.top_today.length" class="trends-section">
-        <p class="section-eyebrow">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/></svg>
-          오늘 많이 담긴 문장
-        </p>
-        <ol class="rank-list">
-          <li v-for="(q, i) in data.top_today" :key="q.id">
-            <router-link :to="`/quotes/${q.id}`" class="rank-link">
-              <span class="rank-num" :class="`rank-num--${i + 1}`">{{ i + 1 }}</span>
-              <div class="rank-body">
-                <p class="rank-text">{{ q.text }}</p>
-                <p v-if="sourceName(q)" class="rank-source">{{ sourceName(q) }}</p>
+      <!-- 내 7일 활동 바 차트 -->
+      <section class="trends-section">
+        <p class="section-eyebrow">내 최근 7일 활동</p>
+        <div class="bar-chart-wrap">
+          <div class="bar-chart">
+            <div v-for="day in data.weekly_activity" :key="day.label" class="bar-col">
+              <div class="bar-track">
+                <div class="bar-fill" :style="{ height: barPct(day.scraps + day.likes) + '%' }"></div>
               </div>
-              <span class="chip chip--scrap">
-                <svg viewBox="0 0 24 24" width="10" height="10"><path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" fill="currentColor"/></svg>{{ q.scrap_count }}
-              </span>
-            </router-link>
-          </li>
-        </ol>
+              <span class="bar-label">{{ day.label }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-footer">
+          <span class="legend-dot legend-dot--accent"></span>
+          <span class="legend-text">스크랩 + 좋아요</span>
+          <span class="today-activity" v-if="todayActivity.scraps + todayActivity.likes > 0">
+            · 오늘 {{ todayActivity.scraps + todayActivity.likes }}개 활동
+          </span>
+          <span class="today-activity today-activity--none" v-else>· 오늘 아직 활동이 없어요</span>
+        </div>
       </section>
 
-      <!-- 이번 주 인기 문장 -->
-      <section v-if="data.top_week.length" class="trends-section">
-        <p class="section-eyebrow">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          이번 주 인기 문장
-        </p>
-        <ol class="rank-list">
-          <li v-for="(q, i) in data.top_week" :key="q.id">
-            <router-link :to="`/quotes/${q.id}`" class="rank-link">
-              <span class="rank-num" :class="`rank-num--${i + 1}`">{{ i + 1 }}</span>
-              <div class="rank-body">
-                <p class="rank-text">{{ q.text }}</p>
-                <p v-if="sourceName(q)" class="rank-source">{{ sourceName(q) }}</p>
-              </div>
-              <span class="chip chip--like">♥ {{ q.like_count }}</span>
-            </router-link>
-          </li>
-        </ol>
-      </section>
+      <!-- 랭킹 -->
+      <section class="trends-section trends-section--last">
+        <!-- 담기 랭킹 -->
+        <div class="rank-block">
+          <div class="rank-block-header">
+            <p class="rank-col-label">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"/></svg>
+              담기
+            </p>
+            <div class="rank-period-tabs">
+              <button :class="['rank-tab', { 'rank-tab--active': scrapPeriod === 'today' }]" @click="scrapPeriod = 'today'">오늘</button>
+              <button :class="['rank-tab', { 'rank-tab--active': scrapPeriod === 'week' }]" @click="scrapPeriod = 'week'">이번 주</button>
+              <button :class="['rank-tab', { 'rank-tab--active': scrapPeriod === 'alltime' }]" @click="scrapPeriod = 'alltime'">역대</button>
+            </div>
+          </div>
+          <ol class="rank-list">
+            <li v-for="(q, i) in currentScraps" :key="q.id">
+              <router-link :to="`/quotes/${q.id}`" class="rank-link">
+                <span class="rank-num" :class="`rank-num--${i + 1}`">{{ i + 1 }}</span>
+                <div class="rank-body">
+                  <p class="rank-text">{{ q.text }}</p>
+                  <p v-if="sourceName(q)" class="rank-source">{{ sourceName(q) }}</p>
+                </div>
+                <span class="chip chip--scrap">
+                  <svg viewBox="0 0 24 24" width="10" height="10"><path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" fill="currentColor"/></svg>{{ fmt(q.scrap_count) }}
+                </span>
+              </router-link>
+            </li>
+          </ol>
+        </div>
 
-      <!-- 역대 인기 문장 -->
-      <section v-if="data.top_alltime.length" class="trends-section trends-section--last">
-        <p class="section-eyebrow">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          역대 인기 문장
-        </p>
-        <ol class="rank-list">
-          <li v-for="(q, i) in data.top_alltime" :key="q.id">
-            <router-link :to="`/quotes/${q.id}`" class="rank-link">
-              <span class="rank-num" :class="`rank-num--${i + 1}`">{{ i + 1 }}</span>
-              <div class="rank-body">
-                <p class="rank-text">{{ q.text }}</p>
-                <p v-if="sourceName(q)" class="rank-source">{{ sourceName(q) }}</p>
-              </div>
-              <span class="chip chip--like">♥ {{ q.like_count }}</span>
-            </router-link>
-          </li>
-        </ol>
+        <!-- 좋아요 랭킹 -->
+        <div class="rank-block">
+          <div class="rank-block-header">
+            <p class="rank-col-label rank-col-label--like">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              좋아요
+            </p>
+            <div class="rank-period-tabs">
+              <button :class="['rank-tab', { 'rank-tab--active': likePeriod === 'today' }]" @click="likePeriod = 'today'">오늘</button>
+              <button :class="['rank-tab', { 'rank-tab--active': likePeriod === 'week' }]" @click="likePeriod = 'week'">이번 주</button>
+              <button :class="['rank-tab', { 'rank-tab--active': likePeriod === 'alltime' }]" @click="likePeriod = 'alltime'">역대</button>
+            </div>
+          </div>
+          <ol class="rank-list">
+            <li v-for="(q, i) in currentLikes" :key="q.id">
+              <router-link :to="`/quotes/${q.id}`" class="rank-link">
+                <span class="rank-num" :class="`rank-num--${i + 1}`">{{ i + 1 }}</span>
+                <div class="rank-body">
+                  <p class="rank-text">{{ q.text }}</p>
+                  <p v-if="sourceName(q)" class="rank-source">{{ sourceName(q) }}</p>
+                </div>
+                <span class="chip chip--like">♥ {{ fmt(q.like_count) }}</span>
+              </router-link>
+            </li>
+          </ol>
+        </div>
       </section>
 
     </template>
@@ -168,7 +175,7 @@ import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 export default {
   name: 'TrendsView',
   data() {
-    return { data: null, loading: false, error: '', maxActivity: 1 }
+    return { data: null, loading: false, error: '', maxActivity: 1, scrapPeriod: 'today', likePeriod: 'today' }
   },
   computed: {
     loggedIn() { return isLoggedIn() },
@@ -176,6 +183,22 @@ export default {
       if (!this.data) return ''
       const [, m, d] = this.data.date.split('-')
       return `${Number(m)}월 ${Number(d)}일`
+    },
+    todayActivity() {
+      if (!this.data || !this.data.weekly_activity.length) return { scraps: 0, likes: 0 }
+      return this.data.weekly_activity[this.data.weekly_activity.length - 1]
+    },
+    currentScraps() {
+      if (!this.data) return []
+      if (this.scrapPeriod === 'today') return this.data.top_scraps_today
+      if (this.scrapPeriod === 'week') return this.data.top_scraps_week
+      return this.data.top_scraps_alltime
+    },
+    currentLikes() {
+      if (!this.data) return []
+      if (this.likePeriod === 'today') return this.data.top_likes_today
+      if (this.likePeriod === 'week') return this.data.top_likes_week
+      return this.data.top_likes_alltime
     },
   },
   mounted() {
@@ -197,7 +220,13 @@ export default {
     },
     barPct(val) { return Math.round((val / this.maxActivity) * 100) },
     sourceName(q) { return quoteSourceTitle(q) || quoteAuthorName(q) || '' },
-    fmt(n) { return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n) },
+    fmt(n) {
+      if (n == null) return '0'
+      if (n >= 100000000) return `${(n / 100000000).toFixed(1).replace(/\.0$/, '')}억`
+      if (n >= 10000) return `${(n / 10000).toFixed(1).replace(/\.0$/, '')}만`
+      if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}천`
+      return String(n)
+    },
   },
 }
 </script>
@@ -250,6 +279,43 @@ export default {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* 통계 스트립 */
+.stat-strip {
+  display: flex;
+  align-items: center;
+  background: var(--glt-surface);
+  border: 1px solid var(--glt-glass-border);
+  border-radius: var(--glt-radius-lg);
+  padding: 10px 0;
+  margin-bottom: 22px;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--glt-glass-border);
+  flex-shrink: 0;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--glt-ink);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.stat-label { font-size: 0.62rem; color: var(--glt-ink-tertiary); font-weight: 500; }
+
 /* 섹션 */
 .trends-section { margin-bottom: 22px; }
 .trends-section--last { margin-bottom: 0; }
@@ -301,31 +367,12 @@ export default {
 .qod-source { font-size: 0.72rem; font-weight: 600; color: var(--glt-ink-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
 .qod-chips { display: flex; gap: 7px; flex-shrink: 0; }
 
-/* 수치 카드 */
-.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
-
-.stat-card {
-  background: var(--glt-surface);
-  border: 1px solid var(--glt-glass-border);
-  border-radius: var(--glt-radius-lg);
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.stat-value {
-  font-size: 1.55rem;
-  font-weight: 800;
-  color: var(--glt-ink);
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-}
-
-.stat-label { font-size: 0.68rem; color: var(--glt-ink-tertiary); font-weight: 500; }
-
 /* 바 차트 */
+.bar-chart-wrap {
+  padding-bottom: 18px; /* bar-label의 bottom: -14px 공간 확보 */
+  overflow: hidden;     /* 가로 삐침 방지 */
+}
+
 .bar-chart {
   display: flex;
   align-items: flex-end;
@@ -336,7 +383,7 @@ export default {
   border-radius: var(--glt-radius-lg);
   padding: 10px 14px 20px;
   position: relative;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; position: relative; }
@@ -359,10 +406,12 @@ export default {
   white-space: nowrap;
 }
 
-.chart-legend { display: flex; align-items: center; gap: 5px; padding-left: 2px; }
+.chart-footer { display: flex; align-items: center; gap: 5px; padding-left: 2px; }
 .legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
 .legend-dot--accent { background: var(--glt-accent); opacity: 0.65; }
 .legend-text { font-size: 0.68rem; color: var(--glt-ink-tertiary); }
+.today-activity { font-size: 0.68rem; color: var(--glt-accent-hover); font-weight: 600; }
+.today-activity--none { color: var(--glt-ink-tertiary); font-weight: 400; }
 
 /* 인기 책 책장 */
 .shelf-scroll {
@@ -453,10 +502,76 @@ export default {
   font-size: 0.7rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 .chip--scrap { color: var(--glt-accent-hover); }
 .chip--like { color: #c4693a; }
+
+/* 랭킹 블록 */
+.rank-block {
+  margin-bottom: 16px;
+}
+
+.rank-block:last-child {
+  margin-bottom: 0;
+}
+
+.rank-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.rank-period-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--glt-surface);
+  border: 1px solid var(--glt-glass-border);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.rank-tab {
+  background: none;
+  border: none;
+  padding: 4px 11px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--glt-ink-tertiary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.rank-tab--active {
+  background: var(--glt-accent-soft);
+  color: var(--glt-accent-hover);
+}
+
+.rank-cols {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rank-col-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--glt-accent-hover);
+  opacity: 0.8;
+}
+
+.rank-col-label svg { opacity: 0.75; }
+
+.rank-col-label--like {
+  color: #c4693a;
+}
 
 /* 랭킹 */
 .rank-list {
@@ -472,7 +587,7 @@ export default {
 
 .rank-link {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   padding: 10px 13px;
   text-decoration: none;
@@ -484,19 +599,34 @@ export default {
 .rank-link:hover { background: var(--glt-bg-subtle); }
 
 .rank-num {
-  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.72rem;
   font-weight: 800;
-  min-width: 16px;
-  text-align: center;
   flex-shrink: 0;
-  color: var(--glt-ink-tertiary);
-  padding-top: 2px;
+  color: #fff;
+  background: var(--glt-ink-tertiary);
   font-variant-numeric: tabular-nums;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
 }
 
-.rank-num--1 { color: #c09a20; }
-.rank-num--2 { color: #7a8fa0; }
-.rank-num--3 { color: #a07050; }
+.rank-num--1 {
+  background: linear-gradient(145deg, #f7d060 0%, #c9900e 100%);
+  box-shadow: 0 2px 6px rgba(201,144,14,0.35);
+}
+.rank-num--2 {
+  background: linear-gradient(145deg, #d4dde5 0%, #8fa3b1 100%);
+  box-shadow: 0 2px 6px rgba(100,130,150,0.3);
+}
+.rank-num--3 {
+  background: linear-gradient(145deg, #d4956a 0%, #a0613a 100%);
+  box-shadow: 0 2px 6px rgba(160,97,58,0.3);
+}
 
 .rank-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
