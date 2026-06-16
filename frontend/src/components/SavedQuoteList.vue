@@ -5,6 +5,7 @@
     <ul class="saved-items">
       <li v-for="quote in quotes" :key="quote.id" class="saved-card glt-card">
         <button
+          v-if="removable"
           type="button"
           class="remove-btn"
           aria-label="스크랩 취소"
@@ -54,6 +55,7 @@ export default {
   name: 'SavedQuoteList',
   props: {
     quotes: { type: Array, required: true },
+    removable: { type: Boolean, default: true },
   },
   emits: ['remove'],
   methods: {

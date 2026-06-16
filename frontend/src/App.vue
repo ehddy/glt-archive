@@ -151,15 +151,13 @@ import MyProfileView from './views/MyProfileView.vue'
 import UserProfileView from './views/UserProfileView.vue'
 import NovelsView from './views/NovelsView.vue'
 import QuotesBrowseView from './views/QuotesBrowseView.vue'
-import SavedView from './views/SavedView.vue'
-
 const SHEET_ROUTE_NAMES = new Set(['register', 'login', 'signup'])
 const AUTH_MODAL_ROUTES = new Set(['login', 'signup'])
 
 const ROUTE_VIEWS = {
   home: HomeView,
   'ai-search': AiSearchView,
-  saved: SavedView,
+  saved: UserProfileView,
   novels: NovelsView,
   'my-library': MyLibraryView,
   'my-profile': MyProfileView,

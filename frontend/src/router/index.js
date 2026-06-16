@@ -10,7 +10,6 @@ import QuotesBrowseView from '../views/QuotesBrowseView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import LoginView from '../views/LoginView.vue'
 import SignupView from '../views/SignupView.vue'
-import SavedView from '../views/SavedView.vue'
 import MyProfileView from '../views/MyProfileView.vue'
 import UserProfileView from '../views/UserProfileView.vue'
 
@@ -21,7 +20,7 @@ const router = createRouter({
     { path: '/ai-search', name: 'ai-search', component: AiSearchView },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/signup', name: 'signup', component: SignupView },
-    { path: '/saved', name: 'saved', component: SavedView },
+    { path: '/saved', name: 'saved', component: UserProfileView },
     { path: '/my-profile', name: 'my-profile', component: MyProfileView },
     { path: '/novels', name: 'novels', component: NovelsView },
     { path: '/my-library', name: 'my-library', component: MyLibraryView },
