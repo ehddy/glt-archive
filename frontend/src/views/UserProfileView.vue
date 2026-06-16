@@ -153,7 +153,6 @@ export default {
       postsObserver: null,
       postsLoaded: false,
       ownBooks: [],
-      postBooks: [],
       initialLoading: true,
       likedIds: new Set(),
       scrappedIds: new Set(),
@@ -171,6 +170,22 @@ export default {
       return this.userName || `사용자 ${this.userId}`
     },
     avatarLetter() { return (this.displayName || '?')[0].toUpperCase() },
+    postBooks() {
+      const seen = new Set()
+      const result = []
+      for (const q of this.posts) {
+        const novelId = q.novel?.id || q.source?.novel_id
+        if (!novelId || seen.has(novelId)) continue
+        seen.add(novelId)
+        result.push({
+          id: novelId,
+          title: q.novel?.title || q.source?.title || '',
+          cover_url: q.novel?.cover_url || q.source?.cover_url || null,
+          author: { name: q.novel?.author?.name || q.source?.author?.name || null },
+        })
+      }
+      return result
+    },
     books() {
       if (this.isOwnProfile) return this.ownBooks
       const seen = new Set()
@@ -267,18 +282,7 @@ export default {
     },
     switchToPostsTab() {
       this.tab = 'posts'
-      if (!this.postsLoaded) {
-        Promise.all([
-          this.loadPosts().then(() => this.$nextTick(() => this.setupPostsScroll())),
-          this.loadPostBooks(),
-        ])
-      }
-    },
-    async loadPostBooks() {
-      if (!this.userId) return
-      try {
-        this.postBooks = await api.getUserNovels(this.userId)
-      } catch {}
+      if (!this.postsLoaded) this.loadPosts().then(() => this.$nextTick(() => this.setupPostsScroll()))
     },
     loadMoreScraps() {
       if (this.scrapsLoadingMore || this.scrapsLoading) return

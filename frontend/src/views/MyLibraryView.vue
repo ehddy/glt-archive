@@ -1,5 +1,6 @@
 <template>
   <section class="my-library glt-container">
+    <BackLink use-history fallback-to="/saved" label="뒤로" />
     <div v-if="!loggedIn" class="login-panel glt-card">
       <p class="login-text">로그인하면 스크랩한 문장의 책들을 모아볼 수 있어요</p>
       <div class="login-actions">
@@ -48,11 +49,13 @@
 
 <script>
 import { api } from '../api'
+import BackLink from '../components/BackLink.vue'
 import { isLoggedIn } from '../utils/auth'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
   name: 'MyLibraryView',
+  components: { BackLink },
   data() {
     return {
       novels: [],
