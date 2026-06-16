@@ -33,7 +33,7 @@
       <div v-else-if="!loading" class="state-panel">
         <p class="state-title">아직 없어요</p>
         <router-link :to="registerRoute" class="glt-btn glt-btn-primary">
-          직접 등록하기
+          직접 포스팅하기
         </router-link>
       </div>
     </template>

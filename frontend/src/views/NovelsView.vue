@@ -20,7 +20,7 @@
     <div v-if="error && !initialLoading" class="glt-empty glt-card">{{ error }}</div>
     <div v-else-if="!initialLoading && !novels.length" class="glt-empty glt-card">
       <p>아직 책이 없어요</p>
-      <router-link to="/register" class="glt-btn glt-btn-primary">문장 등록하기</router-link>
+      <router-link to="/register" class="glt-btn glt-btn-primary">포스팅하기</router-link>
     </div>
     <template v-else-if="!initialLoading">
       <ul class="novel-grid">

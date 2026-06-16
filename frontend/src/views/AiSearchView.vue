@@ -36,7 +36,7 @@
             <div class="news-card-head">
               <blockquote class="news-quote">{{ article.quote }}</blockquote>
               <RegisterIconButton
-                label="등록"
+                label="포스팅"
                 @click="registerArticle(article)"
               />
             </div>

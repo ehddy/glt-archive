@@ -76,7 +76,7 @@
       <template v-else>
         <div v-if="postsLoading" class="section-empty"><span class="loading-spinner" /></div>
         <div v-else-if="postsError" class="glt-empty">{{ postsError }}</div>
-        <div v-else-if="!posts.length" class="section-empty">아직 등록한 문장이 없어요</div>
+        <div v-else-if="!posts.length" class="section-empty">아직 포스팅한 문장이 없어요</div>
         <div v-else class="quote-feed">
           <QuoteFeedItem
             v-for="q in posts"

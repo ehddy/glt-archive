@@ -23,7 +23,7 @@
 
     <div v-else-if="!initialLoading && !quotes.length" class="state-panel">
       <p class="state-title">아직 없어요</p>
-      <router-link :to="registerRoute" class="glt-btn glt-btn-primary">첫 문장 등록</router-link>
+      <router-link :to="registerRoute" class="glt-btn glt-btn-primary">첫 포스팅</router-link>
     </div>
 
     <template v-else-if="!initialLoading">

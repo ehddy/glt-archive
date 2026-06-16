@@ -27,18 +27,18 @@
       <div class="profile-stats">
         <div class="stat-item">
           <span class="stat-num">{{ postsTotal !== null ? postsTotal : '—' }}</span>
-          <span class="stat-label">등록</span>
+          <span class="stat-label">포스트</span>
         </div>
       </div>
 
       <!-- Posts feed -->
-      <div class="section-label">등록한 문장</div>
+      <div class="section-label">포스트</div>
 
       <div v-if="loading" class="page-state">
         <span class="loading-spinner" />
       </div>
       <div v-else-if="error" class="page-state">{{ error }}</div>
-      <div v-else-if="!posts.length" class="page-state glt-empty glt-card">아직 등록한 문장이 없어요</div>
+      <div v-else-if="!posts.length" class="page-state glt-empty glt-card">아직 포스팅한 문장이 없어요</div>
       <template v-else>
         <div class="quote-feed">
           <QuoteFeedItem

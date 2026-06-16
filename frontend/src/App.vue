@@ -79,7 +79,7 @@
 
         </router-link>
 
-        <router-link :to="registerNavTarget" class="tab-item tab-item--register" aria-label="등록">
+        <router-link :to="registerNavTarget" class="tab-item tab-item--register" aria-label="포스팅">
 
           <span class="tab-register-btn">+</span>
 

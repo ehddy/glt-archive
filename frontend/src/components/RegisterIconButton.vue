@@ -23,7 +23,7 @@
 export default {
   name: 'RegisterIconButton',
   props: {
-    label: { type: String, default: '등록' },
+    label: { type: String, default: '포스팅' },
     type: { type: String, default: 'button' },
     disabled: { type: Boolean, default: false },
     large: { type: Boolean, default: false },
