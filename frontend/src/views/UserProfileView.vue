@@ -22,7 +22,8 @@
 
     <!-- Login prompt -->
     <div v-if="isOwnProfile && !loggedIn" class="login-panel glt-card">
-      <p class="login-text">로그인하면 문장을 스크랩하고 다시 볼 수 있어요</p>
+      <p class="login-title">로그인하면 나만의 공간이 생겨요</p>
+      <p class="login-desc">마음에 드는 문장을 담고, 내 책장을 채워보세요</p>
       <div class="login-actions">
         <router-link :to="{ name: 'login', query: { redirect: '/saved' } }" class="glt-btn glt-btn-primary">로그인</router-link>
         <router-link :to="{ name: 'signup', query: { redirect: '/saved' } }" class="glt-btn glt-btn-ghost">회원가입</router-link>
@@ -428,12 +429,21 @@ export default {
 }
 
 .login-panel {
-  padding: var(--glt-space-5) var(--glt-space-4);
+  padding: 28px 20px;
   text-align: center;
+  margin-top: 8px;
 }
 
-.login-text {
-  margin: 0 0 var(--glt-space-3);
+.login-title {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--glt-ink);
+}
+
+.login-desc {
+  margin: 0 0 18px;
+  font-size: 0.82rem;
   color: var(--glt-ink-secondary);
   line-height: 1.6;
 }
@@ -441,7 +451,7 @@ export default {
 .login-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .my-bookshelf {
