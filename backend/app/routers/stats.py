@@ -26,7 +26,7 @@ def get_stats_overview(db: Session = Depends(get_db)):
     now = datetime.now()
     today = now.date().isoformat()
 
-    # 오늘 가장 많이 담긴 문장 (최근 24h scrap)
+    # 오늘 가장 많이 담긴 문장 (최근 24h scrap → fallback: 전체 scrap 기준)
     cutoff_24h = now - timedelta(hours=24)
     today_subq = (
         db.query(QuoteScrap.quote_id, func.count(QuoteScrap.id).label("cnt"))
@@ -41,8 +41,21 @@ def get_stats_overview(db: Session = Depends(get_db)):
         .limit(5)
         .all()
     )
+    if not today_quotes:
+        fallback_scrap_subq = (
+            db.query(QuoteScrap.quote_id, func.count(QuoteScrap.id).label("cnt"))
+            .group_by(QuoteScrap.quote_id)
+            .subquery()
+        )
+        today_quotes = (
+            db.query(Quote)
+            .join(fallback_scrap_subq, Quote.id == fallback_scrap_subq.c.quote_id)
+            .order_by(fallback_scrap_subq.c.cnt.desc())
+            .limit(5)
+            .all()
+        )
 
-    # 이번 주 인기 문장 (최근 7일 like)
+    # 이번 주 인기 문장 (최근 7일 like → fallback: 전체 like 기준)
     cutoff_7d = now - timedelta(days=7)
     week_subq = (
         db.query(QuoteLike.quote_id, func.count(QuoteLike.id).label("cnt"))
@@ -71,6 +84,10 @@ def get_stats_overview(db: Session = Depends(get_db)):
         .limit(5)
         .all()
     )
+
+    # week fallback: 역대 인기로 대체
+    if not week_quotes:
+        week_quotes = alltime_quotes
 
     # 오늘의 문장: 이번 주 인기 > 역대 인기 > 전체 최신 중 날짜 기반 선택
     pool = week_quotes or alltime_quotes
