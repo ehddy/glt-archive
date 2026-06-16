@@ -26,49 +26,62 @@
     </footer>
 
     <div class="feed-actions">
-      <button
-        type="button"
-        class="feed-action-btn feed-action-btn--like"
-        :class="{ 'is-active': liked }"
-        @click.stop="$emit('toggle-like')"
-      >
-        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-          <path
-            d="M12 20.2l-1-1C6.2 14.8 4 12.6 4 10a4 4 0 0 1 7-2.4A4 4 0 0 1 20 10c0 2.6-2.2 4.8-7 9.2l-1 1z"
-            :fill="liked ? 'currentColor' : 'none'"
-            stroke="currentColor"
-            stroke-width="1.75"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-        <span v-if="likeCount > 0">{{ formattedLikeCount }}</span>
-      </button>
+      <div class="feed-meta">
+        <router-link
+          v-if="registeredById"
+          :to="`/users/${registeredById}`"
+          class="feed-poster-name"
+          @click.stop
+        >{{ registeredByName }}</router-link>
+        <span v-else-if="registeredByName" class="feed-poster-name feed-poster-name--static">{{ registeredByName }}</span>
+        <span v-if="timeAgo" class="feed-time-ago">{{ timeAgo }}</span>
+      </div>
 
-      <button
-        type="button"
-        class="feed-action-btn feed-action-btn--scrap"
-        :class="{ 'is-active': scrapped }"
-        @click.stop="$emit('toggle-scrap')"
-      >
-        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-          <path
-            d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"
-            :fill="scrapped ? 'currentColor' : 'none'"
-            stroke="currentColor"
-            stroke-width="1.75"
-            stroke-linejoin="round"
-          />
-        </svg>
-        <span v-if="scrapCount > 0">{{ formattedScrapCount }}</span>
-      </button>
+      <div class="feed-btns">
+        <button
+          type="button"
+          class="feed-action-btn feed-action-btn--like"
+          :class="{ 'is-active': liked }"
+          @click.stop="$emit('toggle-like')"
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <path
+              d="M12 20.2l-1-1C6.2 14.8 4 12.6 4 10a4 4 0 0 1 7-2.4A4 4 0 0 1 20 10c0 2.6-2.2 4.8-7 9.2l-1 1z"
+              :fill="liked ? 'currentColor' : 'none'"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span v-if="likeCount > 0">{{ formattedLikeCount }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="feed-action-btn feed-action-btn--scrap"
+          :class="{ 'is-active': scrapped }"
+          @click.stop="$emit('toggle-scrap')"
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <path
+              d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"
+              :fill="scrapped ? 'currentColor' : 'none'"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span v-if="scrapCount > 0">{{ formattedScrapCount }}</span>
+        </button>
+      </div>
     </div>
   </article>
 </template>
 
 <script>
 import { quoteAuthorName, quoteCoverUrl, quoteSourceTitle } from '../utils/quoteDisplay'
-import { formatCount } from '../utils/formatters'
+import { formatCount, formatRelativeTime } from '../utils/formatters'
 
 export default {
   name: 'QuoteFeedItem',
@@ -88,6 +101,9 @@ export default {
     scrapCount() { return Number(this.quote.scrap_count) || 0 },
     formattedLikeCount() { return formatCount(this.likeCount) },
     formattedScrapCount() { return formatCount(this.scrapCount) },
+    registeredById() { return this.quote.registered_by?.id || null },
+    registeredByName() { return this.quote.registered_by?.name || '' },
+    timeAgo() { return formatRelativeTime(this.quote.created_at) },
   },
 }
 </script>
@@ -128,10 +144,52 @@ export default {
 
 .feed-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.feed-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.feed-poster-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--glt-ink-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.feed-poster-name:not(.feed-poster-name--static):hover {
+  color: var(--glt-accent-hover);
+  text-decoration: underline;
+}
+
+.feed-poster-name--static {
+  pointer-events: none;
+}
+
+.feed-time-ago {
+  font-size: 0.72rem;
+  color: var(--glt-ink-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.feed-btns {
+  display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 14px 12px;
+  flex-shrink: 0;
 }
 
 .feed-action-btn {

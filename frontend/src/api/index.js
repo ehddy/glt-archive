@@ -155,6 +155,18 @@ export const api = {
   listScraps() {
     return request('/api/scraps')
   },
+  getUser(userId) {
+    return request(`/api/users/${userId}`)
+  },
+  getUserQuotes(userId, { skip = 0, limit = 20 } = {}) {
+    return request(`/api/users/${userId}/quotes?skip=${skip}&limit=${limit}`)
+  },
+  getUserNovels(userId) {
+    return request(`/api/users/${userId}/novels`)
+  },
+  getUserScraps(userId, { skip = 0, limit = 20 } = {}) {
+    return request(`/api/users/${userId}/scraps?skip=${skip}&limit=${limit}`)
+  },
   listScrappedNovels() {
     return request('/api/scraps/novels')
   },

@@ -64,7 +64,7 @@ def _registered_by_out(quote: Quote) -> RegisteredByOut | None:
     user = quote.registered_by
     if not user:
         return None
-    return RegisteredByOut(name=user.name or user.email)
+    return RegisteredByOut(id=user.id, name=user.name or user.email)
 
 
 def serialize_quote(

@@ -85,41 +85,6 @@
 
         </router-link>
 
-        <router-link
-
-          :to="{ name: 'my-library' }"
-
-          class="tab-item"
-
-          :class="{ 'is-tab-active': $route.name === 'novel-detail' }"
-          aria-label="내 책장"
-
-        >
-
-          <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
-
-            <path d="M12 7v13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-
-            <path
-              d="M5 5.2A2.2 2.2 0 0 1 7.2 3H12v17H7.2A2.2 2.2 0 0 1 5 17.8V5.2z"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linejoin="round"
-            />
-
-            <path
-              d="M19 5.2A2.2 2.2 0 0 0 16.8 3H12v17h4.8A2.2 2.2 0 0 0 19 17.8V5.2z"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linejoin="round"
-            />
-
-          </svg>
-
-        </router-link>
-
         <router-link :to="{ name: 'saved' }" class="tab-item" aria-label="스크랩">
 
           <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -130,6 +95,24 @@
               stroke="currentColor"
               stroke-width="1.75"
               stroke-linejoin="round"
+            />
+
+          </svg>
+
+        </router-link>
+
+        <router-link :to="{ name: 'my-profile' }" class="tab-item" aria-label="프로필">
+
+          <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+
+            <circle cx="12" cy="8.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.75" />
+
+            <path
+              d="M4 20.5c0-4.1 3.6-7 8-7s8 2.9 8 7"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
             />
 
           </svg>
@@ -164,6 +147,8 @@ import AiSearchView from './views/AiSearchView.vue'
 import HomeView from './views/HomeView.vue'
 import NovelDetailView from './views/NovelDetailView.vue'
 import MyLibraryView from './views/MyLibraryView.vue'
+import MyProfileView from './views/MyProfileView.vue'
+import UserProfileView from './views/UserProfileView.vue'
 import NovelsView from './views/NovelsView.vue'
 import QuoteDetailView from './views/QuoteDetailView.vue'
 import QuotesBrowseView from './views/QuotesBrowseView.vue'
@@ -171,7 +156,7 @@ import SavedView from './views/SavedView.vue'
 
 import { registerRouteForQuote } from './utils/registerBook'
 
-const SHEET_ROUTE_NAMES = new Set(['register', 'login', 'signup'])
+const SHEET_ROUTE_NAMES = new Set(['register', 'login', 'signup', 'quote-detail'])
 const AUTH_MODAL_ROUTES = new Set(['login', 'signup'])
 
 const ROUTE_VIEWS = {
@@ -180,6 +165,8 @@ const ROUTE_VIEWS = {
   saved: SavedView,
   novels: NovelsView,
   'my-library': MyLibraryView,
+  'my-profile': MyProfileView,
+  'user-profile': UserProfileView,
   'novel-detail': NovelDetailView,
   'quotes-browse': QuotesBrowseView,
   'quote-detail': QuoteDetailView,
@@ -213,6 +200,7 @@ export default {
     sheetCloseLabel() {
       if (this.$route.name === 'register') return '등록 닫기'
       if (this.$route.name === 'signup') return '회원가입 닫기'
+      if (this.$route.name === 'quote-detail') return '닫기'
       return '로그인 닫기'
     },
 
@@ -403,7 +391,8 @@ export default {
 }
 
 .main:has(.register--sheet),
-.main:has(.auth-modal) {
+.main:has(.auth-modal),
+.main:has(.quote-sheet) {
 
   z-index: 130;
 

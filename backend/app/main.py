@@ -16,7 +16,7 @@ from app.config import settings
 
 from app.database import Base, SessionLocal, database_kind, engine
 
-from app.routers import ai_search, aladin, authors, auth, chat, likes, novels, quotes, scraps
+from app.routers import ai_search, aladin, authors, auth, chat, likes, novels, quotes, scraps, users
 
 from app.seed.loader import seed_database
 from app.services.quote_service import migrate_quote_uniqueness
@@ -82,6 +82,7 @@ app.include_router(authors.router)
 app.include_router(chat.router)
 app.include_router(ai_search.router)
 app.include_router(aladin.router)
+app.include_router(users.router)
 
 
 

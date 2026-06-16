@@ -14,54 +14,42 @@
       </div>
     </div>
 
-    <template v-else>
-      <div v-if="userName" class="user-chip glt-card">
-        <span>{{ userName }}</span>
-        <button type="button" class="logout-btn" @click="logout">로그아웃</button>
-      </div>
-
-      <template v-if="!loading">
-        <section v-if="myBooks.length" class="my-bookshelf">
-          <header class="shelf-head">
-            <div class="shelf-head-left">
-              <h2 class="shelf-title">내 책장</h2>
-              <span class="shelf-count">{{ myBooks.length }}권</span>
-            </div>
-            <router-link to="/my-library" class="shelf-more">
-              더보기
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M9 6l6 6-6 6"/>
-              </svg>
-            </router-link>
-          </header>
-          <div class="shelf-scroll">
-            <router-link
-              v-for="book in myBooks.slice(0, 10)"
-              :key="book.id"
-              :to="`/novels/${book.id}`"
-              class="shelf-book"
-            >
-              <img
-                v-if="book.cover_url"
-                :src="book.cover_url"
-                :alt="book.title"
-                class="shelf-cover"
-              />
-              <div v-else class="shelf-cover shelf-cover--empty">📖</div>
-              <p class="shelf-book-title">{{ book.title }}</p>
-              <p v-if="book.authorName" class="shelf-book-author">{{ book.authorName }}</p>
-            </router-link>
+    <template v-else-if="!loading">
+      <section v-if="books.length" class="my-bookshelf">
+        <header class="shelf-head">
+          <div class="shelf-head-left">
+            <h2 class="shelf-title">내 책장</h2>
+            <span class="shelf-count">{{ books.length }}권</span>
           </div>
-        </section>
+          <router-link to="/my-library" class="shelf-more">
+            더보기
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </router-link>
+        </header>
+        <div class="shelf-scroll">
+          <router-link
+            v-for="book in books"
+            :key="book.id"
+            :to="`/novels/${book.id}`"
+            class="shelf-book"
+          >
+            <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" class="shelf-cover" />
+            <div v-else class="shelf-cover shelf-cover--empty">📖</div>
+            <p class="shelf-book-title">{{ book.title }}</p>
+            <p v-if="book.author?.name" class="shelf-book-author">{{ book.author.name }}</p>
+          </router-link>
+        </div>
+      </section>
 
-        <div v-if="error" class="glt-empty">{{ error }}</div>
-        <div v-else-if="!quotes.length" class="glt-empty glt-card">아직 스크랩한 문장이 없어요</div>
-        <SavedQuoteList
-          v-else
-          :quotes="quotes"
-          @remove="removeScrap"
-        />
-      </template>
+      <div v-if="error" class="glt-empty">{{ error }}</div>
+      <div v-else-if="!quotes.length" class="glt-empty glt-card">아직 스크랩한 문장이 없어요</div>
+      <SavedQuoteList
+        v-else
+        :quotes="quotes"
+        @remove="removeScrap"
+      />
     </template>
   </section>
 </template>
@@ -69,7 +57,7 @@
 <script>
 import { api } from '../api'
 import SavedQuoteList from '../components/SavedQuoteList.vue'
-import { authState, clearSession, isLoggedIn } from '../utils/auth'
+import { isLoggedIn } from '../utils/auth'
 import { endPageLoading, startPageLoading } from '../utils/pageLoading'
 
 export default {
@@ -78,6 +66,7 @@ export default {
   data() {
     return {
       quotes: [],
+      books: [],
       loading: true,
       error: '',
     }
@@ -85,25 +74,6 @@ export default {
   computed: {
     loggedIn() {
       return isLoggedIn()
-    },
-    userName() {
-      return authState.user?.name || authState.user?.email || ''
-    },
-    myBooks() {
-      const seen = new Set()
-      const books = []
-      for (const q of this.quotes) {
-        const novelId = q.novel?.id || q.source?.novel_id
-        if (!novelId || seen.has(novelId)) continue
-        seen.add(novelId)
-        books.push({
-          id: novelId,
-          title: q.novel?.title || q.source?.title || '',
-          cover_url: q.novel?.cover_url || q.source?.cover_url || null,
-          authorName: q.novel?.author?.name || q.source?.author?.name || q.author?.name || null,
-        })
-      }
-      return books
     },
   },
   watch: {
@@ -121,7 +91,12 @@ export default {
       startPageLoading()
       this.error = ''
       try {
-        this.quotes = await api.listScraps()
+        const [quotes, books] = await Promise.all([
+          api.listScraps(),
+          api.listScrappedNovels().catch(() => []),
+        ])
+        this.quotes = quotes
+        this.books = books
       } catch (e) {
         this.error = e.message
       } finally {
@@ -136,11 +111,6 @@ export default {
       } catch (e) {
         this.error = e.message
       }
-    },
-    logout() {
-      clearSession()
-      this.quotes = []
-      this.$router.push('/')
     },
   },
 }
@@ -160,25 +130,6 @@ export default {
   margin: 0 0 var(--glt-space-3);
   color: var(--glt-ink-secondary);
   line-height: 1.6;
-}
-
-.user-chip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
-  margin-bottom: var(--glt-space-4);
-  font-size: 0.88rem;
-  color: var(--glt-ink-secondary);
-}
-
-.logout-btn {
-  border: none;
-  background: transparent;
-  color: var(--glt-ink-tertiary);
-  font-size: 0.82rem;
-  cursor: pointer;
 }
 
 .login-actions {
@@ -239,7 +190,6 @@ export default {
   overflow-y: hidden;
   padding: 4px 2px 12px;
   scrollbar-width: none;
-  -ms-overflow-style: none;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x;
@@ -248,9 +198,7 @@ export default {
   -webkit-user-select: none;
 }
 
-.shelf-scroll::-webkit-scrollbar {
-  display: none;
-}
+.shelf-scroll::-webkit-scrollbar { display: none; }
 
 .shelf-book {
   flex: 0 0 90px;

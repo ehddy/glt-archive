@@ -117,6 +117,14 @@ class QuoteVersionOut(BaseModel):
 
 
 class RegisteredByOut(BaseModel):
+    id: int
+    name: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class UserPublicOut(BaseModel):
+    id: int
     name: str | None = None
 
     model_config = {"from_attributes": True}
