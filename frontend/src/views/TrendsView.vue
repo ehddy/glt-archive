@@ -380,6 +380,7 @@ export default {
 
 .shelf-book {
   flex: 0 0 80px;
+  width: 80px;
   display: flex;
   flex-direction: column;
   gap: 5px;
