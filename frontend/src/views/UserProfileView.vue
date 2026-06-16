@@ -48,7 +48,7 @@
         <section v-if="books.length" class="my-bookshelf">
           <header class="shelf-head">
             <div class="shelf-head-left">
-              <h2 class="shelf-title">{{ isOwnProfile ? '내 책장' : '책장' }}</h2>
+              <h2 class="shelf-title">담은 책</h2>
               <span class="shelf-count">{{ books.length }}권</span>
             </div>
             <router-link v-if="isOwnProfile" to="/my-library" class="shelf-more">
@@ -83,6 +83,24 @@
 
       <!-- Posts tab -->
       <template v-else>
+        <!-- Post bookshelf -->
+        <section v-if="postBooks.length" class="my-bookshelf">
+          <header class="shelf-head">
+            <div class="shelf-head-left">
+              <h2 class="shelf-title">올린 책</h2>
+              <span class="shelf-count">{{ postBooks.length }}권</span>
+            </div>
+          </header>
+          <div class="shelf-scroll">
+            <router-link v-for="book in postBooks" :key="book.id" :to="`/novels/${book.id}`" class="shelf-book">
+              <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" class="shelf-cover" />
+              <div v-else class="shelf-cover shelf-cover--empty">📖</div>
+              <p class="shelf-book-title">{{ book.title }}</p>
+              <p v-if="book.author?.name" class="shelf-book-author">{{ book.author.name }}</p>
+            </router-link>
+          </div>
+        </section>
+
         <div v-if="postsLoading" class="section-empty"><span class="loading-spinner" /></div>
         <div v-else-if="postsError" class="glt-empty">{{ postsError }}</div>
         <div v-else-if="!posts.length" class="section-empty">아직 포스팅한 문장이 없어요</div>
@@ -135,6 +153,7 @@ export default {
       postsObserver: null,
       postsLoaded: false,
       ownBooks: [],
+      postBooks: [],
       initialLoading: true,
       likedIds: new Set(),
       scrappedIds: new Set(),
@@ -181,6 +200,10 @@ export default {
   },
   methods: {
     async init() {
+      if (!this.isOwnProfile && authState.user?.id && Number(this.$route.params.id) === authState.user.id) {
+        this.$router.replace({ name: 'saved' })
+        return
+      }
       if (this.scrapsObserver) { this.scrapsObserver.disconnect(); this.scrapsObserver = null }
       if (this.postsObserver) { this.postsObserver.disconnect(); this.postsObserver = null }
       this.scraps = []
@@ -244,7 +267,18 @@ export default {
     },
     switchToPostsTab() {
       this.tab = 'posts'
-      if (!this.postsLoaded) this.loadPosts().then(() => this.$nextTick(() => this.setupPostsScroll()))
+      if (!this.postsLoaded) {
+        Promise.all([
+          this.loadPosts().then(() => this.$nextTick(() => this.setupPostsScroll())),
+          this.loadPostBooks(),
+        ])
+      }
+    },
+    async loadPostBooks() {
+      if (!this.userId) return
+      try {
+        this.postBooks = await api.getUserNovels(this.userId)
+      } catch {}
     },
     loadMoreScraps() {
       if (this.scrapsLoadingMore || this.scrapsLoading) return
