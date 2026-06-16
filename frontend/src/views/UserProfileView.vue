@@ -26,10 +26,10 @@
       <!-- Tabs -->
       <div class="tabs">
         <button class="tab-btn" :class="{ active: tab === 'scraps' }" @click="tab = 'scraps'">
-          스크랩<span v-if="scrapsTotal" class="tab-count">{{ scrapsTotal }}</span>
+          컬렉션<span v-if="scrapsTotal" class="tab-count">{{ scrapsTotal }}</span>
         </button>
         <button class="tab-btn" :class="{ active: tab === 'posts' }" @click="switchToPostsTab">
-          등록한 문장<span v-if="postsTotal" class="tab-count">{{ postsTotal }}</span>
+          포스트<span v-if="postsTotal" class="tab-count">{{ postsTotal }}</span>
         </button>
       </div>
 
